@@ -1,8 +1,7 @@
 package loltools
 
 import (
-  "fmt"
-  "loltools/view"
+  "github.com/OwenDurni/loltools/view"
   "net/http"
 )
 

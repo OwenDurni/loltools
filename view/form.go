@@ -1,7 +1,7 @@
 package view
 
 import (
-  "template/html"
+  "html/template"
 )
 
 type FormCtx struct {
@@ -34,7 +34,7 @@ func (ctx *FormCtx) Init() {
 }
 
 func RenderForm(ctx *FormCtx) (out []byte) {
-  out, err := parseTemplate("template/form.html", ctx)
+  out, err := ParseTemplate("template/form.html", ctx)
   if err != nil {
     print(err.Error())
   }

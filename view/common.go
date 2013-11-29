@@ -1,7 +1,8 @@
 package view
 
 import (
-  "template/html"
+  "bytes"
+  "html/template"
 )
 
 func ParseTemplate(file string, data interface{}) (out []byte, error error) {

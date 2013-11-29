@@ -1,13 +1,18 @@
 package view
 
 import (
-  "loltools/model"
-  "template/html"
+  "github.com/OwenDurni/loltools/model"
+  "html/template"
+  "net/http"
 )
 
 func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   user := model.User{} 
   formContents, err := ParseTemplate("/template/profile/edit.html", user)
+  if err != nil {
+    print(err)
+    return
+  }
 
   formCtx := new(FormCtx)
   formCtx.Init()
