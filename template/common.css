@@ -1,0 +1,29 @@
+#header {
+  background-color: #ccc;
+  height: 40;
+}
+
+ul#nav {
+  list-style-type: none;
+}
+
+ul#nav li {
+  display: inline;
+  margin: 0 1em 0 1em;
+  line-height: 40px;
+}
+
+#nav a {
+  text-decoration: none;
+  font-weight: bold;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16;
+}
+
+#nav a:link, #nav a:visited, #nav a:hover, #nav a:active {
+  color: black;
+}
+
+#nav a:hover, #nav a:active {
+  color: #666;
+}

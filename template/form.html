@@ -1,0 +1,36 @@
+<form id="{{.FormId}">
+  {{.FormHTML}}
+  <input id="submit" type="submit" value="{{.SubmitText}}" /><span id="result"></span>
+</form>
+
+<script>
+var req;
+$("#{{.FormId}}").submit(function(event){
+  if (req) {
+    req.abort();
+  }
+  var $form = $(this);
+  var $inputs = $form.find("input, select, button, textarea");
+  var $result = $form.find("#result");
+
+  $inputs.prop("disabled", true);
+  $result.text("{{.StatusTextActive}}");
+
+  req = $.ajax({
+    url: "{{.SubmitUrl}}",
+    type: "post",
+    data: $form.serialize()
+  });
+
+  req.done(function (response, textStatus, jqXHR){
+    $result.text("{{.StatusTextDone}}");
+  });
+  req.fail(function (jqXHR, textStatus, errorThrown){
+    $result.text("{{.StatusTextError}}");
+  });
+  req.always(function () {
+    $inputs.prop("disabled", false);
+  });
+  event.preventDefault();
+});
+</script>
