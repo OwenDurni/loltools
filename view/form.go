@@ -33,10 +33,7 @@ func (ctx *FormCtx) Init() {
   ctx.FormHTML = template.HTML("")
 }
 
-func RenderForm(ctx *FormCtx) (out []byte) {
-  out, err := ParseTemplate("template/form.html", ctx)
-  if err != nil {
-    print(err.Error())
-  }
-  return out
+func RenderForm(ctx *FormCtx) (out []byte, err error) {
+  out, err = ParseTemplate("template/form.html", ctx)
+  return
 }

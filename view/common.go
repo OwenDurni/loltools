@@ -5,6 +5,16 @@ import (
   "html/template"
 )
 
+type CommonCtx struct {
+  Title string
+  ContentHTML template.HTML
+}
+
+func (ctx *CommonCtx) Init() {
+  ctx.Title = ""
+  ctx.ContentHTML = template.HTML("")
+}
+
 func ParseTemplate(file string, data interface{}) (out []byte, error error) {
   var buf bytes.Buffer
   t, err := template.ParseFiles(file)

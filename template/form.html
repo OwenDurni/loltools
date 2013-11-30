@@ -1,4 +1,4 @@
-<form id="{{.FormId}">
+<form id="{{.FormId}}">
   {{.FormHTML}}
   <input id="submit" type="submit" value="{{.SubmitText}}" /><span id="result"></span>
 </form>
@@ -26,7 +26,7 @@ $("#{{.FormId}}").submit(function(event){
     $result.text("{{.StatusTextDone}}");
   });
   req.fail(function (jqXHR, textStatus, errorThrown){
-    $result.text("{{.StatusTextError}}");
+    $result.text("{{.StatusTextFail}}");
   });
   req.always(function () {
     $inputs.prop("disabled", false);

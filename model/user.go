@@ -1,7 +1,7 @@
 package model
 
 type User struct {
-  DisplayName string
+  Name string
   SummonerName string
   Email string
 }
