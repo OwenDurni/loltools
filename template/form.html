@@ -13,13 +13,15 @@ $("#{{.FormId}}").submit(function(event){
   var $inputs = $form.find("input, select, button, textarea");
   var $result = $form.find("#result");
 
+  var data = $form.serialize()
+
   $inputs.prop("disabled", true);
   $result.text("{{.StatusTextActive}}");
 
   req = $.ajax({
     url: "{{.SubmitUrl}}",
     type: "post",
-    data: $form.serialize()
+    data: data
   });
 
   req.done(function (response, textStatus, jqXHR){

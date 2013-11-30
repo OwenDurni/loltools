@@ -8,11 +8,17 @@ import (
 )
 
 func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
-  appengineCtx := appengine.NewContext(r)
-  user := model.User{} 
+  c := appengine.NewContext(r)
+
+  user, err := model.GetUser(c)
+  if err != nil {
+    c.Errorf(err.Error())
+    return
+  }
+
   formContents, err := ParseTemplate("template/profile/edit.html", user)
   if err != nil {
-    appengineCtx.Errorf(err.Error())
+    c.Errorf(err.Error())
     return
   }
 
@@ -23,7 +29,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   formCtx.FormHTML = template.HTML(formContents)
   formHtml, err := RenderForm(formCtx);
   if err != nil {
-    appengineCtx.Errorf(err.Error())
+    c.Errorf(err.Error())
     return
   }
   
@@ -33,7 +39,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   pageCtx.ContentHTML = template.HTML(formHtml)
   pageHtml, err := ParseTemplate("template/common.html", pageCtx)
   if err != nil {
-    appengineCtx.Errorf(err.Error())
+    c.Errorf(err.Error())
     return
   }
 
