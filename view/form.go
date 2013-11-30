@@ -4,7 +4,7 @@ import (
   "html/template"
 )
 
-type FormCtx struct {
+type formCtx struct {
   // HTML id attribute for the form element.
   FormId string
   // Text for the button that submits the form.
@@ -23,7 +23,7 @@ type FormCtx struct {
 }
 
 // Initializes a FormCtx with reasonable default values.
-func (ctx *FormCtx) Init() {
+func (ctx *formCtx) init() {
   ctx.FormId = ""
   ctx.SubmitText = "Save"
   ctx.SubmitUrl = "#"
@@ -33,7 +33,7 @@ func (ctx *FormCtx) Init() {
   ctx.FormHTML = template.HTML("")
 }
 
-func RenderForm(ctx *FormCtx) (out []byte, err error) {
-  out, err = ParseTemplate("template/form.html", ctx)
+func renderForm(ctx *formCtx) (out []byte, err error) {
+  out, err = parseTemplate("template/form.html", ctx)
   return
 }

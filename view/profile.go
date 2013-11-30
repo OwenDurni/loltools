@@ -12,40 +12,52 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
 
   user, err := model.GetUser(c)
   if err != nil {
-    c.Errorf(err.Error())
+    httpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
-  formContents, err := ParseTemplate("template/profile/edit.html", user)
+  formContents, err := parseTemplate("template/profile/edit.html", user)
   if err != nil {
-    c.Errorf(err.Error())
+    httpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
-  formCtx := new(FormCtx)
-  formCtx.Init()
+  formCtx := new(formCtx)
+  formCtx.init()
   formCtx.FormId = "edit-profile"
   formCtx.SubmitUrl = "/profile/update"
   formCtx.FormHTML = template.HTML(formContents)
-  formHtml, err := RenderForm(formCtx);
+  formHtml, err := renderForm(formCtx);
   if err != nil {
-    c.Errorf(err.Error())
+    httpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
   
-  pageCtx := new(CommonCtx)
-  pageCtx.Init()
+  pageCtx := new(commonCtx)
+  pageCtx.init()
   pageCtx.Title = "Edit Profile"
   pageCtx.ContentHTML = template.HTML(formHtml)
-  pageHtml, err := ParseTemplate("template/common.html", pageCtx)
+  pageHtml, err := parseTemplate("template/common.html", pageCtx)
   if err != nil {
-    c.Errorf(err.Error())
+    httpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
   w.Write(pageHtml)
 }
 
-func ProfileViewHandler(w http.ResponseWriter, r *http.Request) {
-
+func ProfileUpdateHandler(w http.ResponseWriter, r *http.Request) {
+  c := appengine.NewContext(r)
+  user, err := model.GetUser(c)
+  if err != nil {
+    httpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  user.Name = r.FormValue("name")
+  user.SummonerName = r.FormValue("summoner")
+  if err := user.Save(c); err != nil {
+    httpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  httpReplyOkEmpty(w)
 }

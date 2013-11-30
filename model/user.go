@@ -4,6 +4,7 @@ import (
   "appengine"
   "appengine/datastore"
   "appengine/user"
+  "errors"
 )
 
 const DATASTORE_KIND_USER = "User"
@@ -30,4 +31,11 @@ func GetUser(c appengine.Context) (*User, error) {
     return nil, err
   }
   return user, nil
+}
+
+func (user *User) Save(c appengine.Context) error {
+  if user == nil { return errors.New("nil user") }
+  key := datastore.NewKey(c, DATASTORE_KIND_USER, user.Email, 0, nil)
+  _, err := datastore.Put(c, key, user)
+  return err
 }
