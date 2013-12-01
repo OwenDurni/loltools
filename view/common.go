@@ -6,7 +6,7 @@ import (
 )
 
 type commonCtx struct {
-  Title string
+  Title       string
   ContentHTML template.HTML
 }
 

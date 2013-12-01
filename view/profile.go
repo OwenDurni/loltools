@@ -27,12 +27,12 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   formCtx.FormId = "edit-profile"
   formCtx.SubmitUrl = "/profile/update"
   formCtx.FormHTML = template.HTML(formContents)
-  formHtml, err := renderForm(formCtx);
+  formHtml, err := renderForm(formCtx)
   if err != nil {
     httpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   pageCtx := new(commonCtx)
   pageCtx.init()
   pageCtx.Title = "Edit Profile"

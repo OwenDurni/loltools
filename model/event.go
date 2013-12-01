@@ -5,21 +5,21 @@ import (
   "time"
 )
 
-const DATASTORE_KIND_EVENT = "Event"
-
 type Event struct {
-  Name string
+  Name      string
   StartTime time.Time
-  EndTime time.Time
+  EndTime   time.Time
 }
 
-const DATASTORE_KIND_EVENT_RSVP = "EventRsvp"
-
-type EventRsvp struct {
+type EventGroupMembership struct {
   EventKey *datastore.Key
-  UserKey *datastore.Key
-  Responded bool
+  GroupKey *datastore.Key
+}
+
+type EventUserRsvp struct {
+  EventKey          *datastore.Key
+  UserKey           *datastore.Key
   AttendencePercent int
-  StartTime time.Time
-  EndTime time.Time
+  StartTime         time.Time
+  EndTime           time.Time
 }

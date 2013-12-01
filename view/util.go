@@ -11,10 +11,10 @@ func httpReplyOkEmpty(w http.ResponseWriter) {
 
 // See http://golang.org/pkg/net/http/#Constants for status codes.
 func httpReplyError(
-    w http.ResponseWriter,
-    r *http.Request,
-    httpStatusCode int,
-    err error) {
+  w http.ResponseWriter,
+  r *http.Request,
+  httpStatusCode int,
+  err error) {
   c := appengine.NewContext(r)
 
   errorString := ""

@@ -1,18 +1,24 @@
 package model
 
 import (
+  "appengine"
   "appengine/datastore"
 )
-
-const DATASTORE_GROUP_KIND = "Group"
 
 type Group struct {
   Name string
 }
 
-const DATASTORE_GROUP_MEMBERSHIP_KIND = "GroupMembership"
-
 type GroupMembership struct {
   GroupKey *datastore.Key
-  UserKey *datastore.Key
+  UserKey  *datastore.Key
+}
+
+func GetGroupKeysForUser(c appengine.Context, userKey *datastore.Key) ([]*datastore.Key, error) {
+  q := datastore.NewQuery("GroupMembership").
+    Filter("UserKey =", userKey).
+    KeysOnly()
+  var out []*datastore.Key
+  _, err := q.GetAll(c, &out)
+  return out, err
 }
