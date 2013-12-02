@@ -3,7 +3,21 @@ package view
 import (
   "appengine"
   "net/http"
+  "time"
 )
+
+const TIME_FORMAT = "2006-01-02 03:04PM (MST)"
+
+// loc is the IANA Time Zone location (ex: "America/New_York")
+// If the string is malformed the time is returned in UTC.
+func fmtTime(t time.Time, loc string) string {
+  if location, err := time.LoadLocation(loc); err != nil {
+    t = t.UTC()
+  } else {
+    t = t.In(location)
+  }
+  return t.Format(TIME_FORMAT)
+}
 
 func httpReplyOkEmpty(w http.ResponseWriter) {
   w.WriteHeader(http.StatusNoContent)

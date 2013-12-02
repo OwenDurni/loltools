@@ -14,11 +14,13 @@ type GroupMembership struct {
   UserKey  *datastore.Key
 }
 
-func GetGroupKeysForUser(c appengine.Context, userKey *datastore.Key) ([]*datastore.Key, error) {
+func GetGroupKeysForUser(
+  c appengine.Context,
+  userKey *datastore.Key,
+  out *[]*datastore.Key) (err error) {
   q := datastore.NewQuery("GroupMembership").
     Filter("UserKey =", userKey).
     KeysOnly()
-  var out []*datastore.Key
-  _, err := q.GetAll(c, &out)
-  return out, err
+  _, err = q.GetAll(c, out)
+  return
 }

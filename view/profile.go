@@ -10,7 +10,7 @@ import (
 func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   c := appengine.NewContext(r)
 
-  user, err := model.GetUser(c)
+  user, _, err := model.GetUser(c)
   if err != nil {
     httpReplyError(w, r, http.StatusInternalServerError, err)
     return
@@ -48,7 +48,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
 
 func ProfileUpdateHandler(w http.ResponseWriter, r *http.Request) {
   c := appengine.NewContext(r)
-  user, err := model.GetUser(c)
+  user, _, err := model.GetUser(c)
   if err != nil {
     httpReplyError(w, r, http.StatusInternalServerError, err)
     return
