@@ -1,6 +1,8 @@
 package view
 
 import (
+  "appengine"
+  "appengine/user"
   "bytes"
   "html/template"
   "time"
@@ -10,12 +12,16 @@ type commonCtx struct {
   Title       string
   TimeNow     string
   ContentHTML template.HTML
+  User        string
 }
 
-func (ctx *commonCtx) init() *commonCtx {
+func (ctx *commonCtx) init(c appengine.Context) *commonCtx {
   ctx.Title = ""
   ctx.TimeNow = fmtTime(time.Now(), "America/Los_Angeles")
   ctx.ContentHTML = template.HTML("")
+  if u := user.Current(c); u != nil {
+    ctx.User = u.Email
+  }
   return ctx
 }
 

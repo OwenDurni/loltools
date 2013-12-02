@@ -33,8 +33,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  pageCtx := new(commonCtx)
-  pageCtx.init()
+  pageCtx := new(commonCtx).init(c)
   pageCtx.Title = "Edit Profile"
   pageCtx.ContentHTML = template.HTML(formHtml)
   pageHtml, err := parseTemplate("template/common.html", pageCtx)
