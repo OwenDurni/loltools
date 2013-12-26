@@ -15,7 +15,8 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-  http.HandleFunc("/", debugHandler)
+  http.HandleFunc("/", view.HomeHandler)
+  http.HandleFunc("/home", view.HomeHandler)
   http.HandleFunc("/profile/edit", view.ProfileEditHandler)
   http.HandleFunc("/profile/update", view.ProfileUpdateHandler)
 }
