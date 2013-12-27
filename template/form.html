@@ -25,7 +25,14 @@ $("#{{.FormId}}").submit(function(event){
   });
 
   req.done(function (response, textStatus, jqXHR){
-    $result.text("{{.StatusTextDone}}");
+    if (jqXHR.status == 201) {
+      var loc = jqXHR.getResponseHeader("Location");
+      if (loc) {
+        // Redirect to created resource.
+        window.location.href = loc;
+      }
+    }
+    $result.text(jqXHR.status + ": {{.StatusTextDone}}");
   });
   req.fail(function (jqXHR, textStatus, errorThrown){
     $result.text("{{.StatusTextFail}}: " + errorThrown + ": " + jqXHR.responseText);

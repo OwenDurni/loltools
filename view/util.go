@@ -23,7 +23,12 @@ func HttpReplyOkEmpty(w http.ResponseWriter) {
   w.WriteHeader(http.StatusNoContent)
 }
 
-// See http://golang.org/pkg/net/http/#Constants for status codes.
+func HttpReplyResourceCreated(w http.ResponseWriter, loc string) {
+  w.Header().Add("Location", loc)
+  w.WriteHeader(http.StatusCreated)
+}
+
+// See http://golang.org/pkg/net/http/#pkg-constants for status codes.
 func HttpReplyError(
   w http.ResponseWriter,
   r *http.Request,

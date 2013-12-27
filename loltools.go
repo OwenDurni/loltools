@@ -28,5 +28,5 @@ func init() {
   http.HandleFunc("/league/create", view.LeagueCreateHandler)
 
   http.HandleFunc("/api/profile/set", view.ProfileSetHandler)
-  http.HandleFunc("/api/league/create", apiNotImplemented)
+  http.HandleFunc("/api/league/create", view.ApiLeagueCreateHandler)
 }

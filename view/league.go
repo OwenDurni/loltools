@@ -43,3 +43,13 @@ func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
 
   w.Write(pageHtml)
 }
+
+func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
+  c := appengine.NewContext(r)
+  _, leagueKey, err := model.CreateLeague(c, r.FormValue("name"))
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  HttpReplyResourceCreated(w, model.LeagueUri(leagueKey))
+}
