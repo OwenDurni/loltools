@@ -19,12 +19,12 @@ func fmtTime(t time.Time, loc string) string {
   return t.Format(TIME_FORMAT)
 }
 
-func httpReplyOkEmpty(w http.ResponseWriter) {
+func HttpReplyOkEmpty(w http.ResponseWriter) {
   w.WriteHeader(http.StatusNoContent)
 }
 
 // See http://golang.org/pkg/net/http/#Constants for status codes.
-func httpReplyError(
+func HttpReplyError(
   w http.ResponseWriter,
   r *http.Request,
   httpStatusCode int,

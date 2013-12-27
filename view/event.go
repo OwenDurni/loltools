@@ -29,14 +29,14 @@ func EventList(w http.ResponseWriter, r *http.Request) {
   // Get current user.
   _, userKey, err := model.GetUser(c)
   if err != nil {
-    httpReplyError(w, r, http.StatusInternalServerError, err)
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
   // Get all keys for groups this user is a member of.
   var groupKeys []*datastore.Key
   if err := model.GetGroupKeysForUser(c, userKey, &groupKeys); err != nil {
-    httpReplyError(w, r, http.StatusInternalServerError, err)
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
@@ -44,7 +44,7 @@ func EventList(w http.ResponseWriter, r *http.Request) {
   eventList := new(model.EventList).Init()
   for _, groupKey := range groupKeys {
     if err := eventList.AppendFutureEventsForGroup(c, groupKey); err != nil {
-      httpReplyError(w, r, http.StatusInternalServerError, err)
+      HttpReplyError(w, r, http.StatusInternalServerError, err)
       return
     }
   }

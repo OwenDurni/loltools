@@ -12,13 +12,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
   _, _, err := model.GetUser(c)
   if err != nil {
-    httpReplyError(w, r, http.StatusInternalServerError, err)
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
   homeHtml, err := parseTemplate("template/home.html", nil)
   if err != nil {
-    httpReplyError(w, r, http.StatusInternalServerError, err)
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
@@ -27,7 +27,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
   pageCtx.ContentHTML = template.HTML(homeHtml)
   pageHtml, err := parseTemplate("template/common.html", pageCtx)
   if err != nil {
-    httpReplyError(w, r, http.StatusInternalServerError, err)
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 

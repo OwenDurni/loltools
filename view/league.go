@@ -7,25 +7,24 @@ import (
   "net/http"
 )
 
-func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
+func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
   c := appengine.NewContext(r)
 
-  user, _, err := model.GetUser(c)
+  _, _, err := model.GetUser(c)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
-  formContents, err := parseTemplate("template/profile/edit.html", user)
+  formContents, err := parseTemplate("template/league/create.html", nil)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
 
-  formCtx := new(formCtx)
-  formCtx.init()
-  formCtx.FormId = "edit-profile"
-  formCtx.SubmitUrl = "/api/profile/set"
+  formCtx := new(formCtx).init()
+  formCtx.FormId = "league-create"
+  formCtx.SubmitUrl = "/api/league/create"
   formCtx.FormHTML = template.HTML(formContents)
   formHtml, err := renderForm(formCtx)
   if err != nil {
@@ -34,7 +33,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   pageCtx := new(commonCtx).init(c)
-  pageCtx.Title = "Edit Profile"
+  pageCtx.Title = "Create League"
   pageCtx.ContentHTML = template.HTML(formHtml)
   pageHtml, err := parseTemplate("template/common.html", pageCtx)
   if err != nil {
@@ -43,20 +42,4 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   w.Write(pageHtml)
-}
-
-func ProfileSetHandler(w http.ResponseWriter, r *http.Request) {
-  c := appengine.NewContext(r)
-  user, _, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-  user.Name = r.FormValue("name")
-  user.SummonerName = r.FormValue("summoner")
-  if err := user.Save(c); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-  HttpReplyOkEmpty(w)
 }

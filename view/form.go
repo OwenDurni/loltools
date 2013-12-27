@@ -23,14 +23,15 @@ type formCtx struct {
 }
 
 // Initializes a FormCtx with reasonable default values.
-func (ctx *formCtx) init() {
+func (ctx *formCtx) init() *formCtx {
   ctx.FormId = ""
   ctx.SubmitText = "Save"
   ctx.SubmitUrl = "#"
   ctx.StatusTextActive = "Saving..."
   ctx.StatusTextDone = "Saved"
-  ctx.StatusTextFail = "Error saving: "
+  ctx.StatusTextFail = "Error saving"
   ctx.FormHTML = template.HTML("")
+  return ctx
 }
 
 func renderForm(ctx *formCtx) (out []byte, err error) {

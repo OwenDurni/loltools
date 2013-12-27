@@ -28,7 +28,7 @@ $("#{{.FormId}}").submit(function(event){
     $result.text("{{.StatusTextDone}}");
   });
   req.fail(function (jqXHR, textStatus, errorThrown){
-    $result.text("{{.StatusTextFail}}");
+    $result.text("{{.StatusTextFail}}: " + errorThrown + ": " + jqXHR.responseText);
   });
   req.always(function () {
     $inputs.prop("disabled", false);
