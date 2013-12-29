@@ -19,16 +19,16 @@ var paths = []string{
 func myHandler1(r http.Request, w http.ResponseWriter, args map[string]string) {}
 
 func printMatchingPaths(dispatcher *Dispatcher) {
-  for _, path := range(paths) {
+  for _, path := range paths {
     handler, args, err := dispatcher.Select(path)
-    if (handler != nil) {
-      if (len(args) == 0) {
+    if handler != nil {
+      if len(args) == 0 {
         fmt.Println(path)
       } else {
         fmt.Println(path, args)
       }
     }
-    if (err != nil) {
+    if err != nil {
       fmt.Println("Error: %v", err)
     }
   }

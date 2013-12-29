@@ -24,7 +24,7 @@ type Player struct {
 }
 
 type TeamMembership struct {
-  TeamKey *datastore.Key
+  TeamKey   *datastore.Key
   PlayerKey *datastore.Key
 }
 
@@ -40,7 +40,7 @@ type Match struct {
 }
 
 type MatchResults struct {
-  MatchKey *datastore.Key
+  MatchKey       *datastore.Key
   GameResultsKey *datastore.Key
 }
 

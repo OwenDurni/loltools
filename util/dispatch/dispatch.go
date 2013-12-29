@@ -14,14 +14,15 @@ type Dispatcher struct {
 }
 
 type dispatchNode struct {
-  LiteralNexts map[string]*dispatchNode
+  LiteralNexts  map[string]*dispatchNode
   ArgumentNexts map[string]*dispatchNode
-  StarNext *dispatchNode
+  StarNext      *dispatchNode
 
   // The handler and pattern for this node if one exists.
   Handler Handler
   Pattern string
 }
+
 func (n *dispatchNode) init() *dispatchNode {
   n.LiteralNexts = make(map[string]*dispatchNode)
   n.ArgumentNexts = make(map[string]*dispatchNode)
@@ -38,7 +39,7 @@ func (n *dispatchNode) init() *dispatchNode {
 //   PATTERN   : /foo
 //   MATCHES   : /foo, /foo?arg=1
 //   MISMATCHES: /foobar, /foo/bar
-// 
+//
 //   PATTERN   : /foo/bar
 //   MATCHES   : /foo/bar, /foo/bar?arg=1
 //   MISMATCHES: /foobar, /foo/bar/baz
@@ -59,7 +60,7 @@ func (n *dispatchNode) init() *dispatchNode {
 //   MATCHES   : /foo/1/2 (a:1,b:2)
 //   MISMATCHES: /foo, /foo/1, /foo/1/2/3
 func (dispatcher *Dispatcher) Add(pattern string, handler Handler) error {
-  if (dispatcher.root == nil) {
+  if dispatcher.root == nil {
     // Ensure root node is initialized.
     dispatcher.root = new(dispatchNode).init()
   }
@@ -72,7 +73,7 @@ func (dispatcher *Dispatcher) Add(pattern string, handler Handler) error {
   // Split pattern into parts
   patternParts := strings.Split(pattern, "/")
   var node *dispatchNode = nil
-  for i, patternPart := range(patternParts) {
+  for i, patternPart := range patternParts {
     switch {
     case i == 0:
       node = dispatcher.root
@@ -82,12 +83,12 @@ func (dispatcher *Dispatcher) Add(pattern string, handler Handler) error {
         break
       } else {
         return errors.New(fmt.Sprintf(
-            "pattern cannot have two consecutive '/': %v", pattern))
+          "pattern cannot have two consecutive '/': %v", pattern))
       }
     case patternPart == "*":
       if i != len(patternParts)-1 {
         return errors.New(fmt.Sprintf(
-            "pattern containing '*' must end with '*': %v", pattern))
+          "pattern containing '*' must end with '*': %v", pattern))
       }
       if node.StarNext == nil {
         node.StarNext = new(dispatchNode).init()
@@ -96,11 +97,11 @@ func (dispatcher *Dispatcher) Add(pattern string, handler Handler) error {
     case strings.HasPrefix(patternPart, "<"):
       if !strings.HasSuffix(patternPart, ">") {
         return errors.New(fmt.Sprintf(
-            "pattern has unterminated '<' bracket: %v", pattern))
+          "pattern has unterminated '<' bracket: %v", pattern))
       } else {
         // TODO: This implementation allows conflicting patterns if the argument
         // name differs. Ex: Only one of '/<a>' and '/<b>' will be selected.
-        argument := patternPart[1:len(patternPart)-1]
+        argument := patternPart[1 : len(patternPart)-1]
         nextNode, exists := node.ArgumentNexts[argument]
         if !exists {
           nextNode = new(dispatchNode).init()
@@ -118,28 +119,27 @@ func (dispatcher *Dispatcher) Add(pattern string, handler Handler) error {
       node = nextNode
     }
   }
-  
+
   // If we got here then the pattern was valid and fully consumed.
-  if (node.Handler != nil) {
+  if node.Handler != nil {
     return errors.New(fmt.Sprintf(
-        "pattern conflicts with existing pattern '%v': %v",
-        node.Pattern, pattern))
+      "pattern conflicts with existing pattern '%v': %v",
+      node.Pattern, pattern))
   }
   node.Handler = handler
   node.Pattern = pattern
   return nil
 }
 
-
 func recSelect(
-    pathIndex int,
-    pathParts []string,
-    node *dispatchNode,
-    argAccum *map[string]string) Handler {
+  pathIndex int,
+  pathParts []string,
+  node *dispatchNode,
+  argAccum *map[string]string) Handler {
   // We do a DFS to match the most specific patterns first.
 
   // Base case: consumed the entire path, if there is a match return it.
-  if (pathIndex == len(pathParts)) {
+  if pathIndex == len(pathParts) {
     return node.Handler
   }
 
@@ -147,7 +147,7 @@ func recSelect(
 
   // Base case: consumed the entire path, path has a trailing '/'. If there is
   // a match return it.
-  if (pathIndex == len(pathParts)-1 && part == "") {
+  if pathIndex == len(pathParts)-1 && part == "" {
     return node.Handler
   }
 
@@ -163,7 +163,7 @@ func recSelect(
 
   // Recursive case: check for argument segment matches. Only return if there is
   // a match. Otherwise check next recursive case.
-  for arg, nextNode := range(node.ArgumentNexts) {
+  for arg, nextNode := range node.ArgumentNexts {
     handler := recSelect(pathIndex+1, pathParts, nextNode, argAccum)
     if handler != nil {
       (*argAccum)[arg] = part
@@ -181,14 +181,14 @@ func recSelect(
 }
 
 func (dispatcher *Dispatcher) Select(
-    path string) (handler Handler, args map[string]string, err error) {
+  path string) (handler Handler, args map[string]string, err error) {
   handler, args, err = nil, make(map[string]string), nil
 
   // strip ?... and #...
   path = strings.Split(path, "?")[0]
   path = strings.Split(path, "#")[0]
 
-  if (!strings.HasPrefix(path, "/")) {
+  if !strings.HasPrefix(path, "/") {
     err = errors.New(fmt.Sprintf("input path is not absolute: %v", path))
     return
   }
