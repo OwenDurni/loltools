@@ -26,7 +26,9 @@ func init() {
   http.HandleFunc("/home", view.HomeHandler)
   http.HandleFunc("/profile/edit", view.ProfileEditHandler)
   http.HandleFunc("/league/create", view.LeagueCreateHandler)
+  http.HandleFunc("/leagues", view.LeaguesHandler)
 
-  http.HandleFunc("/api/profile/set", view.ProfileSetHandler)
+  // Form submission targets
+  http.HandleFunc("/api/profile/update", view.ProfileSetHandler)
   http.HandleFunc("/api/league/create", view.ApiLeagueCreateHandler)
 }
