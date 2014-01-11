@@ -50,14 +50,14 @@ func init() {
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
-  dispatcher.Add("/leagues/create", view.LeagueCreateHandler)
-  dispatcher.Add("/leagues/<leagueKey>", debugHandler)
+  dispatcher.Add("/leagues/<encodedLeagueId>", view.LeagueViewHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)
 
   view.AddTemplate("home.html", "base.html")
   view.AddTemplate("leagues/create.html", "form.html", "base.html")
-  view.AddTemplate("leagues/index.html", "base.html")
+  view.AddTemplate("leagues/index.html", "form.html", "base.html")
+  view.AddTemplate("leagues/view.html", "form.html", "base.html")
   view.AddTemplate("profiles/edit.html", "form.html", "base.html")
 }

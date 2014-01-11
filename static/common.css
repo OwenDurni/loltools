@@ -15,6 +15,11 @@ body {
   float: right;
 }
 
+#footer {
+  margin-top: 6em;
+  font-size: small;
+}
+
 ul.nav {
   list-style-type: none;
   display: inline;

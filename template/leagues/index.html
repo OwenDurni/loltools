@@ -4,4 +4,14 @@
 <ul>{{range .MyLeagues}}
   <li><a href="{{.Uri}}">{{.Name}}</a> ({{.Owner}})</li>
 {{end}}</ul>
+
+<h2>Create New League</h2>
+<form id="league-create">
+  <ul>
+    <li>Name: <input type="text" name="name" value="" /></li>
+  </ul>
+{{with $x := form "league-create" "/api/leagues/create" "Create"}}
+{{template "formEnd" $x}}
+{{end}}
+
 {{end}}

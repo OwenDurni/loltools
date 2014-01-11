@@ -13,7 +13,7 @@ type League struct {
   Id string
   Uri string
 }
-func (l *League) Fill(m model.League, k *datastore.Key) *League {
+func (l *League) Fill(m *model.League, k *datastore.Key) *League {
   l.Name = m.Name
   l.Id = model.EncodeGlobalKeyShort(k)
   l.Uri = model.LeagueUri(k)
@@ -45,7 +45,7 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   
   ctx.MyLeagues = make([]*League, len(leagueInfos))
   for i, info := range leagueInfos {
-    league := new(League).Fill(info.League, info.LeagueKey)
+    league := new(League).Fill(&info.League, info.LeagueKey)
     if owner, err := model.GetUserByKey(c, info.League.Owner); err == nil {
       league.Owner = owner.Email
     } else {
@@ -61,22 +61,33 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   }
 }
 
-func LeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
+  leagueId := args["encodedLeagueId"]
 
-  _, _, err := model.GetUser(c)
+  _, userKey, err := model.GetUser(c)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-
+  
+  league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  // Populate view context.
   ctx := struct {
     ctxBase
+    League
   }{}
   ctx.ctxBase.init(c)
-  ctx.ctxBase.Title = "Create League"
-
-  if err := RenderTemplate(w, "leagues/create.html", "base", ctx); err != nil {
+  ctx.ctxBase.Title = "loltools - Leagues"
+  ctx.League.Fill(league, leagueKey)
+  
+  // Render
+  if err := RenderTemplate(w, "leagues/view.html", "base", ctx); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }

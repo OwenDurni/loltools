@@ -3,6 +3,7 @@ package model
 import (
   "appengine"
   "appengine/datastore"
+  "errors"
   "fmt"
 )
 
@@ -95,4 +96,26 @@ func LeaguesForUser(
     result[i] = info
   }
   return
+}
+
+func LeagueById(
+    c appengine.Context,
+    userKey *datastore.Key,
+    leagueId string) (*League, *datastore.Key, error) {
+  if userKey == nil {
+    return nil, nil, errors.New("LeagueById(): nil userKey")
+  }
+  
+  leagueKey, err := DecodeGlobalKeyShort(c, "League", leagueId)
+  if err != nil {
+    return nil, nil, err
+  }
+  
+  league := new(League)
+  if err := datastore.Get(c, leagueKey, league); err != nil {
+    return nil, leagueKey, err
+  }
+  
+  // TODO(durni): Check viewing permissions
+  return league, leagueKey, nil
 }
