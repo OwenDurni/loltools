@@ -45,6 +45,8 @@ func init() {
   dispatcher = new(dispatch.Dispatcher)
 
   dispatcher.Add("/", view.HomeHandler)
+  dispatcher.Add("/admin", view.AdminIndexHandler)
+  dispatcher.Add("/api/admin/riotapikey/set", view.ApiAdminRiotKeySetHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/debug", debugHandler)
@@ -55,6 +57,7 @@ func init() {
 
   http.HandleFunc("/", dispatcher.RootHandler)
 
+  view.AddTemplate("admin.html", "form.html", "base.html")
   view.AddTemplate("home.html", "base.html")
   view.AddTemplate("leagues/create.html", "form.html", "base.html")
   view.AddTemplate("leagues/index.html", "form.html", "base.html")
