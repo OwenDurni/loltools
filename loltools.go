@@ -10,10 +10,19 @@ import (
   "net/http"
 )
 
-func debugHandler(w http.ResponseWriter, r *http.Request) {
+func debugHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   appengineCtx := appengine.NewContext(r)
   user := user.Current(appengineCtx)
-  fmt.Println(w, "User: ", user)
+  fmt.Fprintf(w, "<html>\n")
+  fmt.Fprintf(w, "<body>\n")
+  fmt.Fprintf(w, "<h3>Debug Info</h3>\n")
+  fmt.Fprintf(w, "<pre>\n")
+  fmt.Fprintf(w, "User: %v\n", user)
+  fmt.Fprintf(w, "Dispatch Args: %v\n", args)
+  fmt.Fprintf(w, "Request: %+v\n", *r)
+  fmt.Fprintf(w, "</pre>\n")
+  fmt.Fprintf(w, "</body>\n")
+  fmt.Fprintf(w, "</html>\n")
 }
 
 func apiNotImplemented(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +41,7 @@ func init() {
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/home", view.HomeHandler)
   dispatcher.Add("/leagues/create", view.LeagueCreateHandler)
-  //dispatcher.Add("/leagues", view.LeaguesHandler)
+  dispatcher.Add("/leagues/<leagueKey>", debugHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)

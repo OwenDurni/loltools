@@ -208,7 +208,7 @@ func (dispatcher *Dispatcher) RootHandler(w http.ResponseWriter, r *http.Request
     return
   }
   if handler == nil {
-    http.Error(w, fmt.Sprintf("Could not find %v", path), http.StatusNotFound)
+    http.Error(w, fmt.Sprintf("HTTP 404 Not Found: %v", path), http.StatusNotFound)
     return
   }
   handler(w, r, args)

@@ -63,5 +63,5 @@ func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, er
 }
 
 func LeagueUri(leagueKey *datastore.Key) string {
-  return fmt.Sprintf("/league/%v", leagueKey.Encode())
+  return fmt.Sprintf("/leagues/%v", leagueKey.Encode())
 }
