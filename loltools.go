@@ -6,6 +6,7 @@ import (
   "errors"
   "fmt"
   "github.com/OwenDurni/loltools/view"
+  "github.com/OwenDurni/loltools/util/dispatch"
   "net/http"
 )
 
@@ -21,14 +22,18 @@ func apiNotImplemented(w http.ResponseWriter, r *http.Request) {
   return
 }
 
-func init() {
-  http.HandleFunc("/", view.HomeHandler)
-  http.HandleFunc("/home", view.HomeHandler)
-  http.HandleFunc("/profile/edit", view.ProfileEditHandler)
-  http.HandleFunc("/league/create", view.LeagueCreateHandler)
-  http.HandleFunc("/leagues", view.LeaguesHandler)
+var dispatcher *dispatch.Dispatcher
 
-  // Form submission targets
-  http.HandleFunc("/api/profile/update", view.ProfileSetHandler)
-  http.HandleFunc("/api/league/create", view.ApiLeagueCreateHandler)
+func init() {
+  dispatcher = new(dispatch.Dispatcher)
+  
+  dispatcher.Add("/", view.HomeHandler)
+  dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
+  dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
+  dispatcher.Add("/home", view.HomeHandler)
+  dispatcher.Add("/leagues/create", view.LeagueCreateHandler)
+  //dispatcher.Add("/leagues", view.LeaguesHandler)
+  dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
+
+  http.HandleFunc("/", dispatcher.RootHandler)
 }

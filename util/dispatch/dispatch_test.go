@@ -16,7 +16,7 @@ var paths = []string{
   "/foo#arg=1",
 }
 
-func myHandler1(r http.Request, w http.ResponseWriter, args map[string]string) {}
+func myHandler1(w http.ResponseWriter, r *http.Request, args map[string]string) {}
 
 func printMatchingPaths(dispatcher *Dispatcher) {
   for _, path := range paths {

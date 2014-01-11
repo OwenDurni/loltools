@@ -7,7 +7,7 @@ import (
   "strings"
 )
 
-type Handler func(http.Request, http.ResponseWriter, map[string]string)
+type Handler func(http.ResponseWriter, *http.Request, map[string]string)
 
 type Dispatcher struct {
   root *dispatchNode
@@ -200,6 +200,16 @@ func (dispatcher *Dispatcher) Select(
 
 // Use http.HandleFunc("/", dispatcher.RootHandler) to use this dispatcher for
 // dispatch in an application.
-func (dispatcher *Dispatcher) RootHandler(r http.Request, w http.ResponseWriter) {
-
+func (dispatcher *Dispatcher) RootHandler(w http.ResponseWriter, r *http.Request) {
+  path := r.URL.Path
+  handler, args, err := dispatcher.Select(path)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  if handler == nil {
+    http.Error(w, fmt.Sprintf("Could not find %v", path), http.StatusNotFound)
+    return
+  }
+  handler(w, r, args)
 }

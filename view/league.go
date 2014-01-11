@@ -7,7 +7,7 @@ import (
   "net/http"
 )
 
-func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
+func LeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
 
   _, _, err := model.GetUser(c)
@@ -16,7 +16,7 @@ func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  formContents, err := parseTemplate("template/league/create.html", nil)
+  formContents, err := parseTemplate("template/leagues/create.html", nil)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
@@ -24,7 +24,7 @@ func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
 
   formCtx := new(formCtx).init()
   formCtx.FormId = "league-create"
-  formCtx.SubmitUrl = "/api/league/create"
+  formCtx.SubmitUrl = "/api/leagues/create"
   formCtx.FormHTML = template.HTML(formContents)
   formHtml, err := renderForm(formCtx)
   if err != nil {
@@ -44,7 +44,7 @@ func LeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
   w.Write(pageHtml)
 }
 
-func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request) {
+func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, leagueKey, err := model.CreateLeague(c, r.FormValue("name"))
   if err != nil {

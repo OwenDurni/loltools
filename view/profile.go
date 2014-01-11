@@ -7,7 +7,7 @@ import (
   "net/http"
 )
 
-func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
+func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
 
   user, _, err := model.GetUser(c)
@@ -16,7 +16,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  formContents, err := parseTemplate("template/profile/edit.html", user)
+  formContents, err := parseTemplate("template/profiles/edit.html", user)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
@@ -25,7 +25,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   formCtx := new(formCtx)
   formCtx.init()
   formCtx.FormId = "edit-profile"
-  formCtx.SubmitUrl = "/api/profile/set"
+  formCtx.SubmitUrl = "/api/profiles/set"
   formCtx.FormHTML = template.HTML(formContents)
   formHtml, err := renderForm(formCtx)
   if err != nil {
@@ -45,7 +45,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request) {
   w.Write(pageHtml)
 }
 
-func ProfileSetHandler(w http.ResponseWriter, r *http.Request) {
+func ProfileSetHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   user, _, err := model.GetUser(c)
   if err != nil {

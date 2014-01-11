@@ -2,19 +2,12 @@ package view
 
 import (
   "appengine"
-  "github.com/OwenDurni/loltools/model"
   "html/template"
   "net/http"
 )
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
+func HomeHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
-
-  _, _, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
 
   homeHtml, err := parseTemplate("template/home.html", nil)
   if err != nil {
