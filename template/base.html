@@ -1,8 +1,10 @@
-<html>
+{{/* base.go: ctxBase */}}
+{{define "base"}}<html>
 <head>
-  <title>{{.Title}}</title>
+  <title>{{.ctxBase.Title}}</title>
   <link rel="stylesheet" type="text/css" href="/static/common.css">
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script src="/static/common.js"></script>
 </head>
 <body>
 <div id="header">
@@ -12,14 +14,14 @@
     <li><a href="/profile">Profile</a></li>
   </ul>
   <ul class="nav right">
-    <li>{{.User}}</li>
+    <li>{{.ctxBase.User}}</li>
   </ul>
 </div>
 <div id="content">
-  {{.ContentHTML}}
+  {{template "content" .}}
 </div>
 <div id="footer">
-  Current datetime is {{.TimeNow}}
+  Current datetime is {{.ctxBase.TimeNow}}
 </div>
 </body>
-</html>
+</html>{{end}}

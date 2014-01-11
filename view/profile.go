@@ -3,7 +3,6 @@ package view
 import (
   "appengine"
   "github.com/OwenDurni/loltools/model"
-  "html/template"
   "net/http"
 )
 
@@ -16,33 +15,18 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]
     return
   }
 
-  formContents, err := parseTemplate("template/profiles/edit.html", user)
-  if err != nil {
+  ctx := struct {
+    ctxBase
+    User *model.User
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.Title = "Edit Profile"
+  ctx.User = user
+
+  if err := RenderTemplate(w, "profiles/edit.html", "base", ctx); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-
-  formCtx := new(formCtx)
-  formCtx.init()
-  formCtx.FormId = "edit-profile"
-  formCtx.SubmitUrl = "/api/profiles/set"
-  formCtx.FormHTML = template.HTML(formContents)
-  formHtml, err := renderForm(formCtx)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-
-  pageCtx := new(commonCtx).init(c)
-  pageCtx.Title = "Edit Profile"
-  pageCtx.ContentHTML = template.HTML(formHtml)
-  pageHtml, err := parseTemplate("template/common.html", pageCtx)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-
-  w.Write(pageHtml)
 }
 
 func ProfileSetHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {

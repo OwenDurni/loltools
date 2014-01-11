@@ -3,7 +3,6 @@ package view
 import (
   "appengine"
   "github.com/OwenDurni/loltools/model"
-  "html/template"
   "net/http"
 )
 
@@ -16,32 +15,16 @@ func LeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string
     return
   }
 
-  formContents, err := parseTemplate("template/leagues/create.html", nil)
-  if err != nil {
+  ctx := struct {
+    ctxBase
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.Title = "Create League"
+
+  if err := RenderTemplate(w, "leagues/create.html", "base", ctx); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-
-  formCtx := new(formCtx).init()
-  formCtx.FormId = "league-create"
-  formCtx.SubmitUrl = "/api/leagues/create"
-  formCtx.FormHTML = template.HTML(formContents)
-  formHtml, err := renderForm(formCtx)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-
-  pageCtx := new(commonCtx).init(c)
-  pageCtx.Title = "Create League"
-  pageCtx.ContentHTML = template.HTML(formHtml)
-  pageHtml, err := parseTemplate("template/common.html", pageCtx)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
-
-  w.Write(pageHtml)
 }
 
 func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {

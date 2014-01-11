@@ -1,45 +1,11 @@
-<form id="{{.FormId}}">
-  {{.FormHTML}}
-  <input id="submit" type="submit" value="{{.SubmitText}}" /><span id="result"></span>
+{{/*
+  Text string
+  Id string
+  Uri string
+*/}}
+
+{{define "formEnd"}}
+  <input id="submit" type="submit" value="{{.Text}}" /><span id="result"></span>
 </form>
-
-<script>
-var req;
-$("#{{.FormId}}").submit(function(event){
-  if (req) {
-    req.abort();
-  }
-  var $form = $(this);
-  var $inputs = $form.find("input, select, button, textarea");
-  var $result = $form.find("#result");
-
-  var data = $form.serialize()
-
-  $inputs.prop("disabled", true);
-  $result.text("{{.StatusTextActive}}");
-
-  req = $.ajax({
-    url: "{{.SubmitUrl}}",
-    type: "post",
-    data: data
-  });
-
-  req.done(function (response, textStatus, jqXHR){
-    if (jqXHR.status == 201) {
-      var loc = jqXHR.getResponseHeader("Location");
-      if (loc) {
-        // Redirect to created resource.
-        window.location.href = loc;
-      }
-    }
-    $result.text(jqXHR.status + ": {{.StatusTextDone}}");
-  });
-  req.fail(function (jqXHR, textStatus, errorThrown){
-    $result.text("{{.StatusTextFail}}: " + errorThrown + ": " + jqXHR.responseText);
-  });
-  req.always(function () {
-    $inputs.prop("disabled", false);
-  });
-  event.preventDefault();
-});
-</script>
+<script>loltools.registerForm("{{.Id}}", "{{.Uri}}")</script>
+{{end}}

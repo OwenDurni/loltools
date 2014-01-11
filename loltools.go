@@ -5,8 +5,8 @@ import (
   "appengine/user"
   "errors"
   "fmt"
-  "github.com/OwenDurni/loltools/view"
   "github.com/OwenDurni/loltools/util/dispatch"
+  "github.com/OwenDurni/loltools/view"
   "net/http"
 )
 
@@ -35,14 +35,19 @@ var dispatcher *dispatch.Dispatcher
 
 func init() {
   dispatcher = new(dispatch.Dispatcher)
-  
+
   dispatcher.Add("/", view.HomeHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/home", view.HomeHandler)
+  dispatcher.Add("/leagues", debugHandler)
   dispatcher.Add("/leagues/create", view.LeagueCreateHandler)
   dispatcher.Add("/leagues/<leagueKey>", debugHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)
+
+  view.AddTemplate("home.html", "base.html")
+  view.AddTemplate("leagues/create.html", "form.html", "base.html")
+  view.AddTemplate("profiles/edit.html", "form.html", "base.html")
 }

@@ -1,3 +1,10 @@
-<ul>
-  <li>Name: <input type="text" name="name" value="" /></li>
-</ul>
+{{/* extends base.html:base */}}
+{{define "content"}}
+<form id="league-create">
+  <ul>
+    <li>Name: <input type="text" name="name" value="" /></li>
+  </ul>
+{{with $x := form "league-create" "/api/leagues/create" "Create"}}
+{{template "formEnd" $x}}
+{{end}}
+{{end}}

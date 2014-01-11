@@ -1,4 +1,5 @@
-<ul>
+{{/* extends base.html */}}
+{{define "content"}}<ul>
   <li><a href="/">/</a>
     <ul>
       <li><a href="/home">home</a></li>
@@ -11,11 +12,11 @@
       </li>
     </ul>
     <ul>
-      <li>leagues
+      <li><a href="/leagues">leagues</a>
         <ul>
           <li><a href="/leagues/create">create</a></li>
         </ul>
       </li>
     </ul>
   </li>
-</ul>
+</ul>{{end}}

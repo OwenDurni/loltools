@@ -1,5 +1,15 @@
-<ul>
-  <li>Email: {{.Email}}</li>
-  <li>Name: <input type="text" name="name" value="{{.Name}}" /></li>
-  <li>Summoner Name: <input type="text" name="summoner" value="{{.SummonerName}}" /></li>
-</ul>
+{{/* extends base.html:base
+  ctxBase
+  User model.User
+*/}}
+{{define "content"}}
+<form id="set-profile">
+  <ul>
+    <li>Email: {{.User.Email}}</li>
+    <li>Name: <input type="text" name="name" value="{{.User.Name}}" /></li>
+    <li>Summoner Name: <input type="text" name="summoner" value="{{.User.SummonerName}}" /></li>
+  </ul>
+{{with $x := form "set-profile" "/api/profiles/set" "Save"}}
+{{template "formEnd" $x}}
+{{end}}
+{{end}}
