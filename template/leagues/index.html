@@ -1,0 +1,7 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>My Leagues</h2>
+<ul>{{range .MyLeagues}}
+  <li><a href="{{.Uri}}">{{.Name}}</a></li>
+{{end}}</ul>
+{{end}}

@@ -65,3 +65,34 @@ func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, er
 func LeagueUri(leagueKey *datastore.Key) string {
   return fmt.Sprintf("/leagues/%v", leagueKey.Encode())
 }
+
+type LeagueInfo struct {
+  League League
+  LeagueKey *datastore.Key
+}
+
+func LeaguesForUser(
+    c appengine.Context, userKey *datastore.Key) (result []*LeagueInfo, err error) {
+  result = nil
+  err = nil
+  if userKey == nil {
+    return 
+  }
+  
+  q := datastore.NewQuery("League").
+           Filter("Owner =", userKey).
+           Order("Name")
+  var leagues []League
+  leagueKeys, err := q.GetAll(c, &leagues)
+  if err != nil {
+    return
+  }
+  result = make([]*LeagueInfo, len(leagues))
+  for i := range leagues {
+    info := new(LeagueInfo)
+    info.League = leagues[i]
+    info.LeagueKey = leagueKeys[i]
+    result[i] = info
+  }
+  return
+}

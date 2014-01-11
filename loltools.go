@@ -40,7 +40,7 @@ func init() {
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/home", view.HomeHandler)
-  dispatcher.Add("/leagues", debugHandler)
+  dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/create", view.LeagueCreateHandler)
   dispatcher.Add("/leagues/<leagueKey>", debugHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
@@ -49,5 +49,6 @@ func init() {
 
   view.AddTemplate("home.html", "base.html")
   view.AddTemplate("leagues/create.html", "form.html", "base.html")
+  view.AddTemplate("leagues/index.html", "base.html")
   view.AddTemplate("profiles/edit.html", "form.html", "base.html")
 }
