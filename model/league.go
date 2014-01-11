@@ -12,29 +12,34 @@ type League struct {
   // The name of the league. Not necessarily unique.
   Name string
 
+  // The Riot server region for this league. Defaults to RegionNA.
+  Region string
+
   // The datastore key for the User who owns this league.
   Owner *datastore.Key
 }
 
-// Teams are identified by their datastore.Key and are a child of the League.
+// Teams are identified by their datastore.Key.
+//
+// Ancestor: League
 type Team struct {
   Name string
+}
+
+// A table associating summoners to teams. Summoners may be on more than one team
+// per league. Teams may have any number of summoners.
+//
+// Ancestor: League
+type TeamMembership struct {
+  TeamKey   *datastore.Key
+  PlayerKey *datastore.Key
 }
 
 // Various accumulated data about a team. Not directly stored in datastore.
 type TeamInfo struct {
   Name string
-  Id string
-  Uri string 
-}
-
-type Player struct {
-  Summoner string
-}
-
-type TeamMembership struct {
-  TeamKey   *datastore.Key
-  PlayerKey *datastore.Key
+  Id   string
+  Uri  string
 }
 
 type Match struct {
@@ -62,6 +67,7 @@ func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, er
   var league = new(League)
   league.Name = name
   league.Owner = userKey
+  league.Region = RegionNA
   leagueKey := datastore.NewIncompleteKey(c, "League", nil)
 
   leagueKey, err = datastore.Put(c, leagueKey, league)
@@ -77,26 +83,26 @@ func LeagueUri(leagueKey *datastore.Key) string {
 
 func LeagueTeamUri(leagueKey *datastore.Key, teamKey *datastore.Key) string {
   return fmt.Sprintf("%s/teams/%s",
-                     LeagueUri(leagueKey),
-                     EncodeKeyShort(teamKey))
+    LeagueUri(leagueKey),
+    EncodeKeyShort(teamKey))
 }
 
 type LeagueInfo struct {
-  League League
+  League    League
   LeagueKey *datastore.Key
 }
 
 func LeaguesForUser(
-    c appengine.Context, userKey *datastore.Key) (result []*LeagueInfo, err error) {
+  c appengine.Context, userKey *datastore.Key) (result []*LeagueInfo, err error) {
   result = nil
   err = nil
   if userKey == nil {
     return
   }
-  
+
   q := datastore.NewQuery("League").
-           Filter("Owner =", userKey).
-           Order("Name")
+    Filter("Owner =", userKey).
+    Order("Name")
   var leagues []League
   leagueKeys, err := q.GetAll(c, &leagues)
   if err != nil {
@@ -113,46 +119,72 @@ func LeaguesForUser(
 }
 
 func LeagueById(
-    c appengine.Context,
-    userKey *datastore.Key,
-    leagueId string) (*League, *datastore.Key, error) {
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueId string) (*League, *datastore.Key, error) {
   if userKey == nil {
     return nil, nil, errors.New("LeagueById(): nil userKey")
   }
-  
+
   leagueKey, err := DecodeKeyShort(c, "League", leagueId, nil)
   if err != nil {
     return nil, nil, err
   }
-  
+
   league := new(League)
   if err := datastore.Get(c, leagueKey, league); err != nil {
     return nil, leagueKey, err
   }
-  
+
   // TODO(durni): Check viewing permissions
   return league, leagueKey, nil
 }
 
+func TeamById(
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueKey *datastore.Key,
+  teamId string) (*Team, *datastore.Key, error) {
+  if userKey == nil {
+    return nil, nil, errors.New("TeamById(): nil userKey")
+  }
+  if leagueKey == nil {
+    return nil, nil, errors.New("TeamById(): nil leagueKey")
+  }
+
+  teamKey, err := DecodeKeyShort(c, "Team", teamId, leagueKey)
+  if err != nil {
+    return nil, nil, err
+  }
+
+  team := new(Team)
+  if err := datastore.Get(c, teamKey, team); err != nil {
+    return nil, teamKey, err
+  }
+
+  // TODO(durni): Check viewing permissions
+  return team, teamKey, nil
+}
+
 func LeagueAddTeam(
-    c appengine.Context,
-    userKey *datastore.Key,
-    leagueId string,
-    teamName string) (*Team, *datastore.Key, error) {
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueId string,
+  teamName string) (*Team, *datastore.Key, error) {
   // TODO(durni): Check that this user has permissions to add teams to the league.
-  
+
   _, leagueKey, err := LeagueById(c, userKey, leagueId)
   if err != nil {
     return nil, nil, err
   }
-  
+
   team := new(Team)
   team.Name = teamName
   var teamKey *datastore.Key
-  
+
   err = datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("Team").Ancestor(leagueKey).
-            Filter("Name =", team.Name)
+      Filter("Name =", team.Name)
     var teams []Team
     if _, err := q.GetAll(c, &teams); err != nil {
       return err
@@ -174,26 +206,46 @@ func LeagueAddTeam(
 }
 
 func LeagueAllTeams(
-    c appengine.Context,
-    userKey *datastore.Key,
-    leagueKey *datastore.Key) ([]*TeamInfo, error) {
-  var infos []*TeamInfo
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueKey *datastore.Key) ([]*Team, []*datastore.Key, error) {
+  var teams []*Team
+  var teamKeys []*datastore.Key
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
-    var teams []Team
     q := datastore.NewQuery("Team").Ancestor(leagueKey)
-    teamKeys, err := q.GetAll(c, &teams)
-    if err != nil {
-      return err
-    }
-    infos = make([]*TeamInfo, len(teams))
-    for i, team := range teams {
-      t := new(TeamInfo)
-      t.Name = team.Name
-      t.Id = EncodeKeyShort(teamKeys[i])
-      t.Uri = LeagueTeamUri(leagueKey, teamKeys[i])      
-      infos[i] = t
-    }
-    return nil
+    var err error
+    teamKeys, err = q.GetAll(c, &teams)
+    return err
   }, nil)
-  return infos, err
+  return teams, teamKeys, err
+}
+
+func TeamAllPlayers(
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueKey *datastore.Key,
+  teamKey *datastore.Key,
+  keysOnly KeysOnlyOption) ([]*Player, []*datastore.Key, error) {
+  var memberships []TeamMembership
+  q := datastore.NewQuery("TeamMembership").Ancestor(leagueKey).
+    Filter("TeamKey =", teamKey)
+  _, err := q.GetAll(c, &memberships)
+  if err != nil {
+    return nil, nil, err
+  }
+
+  playerKeys := make([]*datastore.Key, len(memberships))
+  for i, m := range memberships {
+    playerKeys[i] = m.PlayerKey
+  }
+  if keysOnly == KeysOnly {
+    return nil, playerKeys, nil
+  }
+
+  players := make([]*Player, len(playerKeys))
+  err = datastore.GetMulti(c, playerKeys, players)
+  if err != nil {
+    return nil, nil, err
+  }
+  return players, playerKeys, nil
 }

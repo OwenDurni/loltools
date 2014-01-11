@@ -8,6 +8,13 @@ import (
   "errors"
 )
 
+type KeysOnlyOption bool
+
+const (
+  KeysOnly        KeysOnlyOption = true
+  KeysAndEntities                = false
+)
+
 func EncodeKeyShort(k *datastore.Key) string {
   buf := make([]byte, 8)
   binary.PutVarint(buf, k.IntID())
@@ -15,10 +22,10 @@ func EncodeKeyShort(k *datastore.Key) string {
 }
 
 func DecodeKeyShort(
-    c appengine.Context,
-    kind string,
-    encodedKey string,
-    parentKey *datastore.Key) (*datastore.Key, error) {
+  c appengine.Context,
+  kind string,
+  encodedKey string,
+  parentKey *datastore.Key) (*datastore.Key, error) {
   buf, err := base64.URLEncoding.DecodeString(encodedKey)
   if err != nil {
     return nil, err

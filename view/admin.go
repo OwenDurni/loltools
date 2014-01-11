@@ -7,7 +7,7 @@ import (
 )
 
 func AdminIndexHandler(
-    w http.ResponseWriter, r *http.Request, args map[string]string) {
+  w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
 
   riotApiKey, err := model.GetRiotApiKey(c)
@@ -31,10 +31,10 @@ func AdminIndexHandler(
 }
 
 func ApiAdminRiotKeySetHandler(
-    w http.ResponseWriter, r *http.Request, args map[string]string) {
+  w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   apikey := r.FormValue("key")
-  
+
   if err := model.SetRiotApiKey(c, apikey); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return

@@ -5,13 +5,19 @@ import (
   "appengine/datastore"
 )
 
+const (
+  RegionNA   = "na"
+  RegionEUW  = "euw"
+  RegionEUNE = "eune"
+)
+
 type RateLimit struct {
-  MaxRequests int
+  MaxRequests     int
   IntervalSeconds int
 }
 
 type RiotApiKey struct {
-  Key string
+  Key    string
   Limits []RateLimit
 }
 
@@ -31,7 +37,7 @@ func SetRiotApiKey(c appengine.Context, apikey string) error {
   r.Key = apikey
   r.Limits = []RateLimit{
     RateLimit{10, 10},
-    RateLimit{500, 10*60},
+    RateLimit{500, 10 * 60},
   }
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
   _, err := datastore.Put(c, key, r)

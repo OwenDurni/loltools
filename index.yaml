@@ -14,9 +14,3 @@ indexes:
   properties:
   - name: Owner
   - name: Name
-
-- kind: League
-  properties:
-  - name: Owner
-  - name: Name
-    direction: desc

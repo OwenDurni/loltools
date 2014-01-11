@@ -1,0 +1,29 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>{{.Team.Name}} ({{.League.Name}})</h2>
+
+<h3>Members</h3>
+<table>
+  <tr><th>Summoner</th><th>Wins</th><th>Losses</th></tr>
+  {{range $i, $x := .Players}}
+    <tr class="{{if even $i}}even{{else}}odd{{end}}">
+      <td><a href="{{.Uri}}">{{.Summoner}}</a></td>
+      <td>{{.Wins}}</td>
+      <td>{{.Losses}}</td>
+    </tr>
+  {{end}}
+</table>
+
+<h3>Add Player</h2>
+<form id="add-player">
+  <ul>
+    <input type="hidden" name="league" value="{{.League.Id}}" />
+    <input type="hidden" name="team" value="{{.Team.Id}}" />
+    <input type="hidden" name="region" value="{{.League.Region}}" />
+    <li>Summoner Name: <input type="text" name="summoner" value="" /></li>
+  </ul>
+{{with $x := form "add-player" "/api/leagues/teams/add-player" "Add"}}
+{{template "formEnd" $x}}
+{{end}}
+
+{{end}}

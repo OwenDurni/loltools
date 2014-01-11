@@ -9,30 +9,38 @@ import (
 )
 
 type League struct {
-  Name string
-  Owner string
-  Id string
-  Uri string
+  Name   string
+  Owner  string
+  Id     string
+  Uri    string
+  Region string
 }
+
 func (l *League) Fill(m *model.League, k *datastore.Key) *League {
   l.Name = m.Name
   l.Id = model.EncodeKeyShort(k)
   l.Uri = model.LeagueUri(k)
+  l.Region = model.RegionNA
+  if m.Region != "" {
+    l.Region = m.Region
+  }
   return l
 }
 
 type Team struct {
   Name string
-  Id string
-  Uri string
-  
-  Wins int
+  Id   string
+  Uri  string
+
+  Wins   int
   Losses int
 }
-func (t *Team) Fill(m *model.TeamInfo) *Team {
-  t.Name = m.Name
-  t.Id = m.Id
-  t.Uri = m.Uri
+
+func (t *Team) Fill(
+  team *model.Team, teamKey *datastore.Key, leagueKey *datastore.Key) *Team {
+  t.Name = team.Name
+  t.Id = model.EncodeKeyShort(teamKey)
+  t.Uri = model.LeagueTeamUri(leagueKey, teamKey)
   return t
 }
 
@@ -45,20 +53,20 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   leagueInfos, err := model.LeaguesForUser(c, userKey)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   // Populate view context.
   ctx := struct {
     ctxBase
     MyLeagues []*League
   }{}
   ctx.ctxBase.init(c)
-  
+
   ctx.MyLeagues = make([]*League, len(leagueInfos))
   for i, info := range leagueInfos {
     league := new(League).Fill(&info.League, info.LeagueKey)
@@ -69,7 +77,7 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
     }
     ctx.MyLeagues[i] = league
   }
-  
+
   // Render
   if err := RenderTemplate(w, "leagues/index.html", "base", ctx); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
@@ -86,19 +94,19 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
-  teamInfos, err := model.LeagueAllTeams(c, userKey, leagueKey)
+
+  teams, teamKeys, err := model.LeagueAllTeams(c, userKey, leagueKey)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   // Populate view context.
   ctx := struct {
     ctxBase
@@ -107,14 +115,14 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   }{}
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", league.Name)
-  
+
   ctx.League.Fill(league, leagueKey)
-  
-  ctx.Teams = make([]Team, len(teamInfos))
-  for i, _ := range ctx.Teams {
-    ctx.Teams[i].Fill(teamInfos[i])
+
+  ctx.Teams = make([]Team, len(teams))
+  for i, t := range teams {
+    ctx.Teams[i].Fill(t, teamKeys[i], leagueKey)
   }
-  
+
   // Render
   if err := RenderTemplate(w, "leagues/view.html", "base", ctx); err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
@@ -136,24 +144,24 @@ func ApiLeagueAddTeamHandler(w http.ResponseWriter, r *http.Request, args map[st
   c := appengine.NewContext(r)
   leagueId := r.FormValue("league")
   teamName := r.FormValue("team")
-  
+
   _, userKey, err := model.GetUser(c)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   _, teamKey, err := model.LeagueAddTeam(c, userKey, leagueId, teamName)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, err)
     return
   }
-  
+
   HttpReplyResourceCreated(w, model.LeagueTeamUri(leagueKey, teamKey))
 }

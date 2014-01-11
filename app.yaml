@@ -4,16 +4,26 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /static
-  static_dir: static
-- url: /
-  script: _go_app
 - url: /admin/.*
   script: _go_app
   login: admin
+  
 - url: /api/admin/.*
   script: _go_app
   login: admin
+  
+- url: /task/.*
+  script: go_app
+  login: admin
+  
+- url: /static
+  static_dir: static
+  
+- url: /
+  script: _go_app
+- url: /index.html
+  script: _go_app
+  
 - url: /.*
   script: _go_app
   login: required
