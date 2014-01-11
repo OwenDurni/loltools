@@ -10,13 +10,12 @@ import (
 type League struct {
   Name string
   Owner string
-  Key string
+  Id string
   Uri string
 }
 func (l *League) Fill(m model.League, k *datastore.Key) *League {
   l.Name = m.Name
-  l.Owner = "<TODO>"
-  l.Key = k.Encode()
+  l.Id = model.EncodeGlobalKeyShort(k)
   l.Uri = model.LeagueUri(k)
   return l
 }
@@ -46,7 +45,13 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   
   ctx.MyLeagues = make([]*League, len(leagueInfos))
   for i, info := range leagueInfos {
-    ctx.MyLeagues[i] = new(League).Fill(info.League, info.LeagueKey)
+    league := new(League).Fill(info.League, info.LeagueKey)
+    if owner, err := model.GetUserByKey(c, info.League.Owner); err == nil {
+      league.Owner = owner.Email
+    } else {
+      league.Owner = err.Error()
+    }
+    ctx.MyLeagues[i] = league
   }
   
   // Render

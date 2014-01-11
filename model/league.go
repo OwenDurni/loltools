@@ -11,7 +11,7 @@ type League struct {
   // The name of the league. Not necessarily unique.
   Name string
 
-  // The datastore key for the user who owns this league.
+  // The datastore key for the User who owns this league.
   Owner *datastore.Key
 }
 
@@ -63,7 +63,7 @@ func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, er
 }
 
 func LeagueUri(leagueKey *datastore.Key) string {
-  return fmt.Sprintf("/leagues/%v", leagueKey.Encode())
+  return fmt.Sprintf("/leagues/%v", EncodeGlobalKeyShort(leagueKey))
 }
 
 type LeagueInfo struct {
@@ -76,7 +76,7 @@ func LeaguesForUser(
   result = nil
   err = nil
   if userKey == nil {
-    return 
+    return
   }
   
   q := datastore.NewQuery("League").

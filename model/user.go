@@ -31,6 +31,14 @@ func GetUser(c appengine.Context) (*User, *datastore.Key, error) {
   return user, key, nil
 }
 
+func GetUserByKey(c appengine.Context, userKey *datastore.Key) (*User, error) {
+  var user = new(User)
+  if err := datastore.Get(c, userKey, user); err != nil {
+    return nil, err
+  }
+  return user, nil
+}
+
 func (user *User) Save(c appengine.Context) error {
   if user == nil {
     return errors.New("nil user")

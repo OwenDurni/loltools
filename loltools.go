@@ -5,19 +5,27 @@ import (
   "appengine/user"
   "errors"
   "fmt"
+  "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/util/dispatch"
   "github.com/OwenDurni/loltools/view"
   "net/http"
 )
 
 func debugHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
-  appengineCtx := appengine.NewContext(r)
-  user := user.Current(appengineCtx)
+  c := appengine.NewContext(r)
+  appengineUser := user.Current(c)
+  user, userKey, userErr := model.GetUser(c)
   fmt.Fprintf(w, "<html>\n")
   fmt.Fprintf(w, "<body>\n")
   fmt.Fprintf(w, "<h3>Debug Info</h3>\n")
   fmt.Fprintf(w, "<pre>\n")
-  fmt.Fprintf(w, "User: %v\n", user)
+  fmt.Fprintf(w, "Appengine User: %v\n", appengineUser)
+  if userErr != nil {
+    fmt.Fprintf(w, "User (error): %v\n", userErr.Error())
+  } else {
+    fmt.Fprintf(w, "User: %+v\n", user)
+    fmt.Fprintf(w, "User Key: %v\n", userKey.Encode())
+  }
   fmt.Fprintf(w, "Dispatch Args: %v\n", args)
   fmt.Fprintf(w, "Request: %+v\n", *r)
   fmt.Fprintf(w, "</pre>\n")
@@ -39,6 +47,7 @@ func init() {
   dispatcher.Add("/", view.HomeHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
+  dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/create", view.LeagueCreateHandler)

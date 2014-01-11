@@ -2,6 +2,6 @@
 {{define "content"}}
 <h2>My Leagues</h2>
 <ul>{{range .MyLeagues}}
-  <li><a href="{{.Uri}}">{{.Name}}</a></li>
+  <li><a href="{{.Uri}}">{{.Name}}</a> ({{.Owner}})</li>
 {{end}}</ul>
 {{end}}
