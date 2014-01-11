@@ -1,5 +1,28 @@
 {{/* extends base.html */}}
 {{define "content"}}
 <h2>{{.Name}}</h2>
-<p>TODO content</p>
+
+<h3>Standings</h3>
+<table>
+  <tr><th>Team</th><th>Wins</th><th>Losses</th></tr>
+  {{range $i, $x := .Teams}}
+    <tr class="{{if even $i}}even{{else}}odd{{end}}">
+      <td><a href="{{.Uri}}">{{.Name}}</a></td>
+      <td>{{.Wins}}</td>
+      <td>{{.Losses}}</td>
+    </tr>
+  {{end}}
+</table>
+<p>Not yet implemented</p>
+
+<h3>Add New Team</h2>
+<form id="add-team">
+  <ul>
+    <input type="hidden" name="league" value="{{.Id}}" />
+    <li>Team Name: <input type="text" name="team" value="" /></li>
+  </ul>
+{{with $x := form "add-team" "/api/leagues/add-team" "Create"}}
+{{template "formEnd" $x}}
+{{end}}
+
 {{end}}

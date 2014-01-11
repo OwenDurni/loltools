@@ -8,14 +8,17 @@ import (
   "errors"
 )
 
-func EncodeGlobalKeyShort(k *datastore.Key) string {
+func EncodeKeyShort(k *datastore.Key) string {
   buf := make([]byte, 8)
   binary.PutVarint(buf, k.IntID())
   return base64.URLEncoding.EncodeToString(buf)
 }
 
-func DecodeGlobalKeyShort(
-    c appengine.Context, kind string, encodedKey string) (*datastore.Key, error) {
+func DecodeKeyShort(
+    c appengine.Context,
+    kind string,
+    encodedKey string,
+    parentKey *datastore.Key) (*datastore.Key, error) {
   buf, err := base64.URLEncoding.DecodeString(encodedKey)
   if err != nil {
     return nil, err
@@ -26,5 +29,5 @@ func DecodeGlobalKeyShort(
   } else if n < 0 {
     return nil, errors.New("DecodeGlobalKeyShort(): overflow")
   }
-  return datastore.NewKey(c, kind, "", id, nil), nil
+  return datastore.NewKey(c, kind, "", id, parentKey), nil
 }

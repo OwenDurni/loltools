@@ -16,8 +16,16 @@ type League struct {
   Owner *datastore.Key
 }
 
+// Teams are identified by their datastore.Key and are a child of the League.
 type Team struct {
   Name string
+}
+
+// Various accumulated data about a team. Not directly stored in datastore.
+type TeamInfo struct {
+  Name string
+  Id string
+  Uri string 
 }
 
 type Player struct {
@@ -64,7 +72,13 @@ func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, er
 }
 
 func LeagueUri(leagueKey *datastore.Key) string {
-  return fmt.Sprintf("/leagues/%v", EncodeGlobalKeyShort(leagueKey))
+  return fmt.Sprintf("/leagues/%s", EncodeKeyShort(leagueKey))
+}
+
+func LeagueTeamUri(leagueKey *datastore.Key, teamKey *datastore.Key) string {
+  return fmt.Sprintf("%s/teams/%s",
+                     LeagueUri(leagueKey),
+                     EncodeKeyShort(teamKey))
 }
 
 type LeagueInfo struct {
@@ -106,7 +120,7 @@ func LeagueById(
     return nil, nil, errors.New("LeagueById(): nil userKey")
   }
   
-  leagueKey, err := DecodeGlobalKeyShort(c, "League", leagueId)
+  leagueKey, err := DecodeKeyShort(c, "League", leagueId, nil)
   if err != nil {
     return nil, nil, err
   }
@@ -118,4 +132,68 @@ func LeagueById(
   
   // TODO(durni): Check viewing permissions
   return league, leagueKey, nil
+}
+
+func LeagueAddTeam(
+    c appengine.Context,
+    userKey *datastore.Key,
+    leagueId string,
+    teamName string) (*Team, *datastore.Key, error) {
+  // TODO(durni): Check that this user has permissions to add teams to the league.
+  
+  _, leagueKey, err := LeagueById(c, userKey, leagueId)
+  if err != nil {
+    return nil, nil, err
+  }
+  
+  team := new(Team)
+  team.Name = teamName
+  var teamKey *datastore.Key
+  
+  err = datastore.RunInTransaction(c, func(c appengine.Context) error {
+    q := datastore.NewQuery("Team").Ancestor(leagueKey).
+            Filter("Name =", team.Name)
+    var teams []Team
+    if _, err := q.GetAll(c, &teams); err != nil {
+      return err
+    }
+    if len(teams) > 0 {
+      return errors.New(fmt.Sprintf("team already exists: %v", teams[0].Name))
+    }
+    teamKey = datastore.NewIncompleteKey(c, "Team", leagueKey)
+    teamKey, err = datastore.Put(c, teamKey, team)
+    if err != nil {
+      return err
+    }
+    return nil
+  }, nil)
+  if err != nil {
+    return nil, nil, err
+  }
+  return team, teamKey, nil
+}
+
+func LeagueAllTeams(
+    c appengine.Context,
+    userKey *datastore.Key,
+    leagueKey *datastore.Key) ([]*TeamInfo, error) {
+  var infos []*TeamInfo
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+    var teams []Team
+    q := datastore.NewQuery("Team").Ancestor(leagueKey)
+    teamKeys, err := q.GetAll(c, &teams)
+    if err != nil {
+      return err
+    }
+    infos = make([]*TeamInfo, len(teams))
+    for i, team := range teams {
+      t := new(TeamInfo)
+      t.Name = team.Name
+      t.Id = EncodeKeyShort(teamKeys[i])
+      t.Uri = LeagueTeamUri(leagueKey, teamKeys[i])      
+      infos[i] = t
+    }
+    return nil
+  }, nil)
+  return infos, err
 }

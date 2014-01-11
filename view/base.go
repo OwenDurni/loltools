@@ -23,9 +23,19 @@ func tmplForm(id, uri, text string) interface{} {
   }
 }
 
+func tmplEven(i int) bool {
+  return i % 2 == 0
+}
+
+func tmplOdd(i int) bool {
+  return i % 2 == 1
+}
+
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
+  "even": tmplEven,
   "form": tmplForm,
+  "odd": tmplOdd,
 }
 
 // Adds a template to the registry.

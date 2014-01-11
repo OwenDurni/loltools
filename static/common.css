@@ -51,3 +51,31 @@ ul.nav li {
 #content {
   /*clear: both;*/
 }
+
+table {
+  border-collapse:collapse;
+}
+
+th, td {
+  border: thin solid gray;
+  padding: 3px 7px 2px 7px;
+}
+
+th {
+  padding-top: 5px;
+  padding-bottom: 4px;
+  background-color: #444;
+  color: #fff;
+}
+
+tr.even td {
+  background-color: #eee;
+}
+
+tr.odd td {
+  background-color: #fff;
+}
+
+tr:hover td {
+  background-color: #efe;
+}
