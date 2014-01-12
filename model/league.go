@@ -244,7 +244,7 @@ func TeamAddPlayer(
   teamKey *datastore.Key,
   playerKey *datastore.Key) error {
   m := &TeamMembership{
-    TeamKey: teamKey,
+    TeamKey:   teamKey,
     PlayerKey: playerKey,
   }
   key := datastore.NewIncompleteKey(c, "TeamMembership", leagueKey)

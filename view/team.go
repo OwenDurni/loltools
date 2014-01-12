@@ -53,7 +53,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
     HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
     return
   }
-  
+
   // Sort players by summoner.
   sort.Sort(model.PlayersBySummoner(players))
 
@@ -113,7 +113,7 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
     HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
     return
   }
-  
+
   err = model.TeamAddPlayer(c, userKey, leagueKey, teamKey, playerKey)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))

@@ -27,6 +27,7 @@ type Player struct {
   // The last time we refreshed data for this player (UTC).
   LastUpdated time.Time
 }
+
 func (p *Player) Id() string {
   return fmt.Sprintf("%s-%d", p.Region, p.RiotId)
 }
@@ -36,6 +37,7 @@ func (p *Player) Uri() string {
 
 // sort.Interface for []*Player
 type PlayersBySummoner []*Player
+
 func (a PlayersBySummoner) Len() int {
   return len(a)
 }
@@ -86,29 +88,29 @@ func GetOrCreatePlayerBySummoner(
   if len(players) > 0 {
     return players[0], playerKeys[0], nil
   }
-  
+
   // Otherwise we need to fetch some data from Riot.
   if err := RiotRestApiRateLimiter.TryConsume(c, 1); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
-  
+
   riotApiKey, err := GetRiotApiKey(c)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
-  
+
   riotSummoner, err := riot.SummonerByName(c, riotApiKey.Key, region, summoner)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
-  
+
   player := new(Player)
   player.Summoner = riotSummoner.Name
   player.Region = region
   player.RiotId = riotSummoner.Id
   player.Level = riotSummoner.SummonerLevel
   player.LastUpdated = time.Now().UTC()
-  
+
   playerKey := datastore.NewKey(
     c, "Player", fmt.Sprintf("%s-%d", region, player.RiotId), 0, nil)
 
