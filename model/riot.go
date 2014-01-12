@@ -11,6 +11,8 @@ const (
   RegionEUNE = "eune"
 )
 
+var RiotRestApiRateLimiter = DistributedRateLimiter{"riot-rest-api"}
+
 type RiotApiKey struct {
   Key    string
   Limits []RateLimit
@@ -27,6 +29,7 @@ func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
   return r, nil
 }
 
+// Also reset the relevant rate limiter.
 func SetRiotApiKey(c appengine.Context, apikey string) error {
   r := new(RiotApiKey)
   r.Key = apikey
@@ -35,6 +38,12 @@ func SetRiotApiKey(c appengine.Context, apikey string) error {
     RateLimit{500, 10 * 60},
   }
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
-  _, err := datastore.Put(c, key, r)
+  
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {  
+    if _, err := datastore.Put(c, key, r); err != nil {
+      return err
+    }
+    return RiotRestApiRateLimiter.Init(c, r.Limits)
+  }, &datastore.TransactionOptions{XG: true})
   return err
 }

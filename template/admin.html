@@ -6,7 +6,7 @@
 Key: <input type="text" name="key" value="{{with .RiotApiKey}}{{.Key}}{{end}}" />
 {{with .RiotApiKey}}<ul>
   {{range .Limits}}
-    <li>Rate Limit: {{.MaxRequests}} request(s) every {{.IntervalSeconds}} second(s)</li>
+    <li>Rate Limit: {{.MaxEvents}} request(s) every {{.IntervalSeconds}} second(s)</li>
   {{end}}
 </ul>{{end}}
 {{with $x := form "set-key" "/api/admin/riotapikey/set" "Set New Key"}}
