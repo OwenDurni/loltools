@@ -38,8 +38,8 @@ func SetRiotApiKey(c appengine.Context, apikey string) error {
     RateLimit{500, 10 * 60},
   }
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
-  
-  err := datastore.RunInTransaction(c, func(c appengine.Context) error {  
+
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     if _, err := datastore.Put(c, key, r); err != nil {
       return err
     }

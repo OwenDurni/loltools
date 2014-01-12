@@ -12,7 +12,7 @@ import (
 // Describes a rate limit that permits MaxEvents in the last IntervalSeconds.
 // Ex: RateLimit{10, 100} would indicate 10 events per 100 seconds.
 type RateLimit struct {
-  MaxEvents int
+  MaxEvents       int
   IntervalSeconds int
 }
 
@@ -24,8 +24,8 @@ type DistributedRateLimiter struct {
 // specified limits (or re-initializes the limits of an existing rate limiter
 // with the same name).
 func (r DistributedRateLimiter) Init(
-    c appengine.Context,
-    limits []RateLimit) error {
+  c appengine.Context,
+  limits []RateLimit) error {
   e := new(distributedRateLimiterEntity)
   e.Buckets = make([]TokenBucket, len(limits))
   for i, _ := range e.Buckets {
@@ -41,35 +41,35 @@ func (r DistributedRateLimiter) Init(
 // be consumed.
 func (r *DistributedRateLimiter) TryConsume(c appengine.Context, events int) error {
   key := datastore.NewKey(c, "DistributedRateLimiterEntity", r.Name, 0, nil)
-  
+
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     var e distributedRateLimiterEntity
     if err := datastore.Get(c, key, &e); err != nil {
       return err
     }
-    
+
     // Add tokens since last attempt and try to consume ones for this attempt.
     e.addTokens(time.Now().UTC())
     if err := e.tryConsume(events); err != nil {
       return errors.New(fmt.Sprintf("DistributedRateLimiter(%s): %s",
-                                    r.Name, err.Error()))
+        r.Name, err.Error()))
     }
-    
+
     // Write any changes back to the datastore.
     _, err := datastore.Put(c, key, e)
     return err
   }, nil)
-  
+
   // The tokens were consumed if and only if the transaction was successful.
   return err
 }
 
 type TokenBucket struct {
   Limit RateLimit
-  
+
   // The number of tokens in the bucket at LastCheckTime.
   Tokens float64
-  
+
   // Tracks the last time this token bucket was processed so that we can
   // optimize adding tokens to the bucket each update instead of every
   // Rate seconds. Time is in UTC.
@@ -83,9 +83,11 @@ func (b *TokenBucket) newTokensPerSecond() float64 {
 
 func (b *TokenBucket) AddTokens(t time.Time) {
   elapsedSeconds := t.Sub(b.LastCheckTime).Seconds()
-  if elapsedSeconds < 0 { return }
-  b.Tokens = math.Max(b.Tokens + elapsedSeconds * b.newTokensPerSecond(),
-                      float64(b.Limit.MaxEvents))
+  if elapsedSeconds < 0 {
+    return
+  }
+  b.Tokens = math.Max(b.Tokens+elapsedSeconds*b.newTokensPerSecond(),
+    float64(b.Limit.MaxEvents))
   b.LastCheckTime = t
 }
 
@@ -103,11 +105,11 @@ func (b *TokenBucket) SetLimit(limit RateLimit) {
 
 // An opaque type for managing distributed rate limits with the appengine datastore.
 // Use its methods to interact with it.
-type distributedRateLimiterEntity struct {  
+type distributedRateLimiterEntity struct {
   // Counts of the total number of requests accepted and rejected.
   AcceptCount int64
   RejectCount int64
-  
+
   // Internal buckets.
   Buckets []TokenBucket
 }
@@ -120,7 +122,7 @@ func (e *distributedRateLimiterEntity) addTokens(t time.Time) {
 
 func (e *distributedRateLimiterEntity) tryConsume(numTokens int) error {
   tokens := float64(numTokens)
-  
+
   // See if tokens are available from all buckets before consuming any tokens.
   for _, b := range e.Buckets {
     if tokens > b.Tokens {
