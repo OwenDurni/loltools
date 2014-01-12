@@ -3,6 +3,7 @@ package model
 import (
   "appengine"
   "appengine/datastore"
+  "errors"
   "fmt"
   "time"
 )
@@ -53,4 +54,11 @@ func GetPlayerByRiotId(
     return nil, nil, err
   }
   return player, playerKey, nil
+}
+
+func GetOrCreatePlayerBySummoner(
+  c appengine.Context,
+  region string,
+  summoner string) (*Player, *datastore.Key, error) {
+  return nil, nil, errors.New("not implemented")
 }

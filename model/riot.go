@@ -11,11 +11,6 @@ const (
   RegionEUNE = "eune"
 )
 
-type RateLimit struct {
-  MaxRequests     int
-  IntervalSeconds int
-}
-
 type RiotApiKey struct {
   Key    string
   Limits []RateLimit

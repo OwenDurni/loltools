@@ -163,5 +163,7 @@ func ApiLeagueAddTeamHandler(w http.ResponseWriter, r *http.Request, args map[st
     return
   }
 
+  
+  
   HttpReplyResourceCreated(w, model.LeagueTeamUri(leagueKey, teamKey))
 }
