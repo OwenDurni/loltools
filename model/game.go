@@ -5,11 +5,29 @@ import (
   "appengine/datastore"
   "fmt"
   "github.com/OwenDurni/loltools/riot"
+  "time"
 )
 
 type Game struct {
-  Region     string
-  RiotGameId int64
+  Region string
+  RiotId int64
+  
+  // The UTC datetime the game started.
+  StartDateTime time.Time
+}
+func (g *Game) Id() string {
+  return fmt.Sprintf("%s-%d", g.Region, g.RiotId)
+}
+func (g *Game) Uri() string {
+  return fmt.Sprintf("/games/%s", g.Id())
+}
+// Returns whether g was changed and needs to be written back to datastore.
+func (g *Game) UpdateLocalFromPlayerGameStats(stats *PlayerGameStats) (changed bool) {
+  if g.StartDateTime != stats.GameStartDateTime {
+    g.StartDateTime = stats.GameStartDateTime
+    changed = true
+  }
+  return
 }
 
 func KeyForGame(c appengine.Context, region string, riotGameId int64) *datastore.Key {
@@ -21,9 +39,25 @@ type PlayerGameStats struct {
   GameKey   *datastore.Key
   PlayerKey *datastore.Key
   
-  // This may be nil if we tried to lookup player stats for this game after the game
-  // was no longer in the recent history for this player.
-  RawStats riot.GameDto
+  // The time the game started.
+  GameStartDateTime time.Time
+  
+  // Stats for games that have expired out of recent player history on the Riot side
+  // before we get around to looking for them may be lost forever. This field is set
+  // to true if we know the game stats are no longer available and we don't have a
+  // copy yet.
+  NotAvailable bool
+  
+  // Set to true when we have captured the stats for this player and game already.
+  Saved bool
+  
+  // The raw stats fetched from riot.
+  RiotData riot.GameDto
+}
+
+func KeyForPlayerGameStats(c appengine.Context, game *Game, player *Player) *datastore.Key {
+  return datastore.NewKey(
+    c, "PlayerGameStats", fmt.Sprintf("%s:%s", game.Id(), player.Id()), 0, nil)
 }
 
 func GetOrCreateGame(
@@ -34,7 +68,7 @@ func GetOrCreateGame(
     err := datastore.Get(c, gameKey, game)
     if err == datastore.ErrNoSuchEntity {
       game.Region = region
-      game.RiotGameId = riotGameId
+      game.RiotId = riotGameId
       _, err = datastore.Put(c, gameKey, game)
     }
     return err

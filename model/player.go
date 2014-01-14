@@ -27,7 +27,6 @@ type Player struct {
   // The last time we refreshed data for this player (UTC).
   LastUpdated time.Time
 }
-
 func (p *Player) Id() string {
   return fmt.Sprintf("%s-%d", p.Region, p.RiotId)
 }
@@ -48,7 +47,7 @@ func (a PlayersBySummoner) Swap(i, j int) {
   a[i], a[j] = a[j], a[i]
 }
 
-func GetPlayerByRiotId(
+func GetOrCreatePlayerByRiotId(
   c appengine.Context,
   region string,
   riotId int64) (*Player, *datastore.Key, error) {
