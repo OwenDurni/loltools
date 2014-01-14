@@ -54,6 +54,20 @@ type PlayerGameStats struct {
   // The raw stats fetched from riot.
   RiotData riot.GameDto
 }
+func (p *PlayerGameStats) OtherPlayers(
+  c appengine.Context, region string) ([]*Player, []*datastore.Key, error) {
+  players := make([]*Player, 0, 12)
+  playerKeys := make([]*datastore.Key, 0, 12)
+  for _, riotPlayer := range p.RiotData.FellowPlayers {
+    player, playerKey, err := GetOrCreatePlayerByRiotId(c, region, riotPlayer.SummonerId)
+    if err != nil {
+      return nil, nil, err
+    }
+    players = append(players, player)
+    playerKeys = append(playerKeys, playerKey)
+  }
+  return players, playerKeys, nil
+}
 
 func KeyForPlayerGameStats(c appengine.Context, game *Game, player *Player) *datastore.Key {
   return datastore.NewKey(

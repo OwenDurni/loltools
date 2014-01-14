@@ -3,11 +3,13 @@ package task
 import (
   "appengine"
   "appengine/datastore"
+  "appengine/taskqueue"
   "errors"
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
   "net/http"
+  "net/url"
   "strconv"
   "time"
 )
@@ -16,6 +18,12 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
   c := appengine.NewContext(r)
   region := r.FormValue("region")
   riotSummonerId, err := strconv.ParseInt(r.FormValue("id"), 10, 64)
+  var viral bool
+  if r.FormValue("viral") == "0" {
+    viral = false
+  } else {
+    viral = true
+  }
   if err != nil {
     ReportPermanentError(c, w, errors.New(fmt.Sprintf("Could not parse id param: %v", err)))
     return
@@ -26,7 +34,10 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
     ReportPermanentError(c, w, errors.New(fmt.Sprintf("Could not get riotApiKey: %v", err)))
     return
   }
-  
+  if err := model.RiotRestApiRateLimiter.TryConsume(c, 1); err != nil {
+    ReportTemporaryError(w, r, http.StatusInternalServerError, err)
+    return
+  }
   riotData, err := riot.GameStatsForPlayer(c, riotApiKey.Key, region, riotSummonerId)
   if err != nil {
     ReportPermanentError(
@@ -62,10 +73,8 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
     game, gameKey, err := model.GetOrCreateGame(c, region, gameData.GameId)
     if err != nil {
       updateStatsNotAvailable = false
-      ReportPermanentError(
-        c, w, errors.New(fmt.Sprintf(
-          "Error creating Game(%s-%d) in datastore: %s",
-          region, gameData.GameId, err.Error())))
+      c.Errorf("Error creating Game(%s-%d) in datastore: %s",
+               region, gameData.GameId, err.Error())
       continue
     }
     encodedAvailableGameKeySet[gameKey.Encode()] = struct{}{}
@@ -81,10 +90,8 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
     // Possibly also update some stats for the game itself.
     if game.UpdateLocalFromPlayerGameStats(playerGameStats) {
       if _, err = datastore.Put(c, gameKey, game); err != nil {
-        ReportPermanentError(
-          c, w, errors.New(fmt.Sprintf(
-            "Error writing updated Game(%s) in datastore: %s",
-            game.Id(), err.Error())))
+        c.Errorf("Error writing updated Game(%s) in datastore: %s",
+                 game.Id(), err.Error())
         continue
       }
     }
@@ -92,15 +99,56 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
     // Save the stats.
     playerGameStatsKey := model.KeyForPlayerGameStats(c, game, player)
     if _, err = datastore.Put(c, playerGameStatsKey, playerGameStats); err != nil {
-      ReportPermanentError(
-        c, w, errors.New(fmt.Sprintf(
-          "Error writing PlayerGameStats(%v) in datastore: %s",
-          playerGameStatsKey, err.Error())))
+      c.Errorf("Error writing PlayerGameStats(%v) in datastore: %s",
+               playerGameStatsKey, err.Error())
       continue
     }
     
-    // TODO(durni): Create stub PlayerGameStats for all the other players in the
-    // game if the entities don't exist yet.
+    // If this is a viral task, schedule non-viral tasks to update the match
+    // histories for the players we don't have stats from yet for this game.
+    if viral {
+      otherPlayers, otherPlayerKeys, err := playerGameStats.OtherPlayers(c, region)
+      if err != nil {
+        c.Errorf("Error getting other players: %s", err.Error())
+      } else {
+        for i, otherPlayer := range otherPlayers {
+          otherPlayerKey := otherPlayerKeys[i]
+          otherStatsKey := model.KeyForPlayerGameStats(c, game, otherPlayer)
+          
+          err = datastore.RunInTransaction(c, func(c appengine.Context) error {
+            otherStats := new(model.PlayerGameStats)
+            err := datastore.Get(c, otherStatsKey, otherStats)
+            if err == datastore.ErrNoSuchEntity {
+              // There is no stub for these stats yet. Create one.
+              otherStats := new(model.PlayerGameStats)
+              otherStats.GameKey = gameKey
+              otherStats.PlayerKey = otherPlayerKey
+              otherStats.GameStartDateTime = playerGameStats.GameStartDateTime
+              if _, err = datastore.Put(c, otherStatsKey, otherStats); err != nil {
+                return err
+              }
+            } else if err != nil {
+              return err
+            } else if otherStats.Saved == true {
+              // We already have these game stats.
+              return nil
+            }
+            // We either just created a stub or there is an existing unsaved stub so
+            // it is time to schedule a task.
+            args := url.Values{}
+            args.Add("viral", "0")
+            args.Add("region", otherPlayer.Region)
+            args.Add("id", fmt.Sprintf("%d", otherPlayer.RiotId))
+            _, err = taskqueue.Add(
+              c, taskqueue.NewPOSTTask("/task/riot/get/player/history", args), "")
+            return err
+          }, nil)
+          if err != nil {
+            c.Errorf("Error updating PlayerGameStats.NotAvailable: %s", err.Error())
+          }
+        }
+      }
+    }
   }
   
   // If we have any incomplete PlayerGameStats entities that are not in
@@ -112,10 +160,7 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
            KeysOnly()
     playerGameStatsKeys, err := q.GetAll(c, nil)
     if err != nil {
-      ReportPermanentError(
-        c, w, errors.New(fmt.Sprintf(
-          "Error updating PlayerGameStats.NotAvailable: %s", err.Error())))
-      // Intentionally just continue as if the error didn't happen.
+      c.Errorf("Error updating PlayerGameStats.NotAvailable: %s", err.Error())
     }
     for i := range playerGameStatsKeys {
       err = datastore.RunInTransaction(c, func(c appengine.Context) error {
@@ -137,10 +182,7 @@ func FetchMatchHistoryHandler(w http.ResponseWriter, r *http.Request, args map[s
         return err
       }, nil)
       if err != nil {
-        ReportPermanentError(
-          c, w, errors.New(fmt.Sprintf(
-            "Error updating PlayerGameStats.NotAvailable: %s", err.Error())))
-        // Intentionally just continue as if the error didn't happen.
+        c.Errorf("Error updating PlayerGameStats.NotAvailable: %s", err.Error())
       }
     }
   }
