@@ -18,17 +18,17 @@ type User struct {
 func GetUser(c appengine.Context) (*User, *datastore.Key, error) {
   appengineUser := user.Current(c)
 
-  var user = new(User)
+  user := new(User)
   key := datastore.NewKey(c, "User", appengineUser.Email, 0, nil)
-  if err := datastore.Get(c, key, user); err == datastore.ErrNoSuchEntity {
-    user.Email = appengineUser.Email
-    if _, err := datastore.Put(c, key, user); err != nil {
-      return nil, key, err
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+    err := datastore.Get(c, key, user)
+    if err == datastore.ErrNoSuchEntity {
+      user.Email = appengineUser.Email
+      _, err = datastore.Put(c, key, user)
     }
-  } else if err != nil {
-    return nil, key, err
-  }
-  return user, key, nil
+    return err
+  }, nil)
+  return user, key, err
 }
 
 func GetUserByKey(c appengine.Context, userKey *datastore.Key) (*User, error) {

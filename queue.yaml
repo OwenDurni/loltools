@@ -1,0 +1,8 @@
+queue:
+- name: default
+  rate: 5/s
+  retry_parameters:
+    min_backoff_seconds: 5
+    max_backoff_seconds: 43200  # 12 hours
+    max_doublings: 99999        # use exponential backoff until we hit max_backoff_seconds
+    task_age_limit: 7d          # tasks expire after 7 days of failures

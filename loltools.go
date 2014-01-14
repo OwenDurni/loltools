@@ -6,6 +6,7 @@ import (
   "errors"
   "fmt"
   "github.com/OwenDurni/loltools/model"
+  "github.com/OwenDurni/loltools/task"
   "github.com/OwenDurni/loltools/util/dispatch"
   "github.com/OwenDurni/loltools/view"
   "net/http"
@@ -56,6 +57,7 @@ func init() {
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
+  dispatcher.Add("/task/riot/get/player/history", task.FetchMatchHistoryHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)

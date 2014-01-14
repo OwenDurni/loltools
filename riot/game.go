@@ -1,5 +1,12 @@
 package riot
 
+import (
+  "appengine"
+  "encoding/json"
+  "fmt"
+  "net/url"
+)
+
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
 type RecentGamesDto struct {
   Games      []GameDto `json:"games"`
@@ -138,4 +145,23 @@ type RawStatsDto struct {
   CombatPlayerScore    int `json:"combatPlayerScore"`
   ObjectivePlayerScore int `json:"objectivePlayerScore"`
   TeamObjective        int `json:"teamObjective"`
+}
+
+func GameStatsForPlayer(
+  c appengine.Context,
+  riotApiKey string,
+  region string,
+  riotSummonerId int64) (*RecentGamesDto, error) {
+  loc := ComposeUrl(
+    riotApiKey,
+    fmt.Sprintf("/api/lol/%s/v1.3/game/by-summoner/%d/recent", region, riotSummonerId),
+    &url.Values{})
+  jsonData, err := Fetch(c, loc)
+  if err != nil {
+    return nil, err
+  }
+  
+  g := new(RecentGamesDto)
+  err = json.Unmarshal(jsonData, g)
+  return g, err
 }
