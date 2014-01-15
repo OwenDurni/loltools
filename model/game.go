@@ -13,8 +13,15 @@ type Game struct {
   Region string
   RiotId int64
   
-  // The UTC datetime the game started.
+  // Fields below are populated from riot player stats.
+  HasRiotData   bool
   StartDateTime time.Time
+  MapId         int
+  GameMode      string
+  GameType      string
+  SubType       string
+  Players       []riot.PlayerDto
+  Invalid       bool
 }
 func (g *Game) Id() string {
   return MakeGameId(g.Region, g.RiotId)
@@ -26,26 +33,17 @@ func MakeGameId(region string, riotId int64) string {
   return fmt.Sprintf("%s-%d", region, riotId)
 }
 
-// Returns whether g was changed and needs to be written back to datastore.
-func (g *Game) UpdateLocalFromPlayerGameStats(stats *PlayerGameStats) (changed bool) {
-  if g.StartDateTime != stats.GameStartDateTime {
-    g.StartDateTime = stats.GameStartDateTime
-    changed = true
-  }
-  return
-}
-
 func KeyForGame(c appengine.Context, region string, riotGameId int64) *datastore.Key {
-  return datastore.NewKey(c, "Game", MakeGameId(region, riotGameId), 0, nil)
+  return KeyForGameId(c, MakeGameId(region, riotGameId))
+}
+func KeyForGameId(c appengine.Context, gameId string) *datastore.Key {
+  return datastore.NewKey(c, "Game", gameId, 0, nil)
 }
 
 // The tuple (GameKey, PlayerKey) are unique per entity.
 type PlayerGameStats struct {
   GameKey   *datastore.Key
   PlayerKey *datastore.Key
-  
-  // The time the game started.
-  GameStartDateTime time.Time
   
   // Stats for games that have expired out of recent player history on the Riot side
   // before we get around to looking for them may be lost forever. This field is set
@@ -57,26 +55,16 @@ type PlayerGameStats struct {
   Saved bool
   
   // The raw stats fetched from riot.
-  RiotData riot.GameDto
-}
-func (p *PlayerGameStats) OtherPlayers(
-  c appengine.Context, region string) ([]*Player, []*datastore.Key, error) {
-  players := make([]*Player, 0, 12)
-  playerKeys := make([]*datastore.Key, 0, 12)
-  for _, riotPlayer := range p.RiotData.FellowPlayers {
-    player, playerKey, err := GetOrCreatePlayerByRiotId(c, region, riotPlayer.SummonerId)
-    if err != nil {
-      return nil, nil, err
-    }
-    players = append(players, player)
-    playerKeys = append(playerKeys, playerKey)
-  }
-  return players, playerKeys, nil
+  RiotData riot.RawStatsDto
 }
 
 func KeyForPlayerGameStats(c appengine.Context, game *Game, player *Player) *datastore.Key {
+  return KeyForPlayerGameStatsId(c, game.Id(), player.Id())
+}
+func KeyForPlayerGameStatsId(
+  c appengine.Context, gameId string, playerId string) *datastore.Key {
   return datastore.NewKey(
-    c, "PlayerGameStats", fmt.Sprintf("%s:%s", game.Id(), player.Id()), 0, nil)
+    c, "PlayerGameStats", fmt.Sprintf("%s/%s", gameId, playerId), 0, nil)
 }
 
 func GetOrCreateGame(
@@ -93,6 +81,45 @@ func GetOrCreateGame(
     return err
   }, nil)
   return game, gameKey, err
+}
+
+func EnsureGameExists(
+  c appengine.Context,
+  region string,
+  gameKey *datastore.Key,
+  riotSummonerId int64,
+  dto *riot.GameDto) error {
+  game := new(Game)
+  return datastore.RunInTransaction(c, func(c appengine.Context) error {
+    err := datastore.Get(c, gameKey, game)
+    if err != nil && err != datastore.ErrNoSuchEntity {
+      return err
+    }
+    if game.HasRiotData {
+      return nil
+    }
+    game.Region = region
+    game.RiotId = dto.GameId
+    game.HasRiotData = true
+    game.StartDateTime = (time.Time)(dto.CreateDate)
+    game.MapId = dto.MapId
+    game.GameMode = dto.GameMode
+    game.GameType = dto.GameType
+    game.SubType = dto.SubType
+    players := make([]riot.PlayerDto, 0, len(dto.FellowPlayers)+1)
+    players = append(players, riot.PlayerDto{
+      ChampionId: dto.ChampionId,
+      SummonerId: riotSummonerId,
+      TeamId: dto.TeamId,
+    })
+    for _, playerDto := range dto.FellowPlayers {
+      players = append(players, playerDto)
+    }
+    game.Players = players
+    game.Invalid = dto.Invalid
+    _, err = datastore.Put(c, gameKey, game)
+    return err
+  }, nil)
 }
 
 func GetPlayerGameStats(
@@ -194,8 +221,26 @@ func (s *CollectiveGameStats) FilterToGamesWithAtLeast(n int, players []*Player)
   }
   s.games = filteredGames
 }
-func (s *CollectiveGameStats) Save(c appengine.Context) {
-  
+// Calls the provided function once for each game with a sample player's stat for that game.
+func (s *CollectiveGameStats) ForEachGame(fn func(string, int64, *riot.GameDto)) {
+  if s.games == nil { return }
+  for gameId, playerMap := range s.games {
+    for riotSummonerId, stat := range playerMap {
+      if stat != nil {
+        fn(gameId, riotSummonerId, stat)
+        break
+      }
+    }
+  }
+}
+// Calls the provided function once for each player's stat.
+func (s *CollectiveGameStats) ForEachStat(fn func(string, int64, *riot.GameDto)) {
+  if s.games == nil { return }
+  for gameId, playerMap := range s.games {
+    for playerId, stat := range playerMap {
+      fn(gameId, playerId, stat)
+    }
+  }
 }
 func (s *CollectiveGameStats) Size() int {
   if (s.games == nil) { return 0 }

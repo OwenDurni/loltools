@@ -37,6 +37,9 @@ func (p *Player) Uri() string {
 func MakePlayerId(region string, riotSummonerId int64) string {
   return fmt.Sprintf("%s-%d", region, riotSummonerId)
 }
+func KeyForPlayer(c appengine.Context, region string, riotSummonerId int64) *datastore.Key {
+  return datastore.NewKey(c, "Player", MakePlayerId(region, riotSummonerId), 0, nil) 
+}
 
 // sort.Interface for []*Player
 type PlayersBySummoner []*Player
@@ -56,8 +59,7 @@ func GetOrCreatePlayerByRiotId(
   region string,
   riotId int64) (*Player, *datastore.Key, error) {
   var player *Player = new(Player)
-  playerKey := datastore.NewKey(
-    c, "Player", fmt.Sprintf("%s-%d", region, riotId), 0, nil)
+  playerKey := KeyForPlayer(c, region, riotId)
 
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     err := datastore.Get(c, playerKey, player)
@@ -114,8 +116,7 @@ func GetOrCreatePlayerBySummoner(
   player.Level = riotSummoner.SummonerLevel
   player.LastUpdated = time.Now().UTC()
 
-  playerKey := datastore.NewKey(
-    c, "Player", fmt.Sprintf("%s-%d", region, player.RiotId), 0, nil)
+  playerKey := KeyForPlayer(c, region, player.RiotId)
 
   if _, err = datastore.Put(c, playerKey, player); err != nil {
     return nil, nil, errwrap.Wrap(err)

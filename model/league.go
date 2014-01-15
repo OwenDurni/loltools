@@ -27,6 +27,25 @@ type Team struct {
   Name string
 }
 
+// An association between games and teams.
+// 
+// Specifically the games containing at least 3 members of the league-team on the
+// same in-game team.
+//
+// Ancestor: League
+type GameByTeam struct {
+  GameKey *datastore.Key
+  TeamKey *datastore.Key
+}
+
+// An associate between games and tags. A game can have multiple tags.
+//
+// Ancestor: League
+type GameTags struct {
+  GameKey *datastore.Key
+  Tag     string
+}
+
 // A table associating summoners to teams. Summoners may be on more than one team
 // per league. Teams may have any number of summoners.
 //
@@ -41,22 +60,6 @@ type TeamInfo struct {
   Name string
   Id   string
   Uri  string
-}
-
-type Match struct {
-  // Short string describing the purpose of the match. (Ex: "Week 1", "Round of 64")
-  Tag string
-  // The match consists of this number of games. (Ex: 3 for a best-of-3).
-  GameCount int
-
-  // The two teams involved in the match.
-  Team1 *datastore.Key
-  Team2 *datastore.Key
-}
-
-type MatchResults struct {
-  MatchKey       *datastore.Key
-  GameResultsKey *datastore.Key
 }
 
 func CreateLeague(c appengine.Context, name string) (*League, *datastore.Key, error) {
@@ -249,5 +252,29 @@ func TeamAddPlayer(
   }
   key := datastore.NewIncompleteKey(c, "TeamMembership", leagueKey)
   _, err := datastore.Put(c, key, m)
+  return err
+}
+
+func LeagueAddGameByTeam(
+  c appengine.Context,
+  leagueKey *datastore.Key,
+  gameKey *datastore.Key,
+  teamKey *datastore.Key) error {
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+    q := datastore.NewQuery("GameByTeam").Ancestor(leagueKey).
+           Filter("GameKey =", gameKey).
+           Filter("TeamKey =", teamKey).
+           Limit(1).
+           KeysOnly()
+    keys, err := q.GetAll(c, nil)
+    if err != nil { return err }
+    if len(keys) > 0 { return nil }
+    key := datastore.NewIncompleteKey(c, "GameByTeam", leagueKey)
+    gameByTeam := new(GameByTeam)
+    gameByTeam.GameKey = gameKey
+    gameByTeam.TeamKey = teamKey
+    _, err = datastore.Put(c, key, gameByTeam)
+    return err
+  }, nil)
   return err
 }

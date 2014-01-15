@@ -9,8 +9,8 @@ import (
 
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
 type RecentGamesDto struct {
-  Games      []*GameDto `json:"games"`
-  SummonerId int64      `json:"summonerId"`
+  Games      []GameDto `json:"games"`
+  SummonerId int64     `json:"summonerId"`
 }
 
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
@@ -23,14 +23,14 @@ type GameDto struct {
   GameType string `json:"gameType"`
   SubType  string `json:"subType"`
 
-  TeamId        int          `json:"teamId"`
-  FellowPlayers []*PlayerDto `json:"fellowPlayers"`
+  TeamId        int         `json:"teamId"`
+  FellowPlayers []PlayerDto `json:"fellowPlayers"`
 
-  ChampionId     int          `json:"championId"`
-  Level          int          `json:"level"`
-  SummonerSpell1 int          `json:"spell1"`
-  SummonerSpell2 int          `json:"spell2"`
-  Stats          *RawStatsDto `json:"stats"`
+  ChampionId     int         `json:"championId"`
+  Level          int         `json:"level"`
+  SummonerSpell1 int         `json:"spell1"`
+  SummonerSpell2 int         `json:"spell2"`
+  Stats          RawStatsDto `json:"stats"`
 
   Invalid bool `json:"invalid"`
 }
@@ -43,32 +43,35 @@ type PlayerDto struct {
 }
 
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
+//
+// Fields that are not used in the app are commented out to save datastore ops.
+// This is the struct that appears most often in the datastore.
 type RawStatsDto struct {
   // Overall Game Stats
   Win        bool `json:"win"`
   TimePlayed int  `json:"timePlayed"`
-  Team       int  `json:"team"`
+  //Team       int  `json:"team"`
 
   // KDA
   ChampionsKilled int `json:"championsKilled"`
   NumDeaths       int `json:"numDeaths"`
   Assists         int `json:"assists"`
-  TurretsKilled   int `json:"turretsKilled"`
-  BarracksKilled  int `json:"barracksKilled"`
+  //TurretsKilled   int `json:"turretsKilled"`
+  //BarracksKilled  int `json:"barracksKilled"`
 
   // Gold/XP
   Level      int `json:"level"`
-  Gold       int `json:"gold"`
+  //Gold       int `json:"gold"`
   GoldEarned int `json:"goldEarned"`
-  GoldSpent  int `json:"goldSpent"`
+  //GoldSpent  int `json:"goldSpent"`
 
   // CS
-  MinionsDenied                   int `json:"minionsDenied"`
+  //MinionsDenied                   int `json:"minionsDenied"`
   MinionsKilled                   int `json:"minionsKilled"`
-  NeutralMinionsKilled            int `json:"neutralMinionsKilled"`
+  //NeutralMinionsKilled            int `json:"neutralMinionsKilled"`
   NeutralMinionsKilledEnemyJungle int `json:"neutralMinionsKilledEnemyJungle"`
   NeutralMinionsKilledYourJungle  int `json:"neutralMinionsKilledYourJungle"`
-  SuperMonstersKilled             int `json:"superMonsterKilled"`
+  //SuperMonstersKilled             int `json:"superMonsterKilled"`
 
   // Items
   Item0                 int `json:"item0"`
@@ -78,10 +81,10 @@ type RawStatsDto struct {
   Item4                 int `json:"item4"`
   Item5                 int `json:"item5"`
   Item6                 int `json:"item6"`
-  ItemsPurchased        int `json:"itemsPurchased"`
-  ConsumablesPurchased  int `json:"consumablesPurchased"`
-  NumItemsBought        int `json:"numItemsBought"`
-  LegendaryItemsCreated int `json:"legendaryItemsCreated"`
+  //ItemsPurchased        int `json:"itemsPurchased"`
+  //ConsumablesPurchased  int `json:"consumablesPurchased"`
+  //NumItemsBought        int `json:"numItemsBought"`
+  //LegendaryItemsCreated int `json:"legendaryItemsCreated"`
 
   // Vision
   WardPlaced        int `json:"wardPlaced"`
@@ -90,61 +93,61 @@ type RawStatsDto struct {
   WardKilled        int `json:"wardKilled"`
 
   // Damage Dealt
-  DamageDealtPlayer              int `json:"damageDealtPlayer"`
-  TotalDamageDealt               int `json:"totalDamageDealt"`
-  TotalDamageDealtToChampions    int `json:"totalDamageDealtToChampions"`
-  PhysicalDamageDealtPlayer      int `json:"physicalDamageDealtPlayer"`
+  //DamageDealtPlayer              int `json:"damageDealtPlayer"`
+  //TotalDamageDealt               int `json:"totalDamageDealt"`
+  //TotalDamageDealtToChampions    int `json:"totalDamageDealtToChampions"`
+  //PhysicalDamageDealtPlayer      int `json:"physicalDamageDealtPlayer"`
   PhysicalDamageDealtToChampions int `json:"physicalDamageDealtToChampions"`
-  MagicDamageDealtPlayer         int `json:"magicDamageDealtPlayer"`
+  //MagicDamageDealtPlayer         int `json:"magicDamageDealtPlayer"`
   MagicDamageDealtToChampions    int `json:"magicDamageDealtToChampions"`
-  TrueDamageDealtPlayer          int `json:"trueDamageDealtPlayer"`
+  //TrueDamageDealtPlayer          int `json:"trueDamageDealtPlayer"`
   TrueDamageDealtToChampions     int `json:"trueDamageDealtToChampions"`
 
   // Damage Taken
-  TotalDamageTaken    int `json:"totalDamageTaken"`
+  //TotalDamageTaken    int `json:"totalDamageTaken"`
   PhysicalDamageTaken int `json:"physicalDamageTaken"`
   MagicDamageTaken    int `json:"magicDamageTaken"`
   TrueDamageTaken     int `json:"trueDamageTaken"`
 
   // Misc Dealt Stats
   TotalTimeCrowdCotrolDealt int `json:"totalTimeCrowdControlDealt"`
-  TotalHeal                 int `json:"totalHeal"`
-  TotalUnitsHealed          int `json:"totalUnitsHealed"`
+  //TotalHeal                 int `json:"totalHeal"`
+  //TotalUnitsHealed          int `json:"totalUnitsHealed"`
 
   // Vanity stats.
-  KillingSprees         int  `json:"killingSprees"`
-  LargestKillingSpree   int  `json:"largestKillingSpree"`
-  LargestMultiKill      int  `json:"largestMultiKill"`
-  DoubleKills           int  `json:"doubleKills"`
-  TripleKills           int  `json:"tripleKills"`
-  QuadraKills           int  `json:"quadraKills"`
-  PentaKills            int  `json:"pentaKills"`
-  UnrealKills           int  `json:"unrealKills"`
-  NexusKilled           bool `json:"nexusKilled"`
-  FirstBlood            int  `json:"firstBlood"`
-  LargestCriticalStrike int  `json:"largestCriticalStrike"`
+  //KillingSprees         int  `json:"killingSprees"`
+  //LargestKillingSpree   int  `json:"largestKillingSpree"`
+  //LargestMultiKill      int  `json:"largestMultiKill"`
+  //DoubleKills           int  `json:"doubleKills"`
+  //TripleKills           int  `json:"tripleKills"`
+  //QuadraKills           int  `json:"quadraKills"`
+  //PentaKills            int  `json:"pentaKills"`
+  //UnrealKills           int  `json:"unrealKills"`
+  //NexusKilled           bool `json:"nexusKilled"`
+  //FirstBlood            int  `json:"firstBlood"`
+  //LargestCriticalStrike int  `json:"largestCriticalStrike"`
 
   // Number of times various spells were cast.
-  Spell1Cast         int `json:"spell1Cast"`
-  Spell2Cast         int `json:"spell2Cast"`
-  Spell3Cast         int `json:"spell3Cast"`
-  Spell4Cast         int `json:"spell4Cast"`
-  SummonerSpell1Cast int `json:"summonSpell1Cast"`
-  SummonerSpell2Cast int `json:"summonSpell2Cast"`
+  //Spell1Cast         int `json:"spell1Cast"`
+  //Spell2Cast         int `json:"spell2Cast"`
+  //Spell3Cast         int `json:"spell3Cast"`
+  //Spell4Cast         int `json:"spell4Cast"`
+  //SummonerSpell1Cast int `json:"summonSpell1Cast"`
+  //SummonerSpell2Cast int `json:"summonSpell2Cast"`
 
   // Dominion
-  VictoryPointTotal    int `json:"victoryPointTotal"`
-  NodeCapture          int `json:"nodeCapture"`
-  NodeCaptureAssist    int `json:"nodeCaptureAssist"`
-  NodeNeutralize       int `json:"nodeNeutralize"`
-  NodeNeutralizeAssist int `json:"nodeNeutralizeAssist"`
+  //VictoryPointTotal    int `json:"victoryPointTotal"`
+  //NodeCapture          int `json:"nodeCapture"`
+  //NodeCaptureAssist    int `json:"nodeCaptureAssist"`
+  //NodeNeutralize       int `json:"nodeNeutralize"`
+  //NodeNeutralizeAssist int `json:"nodeNeutralizeAssist"`
 
   // ???
-  TotalPlayerScore     int `json:"totalPlayerScore"`
-  TotalScoreRank       int `json:"totalScoreRank"`
-  CombatPlayerScore    int `json:"combatPlayerScore"`
-  ObjectivePlayerScore int `json:"objectivePlayerScore"`
-  TeamObjective        int `json:"teamObjective"`
+  //TotalPlayerScore     int `json:"totalPlayerScore"`
+  //TotalScoreRank       int `json:"totalScoreRank"`
+  //CombatPlayerScore    int `json:"combatPlayerScore"`
+  //ObjectivePlayerScore int `json:"objectivePlayerScore"`
+  //TeamObjective        int `json:"teamObjective"`
 }
 
 func GameStatsForPlayer(

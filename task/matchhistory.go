@@ -2,7 +2,7 @@ package task
 
 import (
   "appengine"
-  //"appengine/datastore"
+  "appengine/datastore"
   //"appengine/taskqueue"
   "fmt"
   "github.com/OwenDurni/loltools/model"
@@ -68,7 +68,8 @@ func FetchTeamMatchHistoryHandler(
     }
     for _, gameDto := range recentGamesDto.Games {
       gameId := model.MakeGameId(region, gameDto.GameId)
-      collectiveGameStats.Add(region, gameId, player.RiotId, gameDto)
+      gameDtoCopy := gameDto
+      collectiveGameStats.Add(region, gameId, player.RiotId, &gameDtoCopy)
     }
   }
   
@@ -76,7 +77,50 @@ func FetchTeamMatchHistoryHandler(
   collectiveGameStats.FilterToGamesWithAtLeast(3, players)
   
   // Write to datastore.
-  collectiveGameStats.Save(c)
+  collectiveGameStats.ForEachGame(func(gameId string,
+                                       sampleRiotSummonerId int64,
+                                       sampleStat *riot.GameDto) {
+    gameKey := model.KeyForGameId(c, gameId)
+    err := model.EnsureGameExists(c, region, gameKey, sampleRiotSummonerId, sampleStat)
+    if err != nil {
+      c.Errorf("Failed to create game %s: %v", gameId, err)
+      return
+    }
+    if err := model.LeagueAddGameByTeam(c, leagueKey, gameKey, teamKey); err != nil {
+      c.Errorf("Failed to associate game %s with team %s: %v", gameId, teamId, err)
+    }
+  })
+  
+  collectiveGameStats.ForEachStat(func(gameId string, riotSummonerId int64, stat *riot.GameDto) {
+    if stat == nil { return }
+    gameKey := model.KeyForGameId(c, gameId)
+    playerKey := model.KeyForPlayer(c, region, riotSummonerId)
+    playerId := model.MakePlayerId(region, riotSummonerId)
+    statsKey := model.KeyForPlayerGameStatsId(c, gameId, playerId)
+    
+    err = datastore.RunInTransaction(c, func (c appengine.Context) error {
+      playerGameStats := new(model.PlayerGameStats)
+      err := datastore.Get(c, statsKey, playerGameStats)
+      if err != nil && err != datastore.ErrNoSuchEntity {
+        return err
+      }
+      // Only write if the entity hasn't been saved yet.
+      if !playerGameStats.Saved {
+        playerGameStats.GameKey = gameKey
+        playerGameStats.PlayerKey = playerKey
+        playerGameStats.Saved = true
+        playerGameStats.NotAvailable = false
+        playerGameStats.RiotData = stat.Stats
+        _, err = datastore.Put(c, statsKey, playerGameStats)
+        return err
+      }
+      // Nothing to write.
+      return nil
+    }, nil)
+    if err != nil {
+      c.Errorf("Failed to store stats for %s/%s: %v", gameId, playerId, err)
+    }
+  })
   
   // Write some debug info to the response.
   fmt.Fprintf(
