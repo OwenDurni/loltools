@@ -10,6 +10,14 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: GameByTeam
+  ancestor: yes
+  properties:
+  - name: TeamKey
+  - name: DateTime
+    direction: desc
+  - name: GameKey
+
 - kind: League
   properties:
   - name: Owner
