@@ -82,6 +82,7 @@ type ctxBase struct {
   Title   string
   TimeNow string
   User    string
+  Errors  []error
 }
 
 func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
@@ -90,5 +91,6 @@ func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
   if u := user.Current(c); u != nil {
     ctx.User = u.Email
   }
+  ctx.Errors = make([]error, 0)
   return ctx
 }

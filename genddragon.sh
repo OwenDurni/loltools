@@ -1,0 +1,1 @@
+go run ./tools/genddragon.go > ddragon/autogen.go

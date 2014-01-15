@@ -67,6 +67,11 @@ func KeyForPlayerGameStatsId(
     c, "PlayerGameStats", fmt.Sprintf("%s/%s", gameId, playerId), 0, nil)
 }
 
+type GameInfo struct {
+  Game        *Game
+  PlayerStats []*PlayerGameStats
+}
+
 func GetOrCreateGame(
   c appengine.Context, region string, riotGameId int64) (*Game, *datastore.Key, error) {
   game := new(Game)
@@ -142,6 +147,55 @@ func GetPlayerGameStats(
     return nil, gameKeys[0], err
   }
   return games[0], gameKeys[0], err
+}
+
+// Note that sometimes partial results are returned even if there is an error.
+func TeamRecentGameInfo(
+  c appengine.Context,
+  n int,
+  leagueKey *datastore.Key,
+  teamKey *datastore.Key) ([]*GameInfo, []error) {
+  infos := make([]*GameInfo, 0, n)
+  errors := make([]error, 0)
+  
+  var gameKeys []*datastore.Key
+  {
+    var gamesByTeam []*GameByTeam
+    q := datastore.NewQuery("GameByTeam").Ancestor(leagueKey).
+           Project("GameKey").
+           Filter("TeamKey =", teamKey).
+           Order("-DateTime").
+           Limit(n)
+    if _, err := q.GetAll(c, &gamesByTeam); err != nil {
+      errors = append(errors, err)
+      return infos, errors
+    }
+    for _, g := range gamesByTeam {
+      gameKeys = append(gameKeys, g.GameKey)
+    }
+  }
+  
+  games := make([]*Game, len(gameKeys))
+  if err := datastore.GetMulti(c, gameKeys, games); err != nil {
+    errors = append(errors, err)
+  }
+  
+  for _, game := range games {
+    if game == nil { continue }
+    info := new(GameInfo)
+    infos = append(infos, info)
+    info.Game = game
+    info.PlayerStats = make([]*PlayerGameStats, len(game.Players))
+    for p := range game.Players {
+      statKey := KeyForPlayerGameStatsId(
+        c, game.Id(), MakePlayerId(game.Region, game.Players[p].SummonerId))
+      if err := datastore.Get(c, statKey, info.PlayerStats[p]); err != nil {
+        errors = append(errors, err)
+      }
+    }
+  }
+  
+  return infos, errors
 }
 
 type CollectiveGameStats struct {

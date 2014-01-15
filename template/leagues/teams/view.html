@@ -14,16 +14,20 @@
   {{end}}
 </table>
 
-<h3>Add Player</h2>
+<h3>Add Player</h3>
 <form id="add-player">
-  <ul>
-    <input type="hidden" name="league" value="{{.League.Id}}" />
-    <input type="hidden" name="team" value="{{.Team.Id}}" />
-    <input type="hidden" name="region" value="{{.League.Region}}" />
-    <li>Summoner Name: <input type="text" name="summoner" value="" /></li>
-  </ul>
+  <input type="hidden" name="league" value="{{.League.Id}}" />
+  <input type="hidden" name="team" value="{{.Team.Id}}" />
+  <input type="hidden" name="region" value="{{.League.Region}}" />
+  <input type="text" name="summoner" value="" /></li>
 {{with $x := form "add-player" "/api/leagues/teams/add-player" "Add"}}
 {{template "formEnd" $x}}
 {{end}}
+
+<h3>Admin</h3>
+<a class="action"
+   href="/task/riot/get/team/history?league={{.League.Id}}&team={{.Team.Id}}">
+  Update Match History
+</a>
 
 {{end}}

@@ -6,6 +6,7 @@ import (
   "errors"
   "fmt"
   "github.com/OwenDurni/loltools/util/errwrap"
+  "time"
 )
 
 // Leagues are identified by their key.
@@ -34,8 +35,9 @@ type Team struct {
 //
 // Ancestor: League
 type GameByTeam struct {
-  GameKey *datastore.Key
-  TeamKey *datastore.Key
+  GameKey  *datastore.Key
+  TeamKey  *datastore.Key
+  DateTime time.Time
 }
 
 // An associate between games and tags. A game can have multiple tags.
@@ -259,7 +261,8 @@ func LeagueAddGameByTeam(
   c appengine.Context,
   leagueKey *datastore.Key,
   gameKey *datastore.Key,
-  teamKey *datastore.Key) error {
+  teamKey *datastore.Key,
+  dateTime time.Time) error {
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("GameByTeam").Ancestor(leagueKey).
            Filter("GameKey =", gameKey).
@@ -273,6 +276,7 @@ func LeagueAddGameByTeam(
     gameByTeam := new(GameByTeam)
     gameByTeam.GameKey = gameKey
     gameByTeam.TeamKey = teamKey
+    gameByTeam.DateTime = dateTime
     _, err = datastore.Put(c, key, gameByTeam)
     return err
   }, nil)

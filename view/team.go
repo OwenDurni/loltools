@@ -57,17 +57,23 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   // Sort players by summoner.
   sort.Sort(model.PlayersBySummoner(players))
 
+  // Get recent match history.
+  gameInfos, errors := model.TeamRecentGameInfo(c, 5, leagueKey, teamKey)
+  
   // Populate view context.
   ctx := struct {
     ctxBase
     League
     Team
-    Players []*PlayerInfo
+    RecentGames []*model.GameInfo
+    Players     []*PlayerInfo
   }{}
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
+  ctx.ctxBase.Errors = errors
   ctx.League.Fill(league, leagueKey)
   ctx.Team.Fill(team, teamKey, leagueKey)
+  ctx.RecentGames = gameInfos
 
   ctx.Players = make([]*PlayerInfo, len(players))
   for i, p := range players {

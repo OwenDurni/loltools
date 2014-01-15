@@ -8,6 +8,7 @@ import (
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
+  "time"
 )
 
 // Note(durni): This is optimized to minimize the number of datastore write ops at
@@ -82,7 +83,9 @@ func FetchTeamMatchHistoryHandler(
       c.Errorf("Failed to create game %s: %v", gameId, err)
       return
     }
-    if err := model.LeagueAddGameByTeam(c, leagueKey, gameKey, teamKey); err != nil {
+    err = model.LeagueAddGameByTeam(
+      c, leagueKey, gameKey, teamKey, (time.Time)(sampleStat.CreateDate))
+    if err != nil {
       c.Errorf("Failed to associate game %s with team %s: %v", gameId, teamId, err)
     }
   })
