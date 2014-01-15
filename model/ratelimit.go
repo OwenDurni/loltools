@@ -109,7 +109,8 @@ func (b *TokenBucket) SetLimit(limit RateLimit) {
     return
   }
   b.Limit = limit
-  b.Tokens = 0.0
+  // Assume 50% of the tokens when creating a new instance.
+  b.Tokens = float64(limit.MaxEvents) / 2.0
   b.LastCheckTime = time.Now().UTC()
 }
 

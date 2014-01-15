@@ -3,15 +3,11 @@ package task
 import (
   "appengine"
   "appengine/datastore"
-  //"appengine/taskqueue"
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
-  //"net/url"
-  //"strconv"
-  //"time"
 )
 
 // Note(durni): This is optimized to minimize the number of datastore write ops at
@@ -123,10 +119,12 @@ func FetchTeamMatchHistoryHandler(
   })
   
   // Write some debug info to the response.
+  fmt.Fprintf(w, "<html><body><pre>")
   fmt.Fprintf(
     w, "Found %d games with at least 3 players from:\n", collectiveGameStats.Size())
   for _, player := range players {
     fmt.Fprintf(w, "  %s (%d)\n", player.Summoner, player.RiotId)
   }
   collectiveGameStats.WriteDebugStringTo(w)
+  fmt.Fprintf(w, "</pre></body></html>")
 }
