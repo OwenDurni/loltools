@@ -3,6 +3,7 @@ package model
 import (
   "appengine"
   "appengine/datastore"
+  "appengine/memcache"
 )
 
 const (
@@ -11,39 +12,51 @@ const (
   RegionEUNE = "eune"
 )
 
-var RiotRestApiRateLimiter = DistributedRateLimiter{"riot-rest-api"}
+var RiotApiRateLimiter = DistributedRateLimiter{
+  Name: "riot-rest-api",
+  Limits: RiotDevRateLimits,
+}
+
+var RiotDevRateLimits = []RateLimit{
+  RateLimit{10, 10},
+  RateLimit{500, 10 * 60},
+}
 
 type RiotApiKey struct {
-  Key    string
-  Limits []RateLimit
+  Key string
 }
 
 func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
   var r = new(RiotApiKey)
+  
+  // First try memcache.
+  if _, err := memcache.JSON.Get(c, "RiotApiKey/dev", r); err == nil {
+    return r, nil
+  }
+  
+  // Next try datastore.
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
   if err := datastore.Get(c, key, r); err == datastore.ErrNoSuchEntity {
     return nil, nil
   } else if err != nil {
     return nil, err
   }
+  
+  // Best effort put into datastore before returning.
+  memcache.JSON.Set(c, &memcache.Item{Key: "RiotApiKey/dev", Object: r})
   return r, nil
 }
 
-// Also reset the relevant rate limiter.
 func SetRiotApiKey(c appengine.Context, apikey string) error {
   r := new(RiotApiKey)
   r.Key = apikey
-  r.Limits = []RateLimit{
-    RateLimit{10, 10},
-    RateLimit{500, 10 * 60},
-  }
+  
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
-
-  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
-    if _, err := datastore.Put(c, key, r); err != nil {
-      return err
-    }
-    return RiotRestApiRateLimiter.Init(c, r.Limits)
-  }, &datastore.TransactionOptions{XG: true})
-  return err
+  _, err := datastore.Put(c, key, r)
+  if err != nil {
+    return err
+  }
+  // Best effort put in memcache.
+  memcache.JSON.Set(c, &memcache.Item{Key: "RiotApiKey/dev", Object: r})
+  return nil
 }

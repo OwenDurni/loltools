@@ -9,8 +9,8 @@ import (
 
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
 type RecentGamesDto struct {
-  Games      []GameDto `json:"games"`
-  SummonerId int64     `json:"summonerId"`
+  Games      []*GameDto `json:"games"`
+  SummonerId int64      `json:"summonerId"`
 }
 
 // v1.3: http://developer.riotgames.com/api/methods#!/339/1143
@@ -23,14 +23,14 @@ type GameDto struct {
   GameType string `json:"gameType"`
   SubType  string `json:"subType"`
 
-  TeamId        int         `json:"teamId"`
-  FellowPlayers []PlayerDto `json:"fellowPlayers"`
+  TeamId        int          `json:"teamId"`
+  FellowPlayers []*PlayerDto `json:"fellowPlayers"`
 
-  ChampionId     int         `json:"championId"`
-  Level          int         `json:"level"`
-  SummonerSpell1 int         `json:"spell1"`
-  SummonerSpell2 int         `json:"spell2"`
-  Stats          RawStatsDto `json:"stats"`
+  ChampionId     int          `json:"championId"`
+  Level          int          `json:"level"`
+  SummonerSpell1 int          `json:"spell1"`
+  SummonerSpell2 int          `json:"spell2"`
+  Stats          *RawStatsDto `json:"stats"`
 
   Invalid bool `json:"invalid"`
 }

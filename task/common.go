@@ -6,8 +6,8 @@ import (
   "net/http"
 )
 
-func ReportPermanentError(c appengine.Context, w http.ResponseWriter, err error) {
-  c.Errorf("[Permanent Task Error] %s", err.Error())
+func ReportPermanentError(c appengine.Context, w http.ResponseWriter, msg string) {
+  c.Errorf("[Permanent Task Error] %s", msg)
   
   // We write a 200 response so that the task is not retried.
   view.HttpReplyOkEmpty(w)

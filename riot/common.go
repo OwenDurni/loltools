@@ -36,8 +36,11 @@ func Fetch(c appengine.Context, loc string) ([]byte, error) {
     return nil, err
   }
   if resp.StatusCode < 200 || resp.StatusCode > 299 {
+    c.Errorf("RiotApi fetch failed with status %d: %s", resp.StatusCode, loc)
     return nil, errors.New(
-      fmt.Sprintf("Fetch failed with status %d: %s", resp.StatusCode, loc))
+      fmt.Sprintf("RiotApi fetch failed with status %d", resp.StatusCode))
+  } else {
+    c.Infof("RiotApi fetch status %d: %s", resp.StatusCode, loc)
   }
   defer resp.Body.Close()
   body, err := ioutil.ReadAll(resp.Body)

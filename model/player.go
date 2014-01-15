@@ -28,10 +28,14 @@ type Player struct {
   LastUpdated time.Time
 }
 func (p *Player) Id() string {
-  return fmt.Sprintf("%s-%d", p.Region, p.RiotId)
+  return MakePlayerId(p.Region, p.RiotId)
 }
 func (p *Player) Uri() string {
   return fmt.Sprintf("/players/%s", p.Id())
+}
+
+func MakePlayerId(region string, riotSummonerId int64) string {
+  return fmt.Sprintf("%s-%d", region, riotSummonerId)
 }
 
 // sort.Interface for []*Player
@@ -89,7 +93,7 @@ func GetOrCreatePlayerBySummoner(
   }
 
   // Otherwise we need to fetch some data from Riot.
-  if err := RiotRestApiRateLimiter.TryConsume(c, 1); err != nil {
+  if err := RiotApiRateLimiter.TryConsume(c, 1); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
 

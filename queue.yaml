@@ -1,6 +1,8 @@
 queue:
 - name: default
-  rate: 5/s
+  rate: 1/s                     # Set to match the riot api dev-key limits
+  bucket_size: 1                # Set to match the riot api dev-key limits
+  max_concurrent_requests: 1    # Set to match the riot api dev-key limits
   retry_parameters:
     min_backoff_seconds: 5
     max_backoff_seconds: 43200  # 12 hours
