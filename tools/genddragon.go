@@ -41,6 +41,7 @@ func main() {
   fmt.Fprintf(f, "\n")
   fmt.Fprintf(f, "import (\n")
   fmt.Fprintf(f, "  \"github.com/OwenDurni/loltools/ddragon\"\n")
+  fmt.Fprintf(f, "  \"io\"\n")
   fmt.Fprintf(f, ")\n")
   fmt.Fprintf(f, "\n")
   fmt.Fprintf(f, "//\n")
