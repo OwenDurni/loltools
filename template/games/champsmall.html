@@ -1,0 +1,11 @@
+{{/* .(ChampionId) int */}}
+
+{{define "champsmall"}}
+<div class="sprite" style="width: {{ddc_sw .}}px; height: {{ddc_sh .}}px;">
+  <img width="0"
+       height="1"
+       style="width: {{ddc_stw}}px; height: {{ddc_sth}}px; top: -{{ddc_sy .}}px; left: -{{ddc_sx .}}px;"
+       src="{{ddc_s .}}"
+       alt="{{.}}" />
+</div>
+{{end}}

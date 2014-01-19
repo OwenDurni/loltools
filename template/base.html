@@ -19,6 +19,13 @@
     <li>{{.ctxBase.User}}</li>
   </ul>
 </div>
+{{if .ctxBase.Errors}}
+  <div id="errors">
+  {{range .ctxBase.Errors}}
+  <div>{{.}}</div>
+  {{end}}
+  </div>
+{{end}}
 <div id="content">
   {{template "content" .}}
 </div>

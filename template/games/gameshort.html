@@ -1,0 +1,11 @@
+{{/* . GameInfo */}}
+
+{{define "gameshort"}}
+<div>
+  {{range .Game.Players}}
+    {{template "champsmall" .ChampionId}}
+  {{end}}
+  <br />
+  {{.Game}}
+</div>
+{{end}}

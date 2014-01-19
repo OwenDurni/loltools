@@ -5,6 +5,7 @@ import (
   "appengine/datastore"
   "fmt"
   "github.com/OwenDurni/loltools/riot"
+  "github.com/OwenDurni/loltools/util/errwrap"
   "io"
   "time"
 )
@@ -83,9 +84,9 @@ func GetOrCreateGame(
       game.RiotId = riotGameId
       _, err = datastore.Put(c, gameKey, game)
     }
-    return err
+    return errwrap.Wrap(err)
   }, nil)
-  return game, gameKey, err
+  return game, gameKey, errwrap.Wrap(err)
 }
 
 func EnsureGameExists(
@@ -98,7 +99,7 @@ func EnsureGameExists(
   return datastore.RunInTransaction(c, func(c appengine.Context) error {
     err := datastore.Get(c, gameKey, game)
     if err != nil && err != datastore.ErrNoSuchEntity {
-      return err
+      return errwrap.Wrap(err)
     }
     if game.HasRiotData {
       return nil
@@ -123,7 +124,7 @@ func EnsureGameExists(
     game.Players = players
     game.Invalid = dto.Invalid
     _, err = datastore.Put(c, gameKey, game)
-    return err
+    return errwrap.Wrap(err)
   }, nil)
 }
 
@@ -142,11 +143,11 @@ func GetPlayerGameStats(
   var games []*Game
   gameKeys, err := q.GetAll(c, &games)
   if len(gameKeys) == 0 {
-    return nil, nil, err
+    return nil, nil, errwrap.Wrap(err)
   } else if len(games) == 0 {
-    return nil, gameKeys[0], err
+    return nil, gameKeys[0], errwrap.Wrap(err)
   }
-  return games[0], gameKeys[0], err
+  return games[0], gameKeys[0], errwrap.Wrap(err)
 }
 
 // Note that sometimes partial results are returned even if there is an error.
@@ -167,7 +168,7 @@ func TeamRecentGameInfo(
            Order("-DateTime").
            Limit(n)
     if _, err := q.GetAll(c, &gamesByTeam); err != nil {
-      errors = append(errors, err)
+      errors = append(errors, errwrap.Wrap(err))
       return infos, errors
     }
     for _, g := range gamesByTeam {
@@ -176,8 +177,19 @@ func TeamRecentGameInfo(
   }
   
   games := make([]*Game, len(gameKeys))
+  for i := range games {
+    games[i] = new(Game)
+  }
   if err := datastore.GetMulti(c, gameKeys, games); err != nil {
-    errors = append(errors, err)
+    errors = append(errors, errwrap.Wrap(err))
+    if me, ok := err.(appengine.MultiError); ok {
+      for i, merr := range me {
+        if merr == datastore.ErrNoSuchEntity {
+          games[i] = nil
+          errors = append(errors, errwrap.Wrap(err))
+        }
+      }
+    }
   }
   
   for _, game := range games {
@@ -186,11 +198,19 @@ func TeamRecentGameInfo(
     infos = append(infos, info)
     info.Game = game
     info.PlayerStats = make([]*PlayerGameStats, len(game.Players))
+    for p := range info.PlayerStats {
+      info.PlayerStats[p] = new(PlayerGameStats)
+    }
     for p := range game.Players {
       statKey := KeyForPlayerGameStatsId(
         c, game.Id(), MakePlayerId(game.Region, game.Players[p].SummonerId))
-      if err := datastore.Get(c, statKey, info.PlayerStats[p]); err != nil {
-        errors = append(errors, err)
+      err := datastore.Get(c, statKey, info.PlayerStats[p])
+      if err != nil {
+        if err == datastore.ErrNoSuchEntity {
+          info.PlayerStats[p] = nil
+        } else {
+          errors = append(errors, errwrap.Wrap(err))
+        }
       }
     }
   }

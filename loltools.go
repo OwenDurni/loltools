@@ -62,11 +62,18 @@ func init() {
 
   http.HandleFunc("/", dispatcher.RootHandler)
 
-  view.AddTemplate("admin.html", "form.html", "base.html")
-  view.AddTemplate("home.html", "base.html")
-  view.AddTemplate("leagues/create.html", "form.html", "base.html")
-  view.AddTemplate("leagues/index.html", "form.html", "base.html")
-  view.AddTemplate("leagues/teams/view.html", "form.html", "base.html")
-  view.AddTemplate("leagues/view.html", "form.html", "base.html")
-  view.AddTemplate("profiles/edit.html", "form.html", "base.html")
+  view.AddTemplate("admin.html",
+                   "form.html", "base.html")
+  view.AddTemplate("home.html",
+                   "base.html")
+  view.AddTemplate("leagues/create.html",
+                   "form.html", "base.html")
+  view.AddTemplate("leagues/index.html",
+                   "form.html", "base.html")
+  view.AddTemplate("leagues/teams/view.html",
+                   "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
+  view.AddTemplate("leagues/view.html",
+                   "form.html", "base.html")
+  view.AddTemplate("profiles/edit.html",
+                   "form.html", "base.html")
 }

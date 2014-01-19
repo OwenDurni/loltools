@@ -15,6 +15,11 @@ body {
   float: right;
 }
 
+div#errors {
+  background-color: #fee;
+  padding: .2em;
+}
+
 #footer {
   margin-top: 6em;
   font-size: small;
@@ -49,7 +54,7 @@ ul.nav li {
 }
 
 #content {
-  /*clear: both;*/
+  
 }
 
 table {
@@ -78,4 +83,15 @@ tr.odd td {
 
 tr:hover td {
   background-color: #efe;
+}
+
+div.sprite {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  background: none;
+}
+
+div.sprite img {
+  position: absolute;
 }

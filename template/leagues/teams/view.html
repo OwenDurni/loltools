@@ -1,7 +1,21 @@
 {{/* extends base.html */}}
 {{define "content"}}
+
+<style>
+#summary {
+  float: left;
+}
+#games {
+  float: right;
+}
+#foot {
+  clear: both;
+}
+</style>
+
 <h2>{{.Team.Name}} ({{.League.Name}})</h2>
 
+<div id="summary">
 <h3>Members</h3>
 <table>
   <tr><th>Summoner</th><th>Wins</th><th>Losses</th></tr>
@@ -29,5 +43,17 @@
    href="/task/riot/get/team/history?league={{.League.Id}}&team={{.Team.Id}}">
   Update Match History
 </a>
+</div>
+
+<div id="games" class="games">
+<h3>Recent Team History</h3>
+{{range .RecentGames}}
+  {{template "gameshort" .}}
+{{else}}
+  <p>No recent history</p>
+{{end}}
+</div>
+
+<div id="foot" />
 
 {{end}}
