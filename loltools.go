@@ -48,6 +48,7 @@ func init() {
   dispatcher.Add("/", view.HomeHandler)
   dispatcher.Add("/admin", view.AdminIndexHandler)
   dispatcher.Add("/api/admin/riotapikey/set", view.ApiAdminRiotKeySetHandler)
+  dispatcher.Add("/api/groups/create", view.ApiGroupCreateHandler)
   dispatcher.Add("/api/leagues/add-team", view.ApiLeagueAddTeamHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/leagues/teams/add-player", view.ApiTeamAddPlayerHandler)
@@ -55,6 +56,7 @@ func init() {
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
+  dispatcher.Add("/groups", view.GroupIndexHandler)
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
@@ -67,6 +69,8 @@ func init() {
                    "form.html", "base.html")
   view.AddTemplate("home.html",
                    "base.html")
+  view.AddTemplate("groups/index.html",
+                   "form.html", "base.html")
   view.AddTemplate("leagues/create.html",
                    "form.html", "base.html")
   view.AddTemplate("leagues/index.html",

@@ -3,11 +3,17 @@ package model
 import (
   "appengine"
   "appengine/datastore"
-  "errors"
+  "fmt"
 )
 
+// Root entity for all groups and acls.
+type GroupRoot struct {}
+func GroupRootKey(c appengine.Context) *datastore.Key {
+  return datastore.NewKey(c, "GroupRoot", "dev", 0, nil)
+}
+
 type Group struct {
-  Name string
+  Name    string
 }
 
 type GroupMembership struct {
@@ -16,55 +22,59 @@ type GroupMembership struct {
   Owner    bool
 }
 
-func GetGroupKeysForUser(
-  c appengine.Context,
-  userKey *datastore.Key,
-  out *[]*datastore.Key) (err error) {
-  q := datastore.NewQuery("GroupMembership").
-    Filter("UserKey =", userKey).
-    KeysOnly()
-  _, err = q.GetAll(c, out)
-  return
+func GroupId(groupKey *datastore.Key) string {
+  return EncodeKeyShort(groupKey)
+}
+
+func GroupUri(groupKey *datastore.Key) string {
+  return fmt.Sprintf("/groups/%s", GroupId(groupKey))
+}
+
+func GetGroupByKey(c appengine.Context, groupKey *datastore.Key) (*Group, error) {
+  g := new(Group)
+  err := datastore.Get(c, groupKey, g)
+  return g, err
+}
+
+func GetGroupsForUser(c appengine.Context, userKey *datastore.Key) ([]*GroupMembership, error) {
+  q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
+    Filter("UserKey =", userKey)
+  
+  var memberships []*GroupMembership
+  _, err := q.GetAll(c, &memberships)
+  return memberships, err
 }
 
 // Creates a new group with the current user as the owner.
-func CreateGroup(c appengine.Context) (*Group, *datastore.Key, error) {
+func CreateGroup(c appengine.Context, name string) (*Group, *datastore.Key, error) {
   _, userKey, err := GetUser(c)
   if err != nil {
     return nil, nil, err
   }
 
+  groot := GroupRootKey(c)
+  
   group := new(Group)
-  groupKey, err := datastore.Put(
-    c, datastore.NewIncompleteKey(c, "Group", nil), group)
+  group.Name = name
+  var groupKey *datastore.Key
+  
+  err = datastore.RunInTransaction(c, func(c appengine.Context) error {
+    groupKey, err = datastore.Put(c, datastore.NewIncompleteKey(c, "Group", groot), group)
+    if err != nil {
+      return err
+    }
+
+    groupMembership := &GroupMembership{
+      GroupKey: groupKey,
+      UserKey:  userKey,
+      Owner:    true,
+    }
+    _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "GroupMembership", groot),
+                           groupMembership)
+    return err
+  }, nil)
   if err != nil {
     return nil, nil, err
   }
-
-  groupMembership := &GroupMembership{
-    GroupKey: groupKey,
-    UserKey:  userKey,
-    Owner:    true,
-  }
-  _, err = datastore.Put(
-    c,
-    datastore.NewIncompleteKey(c, "GroupMembership", nil),
-    groupMembership)
-
-  return group, groupKey, err
-}
-
-func DeleteGroup(c appengine.Context, groupKey *datastore.Key) error {
-  //user, userKey, err := GetUser(c)
-
-  // TODO: This should be a transaction.
-
-  // Error if this user is not an owner of the group.
-  //q := datastore.NewQuery("GroupMembership").
-  //  Filter("GroupKey =", groupKey).
-  //  Filter("UserKey =", userKey).
-  //  Filter("Owner =", true).
-  //  KeysOnly()
-
-  return errors.New("Not yet implemented")
+  return group, groupKey, nil
 }

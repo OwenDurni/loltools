@@ -1,0 +1,30 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>My Groups (owner)</h2>
+{{template "grouplist" .OwnedGroups}}
+
+<h2>My Groups (member)</h2>
+{{template "grouplist" .MemberGroups}}
+
+<h2>Create New Group</h2>
+<form id="group-create">
+  <ul>
+    <li>Name: <input type="text" name="name" value="" /></li>
+  </ul>
+{{with $x := form "group-create" "/api/groups/create" "Create"}}
+{{template "formEnd" $x}}
+{{end}}
+
+{{end}}
+
+{{define "grouplist"}}
+{{if .}}
+  <ul>
+    {{range .}}
+      <li><a href="{{.Uri}}">{{.Name}}</a> ({{.Id}})</li>
+    {{end}}
+  </ul>
+{{else}}
+  <p>None</p>
+{{end}}
+{{end}}

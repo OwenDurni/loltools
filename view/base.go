@@ -6,7 +6,6 @@ import (
   "errors"
   "fmt"
   "html/template"
-  "github.com/OwenDurni/loltools/ddragon"
   "github.com/OwenDurni/loltools/riot"
   "io/ioutil"
   "net/http"
@@ -110,7 +109,6 @@ func RenderTemplate(w http.ResponseWriter, id string, name string, ctx interface
 }
 
 type ctxBase struct {
-  DDLookup *ddragon.DDragon
   Title    string
   TimeNow  string
   User     string
@@ -118,7 +116,6 @@ type ctxBase struct {
 }
 
 func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
-  ctx.DDLookup = &riot.Lookup
   ctx.Title = ""
   ctx.TimeNow = fmtTime(time.Now(), "America/Los_Angeles")
   if u := user.Current(c); u != nil {
