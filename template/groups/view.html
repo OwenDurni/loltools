@@ -1,0 +1,29 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>{{.Group.Name}}</h2>
+
+<h3>Members</h3>
+<ul>
+  {{range .Members}}
+    <li>{{.Email}}{{if .Owner}} (owner){{end}}</li>
+  {{end}}
+</ul>
+
+<h3>Add Member</h2>
+<form id="add-member">
+  <input type="hidden" name="group" value="{{.Group.Id}}" />
+  User Email: <input type="text" name="email" value="" /><br />
+  Owner: <input type="checkbox" name="owner" value="1" /><br />
+{{with $x := form "add-member" "/api/groups/add-user" "Add"}}
+{{template "formEnd" $x}}
+{{end}}
+
+<h3>Remove Member</h2>
+<form id="del-member">
+  <input type="hidden" name="group" value="{{.Group.Id}}" />
+  User Email: <input type="text" name="email" value="" /><br />
+{{with $x := form "del-member" "/api/groups/del-user" "Remove"}}
+{{template "formEnd" $x}}
+{{end}}
+
+{{end}}

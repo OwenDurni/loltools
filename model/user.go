@@ -5,6 +5,7 @@ import (
   "appengine/datastore"
   "appengine/user"
   "errors"
+  "fmt"
 )
 
 type User struct {
@@ -37,6 +38,21 @@ func GetUserByKey(c appengine.Context, userKey *datastore.Key) (*User, error) {
     return nil, err
   }
   return user, nil
+}
+
+func GetUserByEmail(c appengine.Context, email string) (*User, *datastore.Key, error) {
+  q := datastore.NewQuery("User").
+         Filter("Email =", email).
+         Limit(1)
+  var users []*User
+  userKeys, err := q.GetAll(c, &users)
+  if err != nil {
+    return nil, nil, err
+  }
+  if len(userKeys) == 0 {
+    return nil, nil, errors.New(fmt.Sprintf("User does not exist: %s", email))
+  }
+  return users[0], userKeys[0], nil
 }
 
 func (user *User) Save(c appengine.Context) error {

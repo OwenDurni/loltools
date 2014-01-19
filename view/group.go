@@ -3,6 +3,8 @@ package view
 import (
   "appengine"
   "appengine/datastore"
+  "errors"
+  "fmt"
   "github.com/OwenDurni/loltools/model"
   "net/http"
 )
@@ -17,6 +19,16 @@ func (g *Group) Fill(m *model.Group, key *datastore.Key) *Group {
   g.Id = model.GroupId(key)
   g.Uri = model.GroupUri(key)
   return g
+}
+
+type Member struct {
+  Email string
+  Owner bool
+}
+func (m *Member) Fill(u *model.User, membership *model.GroupMembership) *Member {
+  m.Email = u.Email
+  m.Owner = membership.Owner
+  return m
 }
 
 func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -45,7 +57,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   ctx.ctxBase.Title = "loltools - My Groups"
 
   for _, m := range memberships {
-    g, err := model.GetGroupByKey(c, m.GroupKey)  // TODO: GetMulti
+    g, _, err := model.GroupByKey(c, m.GroupKey, userKey)
     if err != nil {
       ctx.Errors = append(ctx.Errors, err)
       continue
@@ -65,6 +77,54 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   }
 }
 
+func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  groupId := args["groupId"]
+  
+  _, userKey, err := model.GetUser(c)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  group, groupKey, _, err := model.GroupById(c, userKey, groupId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  memberships, err := model.GetGroupMemberships(c, groupKey)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  ctx := struct {
+    ctxBase
+    Group
+    Members []*Member
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", group.Name)
+  ctx.Group.Fill(group, groupKey)
+  ctx.Members = make([]*Member, 0, len(memberships))
+  
+  for _, m := range memberships {
+    user, err := model.GetUserByKey(c, m.UserKey)
+    if err != nil {
+      ctx.ctxBase.Errors = append(ctx.ctxBase.Errors, err)
+      continue
+    }
+    ctx.Members = append(ctx.Members, new(Member).Fill(user, m))
+  }
+  
+  // Render
+  if err := RenderTemplate(w, "groups/view.html", "base", ctx); err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+}
+
 func ApiGroupCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, groupKey, err := model.CreateGroup(c, r.FormValue("name"))
@@ -73,4 +133,84 @@ func ApiGroupCreateHandler(w http.ResponseWriter, r *http.Request, args map[stri
     return
   }
   HttpReplyResourceCreated(w, model.GroupUri(groupKey))
+}
+
+func ApiGroupAddUserHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  groupId := r.FormValue("group")
+  addUserEmail := r.FormValue("email")
+  owner := false
+  if r.FormValue("owner") == "1" {
+    owner = true
+  }
+
+  _, userKey, err := model.GetUser(c)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+
+  _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+
+  // Only owners of a group can add members.
+  if !userMembership.Owner {
+    HttpReplyError(w, r, http.StatusForbidden,
+                   errors.New("Can only add members to a group you own."))
+    return
+  }
+  
+  _, addUserKey, err := model.GetUserByEmail(c, addUserEmail)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  err = model.GroupAddMember(c, groupKey, addUserKey, owner)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  HttpReplyOkEmpty(w)
+}
+
+func ApiGroupDelUserHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  groupId := r.FormValue("group")
+  delUserEmail := r.FormValue("email")
+
+  _, userKey, err := model.GetUser(c)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+
+  _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+
+  // Only owners of a group can add members.
+  if !userMembership.Owner {
+    HttpReplyError(w, r, http.StatusForbidden,
+                   errors.New("Can only remove members to a group you own."))
+    return
+  }
+  
+  _, delUserKey, err := model.GetUserByEmail(c, delUserEmail)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  
+  err = model.GroupDelMember(c, groupKey, delUserKey)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, err)
+    return
+  }
+  HttpReplyOkEmpty(w)
 }
