@@ -3,12 +3,53 @@ package model
 import (
   "appengine"
   "appengine/datastore"
+  "appengine/memcache"
   "fmt"
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
   "strings"
   "time"
 )
+
+// Caches player data within a region.
+type PlayerCache struct {
+  Region string
+  c appengine.Context
+  byId map[int64]*Player
+  bySummoner map[string]*Player
+}
+func NewPlayerCache(c appengine.Context, region string) *PlayerCache {
+  cache := new(PlayerCache)
+  cache.Region = region
+  cache.c = c
+  cache.byId = make(map[int64]*Player)
+  cache.bySummoner = make(map[string]*Player)
+  return cache
+}
+func (cache *PlayerCache) ById(riotId int64) (*Player, error) {
+  if p, exists := cache.byId[riotId]; exists {
+    return p, nil
+  }
+  p, _, err := GetOrCreatePlayerByRiotId(cache.c, cache.Region, riotId)
+  if err == nil {
+    cache.Add(p)
+  }
+  return p, err
+}
+func (cache *PlayerCache) BySummoner(summoner string) (*Player, error) {
+  if p, exists := cache.bySummoner[summoner]; exists {
+    return p, nil
+  }
+  p, _, err := GetOrCreatePlayerBySummoner(cache.c, cache.Region, summoner)
+  if err == nil {
+    cache.Add(p)
+  }
+  return p, err
+}
+func (cache *PlayerCache) Add(p *Player) {
+  cache.byId[p.RiotId] = p
+  cache.bySummoner[p.Summoner] = p
+}
 
 // ("%s-%s", Region, RiotId) is the key for a player.
 type Player struct {
@@ -23,8 +64,7 @@ type Player struct {
 
   // This player's in game level.
   Level int
-
-  // The last time we refreshed data for this player (UTC).
+  
   LastUpdated time.Time
 }
 func (p *Player) Id() string {
@@ -58,21 +98,48 @@ func GetOrCreatePlayerByRiotId(
   c appengine.Context,
   region string,
   riotId int64) (*Player, *datastore.Key, error) {
-  var player *Player = new(Player)
+  player := new(Player)
+  
+  // Try memcache first.
+  mkey := fmt.Sprintf("Player/%s-%d", region, riotId)
+  if _, err := memcache.JSON.Get(c, mkey, player); err == nil {
+    return player, KeyForPlayer(c, region, player.RiotId), nil
+  }
+  
   playerKey := KeyForPlayer(c, region, riotId)
-
-  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+  
+  for attempt := 0; attempt < 3; attempt++ {
     err := datastore.Get(c, playerKey, player)
     if err == datastore.ErrNoSuchEntity {
+      if err := RiotApiRateLimiter.TryConsume(c, 1); err != nil {
+        return nil, nil, errwrap.Wrap(err)
+      }
+      riotApiKey, err := GetRiotApiKey(c)
+      if err != nil {
+        return nil, nil, errwrap.Wrap(err)
+      }
+      riotSummoner, err := riot.SummonerById(c, riotApiKey.Key, region, riotId)
+      if err != nil {
+        return nil, nil, errwrap.Wrap(err)
+      }
+
+      player.Summoner = riotSummoner.Name
       player.Region = region
-      player.RiotId = riotId
-      playerKey, err = datastore.Put(c, playerKey, player)
+      player.RiotId = riotSummoner.Id
+      player.Level = riotSummoner.SummonerLevel
+
+      if _, err = datastore.Put(c, playerKey, player); err != nil {
+        return nil, nil, errwrap.Wrap(err)
+      }
+      continue
     }
-    return err
-  }, nil)
-  if err != nil {
-    return nil, nil, err
+    if err != nil {
+      return nil, nil, err
+    }
   }
+  
+  // Best effort put into memcache.
+  memcache.JSON.Set(c, &memcache.Item{Key: mkey, Object: player})
   return player, playerKey, nil
 }
 
@@ -80,25 +147,9 @@ func GetOrCreatePlayerBySummoner(
   c appengine.Context,
   region string,
   summoner string) (*Player, *datastore.Key, error) {
-  // Do a first pass check to avoid hitting Riot API if possible.
-  q := datastore.NewQuery("Player").
-    Filter("Region =", region).
-    Filter("Summoner =", summoner).
-    Limit(1)
-  var players []*Player
-  playerKeys, err := q.GetAll(c, &players)
-  if err != nil {
-    return nil, nil, errwrap.Wrap(err)
-  }
-  if len(players) > 0 {
-    return players[0], playerKeys[0], nil
-  }
-
-  // Otherwise we need to fetch some data from Riot.
   if err := RiotApiRateLimiter.TryConsume(c, 1); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
-
   riotApiKey, err := GetRiotApiKey(c)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
@@ -114,12 +165,12 @@ func GetOrCreatePlayerBySummoner(
   player.Region = region
   player.RiotId = riotSummoner.Id
   player.Level = riotSummoner.SummonerLevel
-  player.LastUpdated = time.Now().UTC()
 
   playerKey := KeyForPlayer(c, region, player.RiotId)
 
   if _, err = datastore.Put(c, playerKey, player); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
+  
   return player, playerKey, nil
 }

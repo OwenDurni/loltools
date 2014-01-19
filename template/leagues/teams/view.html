@@ -3,10 +3,10 @@
 
 <style>
 #summary {
-  float: left;
+  float: right;
 }
 #games {
-  float: right;
+  float: left;
 }
 #foot {
   clear: both;
@@ -17,8 +17,8 @@
 
 <div id="summary">
 <h3>Members</h3>
-<table>
-  <tr><th>Summoner</th><th>Wins</th><th>Losses</th></tr>
+<table class="base">
+  <tr class="header"><th>Summoner</th><th>Wins</th><th>Losses</th></tr>
   {{range $i, $x := .Players}}
     <tr class="{{if even $i}}even{{else}}odd{{end}}">
       <td><a href="{{.Uri}}">{{.Summoner}}</a></td>
@@ -46,7 +46,6 @@
 </div>
 
 <div id="games" class="games">
-<h3>Recent Team History</h3>
 {{range .RecentGames}}
   {{template "gameshort" .}}
 {{else}}

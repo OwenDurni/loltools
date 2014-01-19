@@ -10,6 +10,11 @@ import (
 )
 
 const (
+  BlueTeamId = 100
+  PurpleTeamId = 200
+)
+
+const (
   baseUrl = "https://prod.api.pvp.net"
 )
 

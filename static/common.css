@@ -57,32 +57,102 @@ ul.nav li {
   
 }
 
-table {
+table.base {
   border-collapse:collapse;
 }
 
-th, td {
+table.base th, td {
   border: thin solid gray;
   padding: 3px 7px 2px 7px;
 }
 
-th {
+table.base th {
   padding-top: 5px;
   padding-bottom: 4px;
   background-color: #444;
   color: #fff;
 }
 
-tr.even td {
+table.base tr.even td {
   background-color: #eee;
 }
 
-tr.odd td {
+table.base tr.odd td {
   background-color: #fff;
 }
 
-tr:hover td {
+table.base tr:hover td {
   background-color: #efe;
+}
+
+.blue-team, .purple-team {
+  display: inline-block;
+  padding: 0;
+  border: thick solid;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.blue-team {
+  min-width: 300px;
+  background-color: #adf;
+  border-color: #036;
+}
+.blue-team table.short-player-stats th, .blue-team .header {
+  background-color: #036;
+}
+
+.purple-team {
+  min-width: 300px;
+  background-color: #daf;
+  border-color: #306;
+}
+.purple-team table.short-player-stats th, .purple-team .header {
+  background-color: #306;
+}
+
+.champion-icon-row {
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.game-short {
+  min-width: 600px;
+}
+
+.game-short .header {
+  width: 100%;
+}
+
+.champion-icon-row {
+  display:block;
+  width: 240px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.short-player-stats {
+  width: 100%;
+  font-size: small;
+}
+
+table.short-player-stats {
+  border-collapse:collapse;
+}
+
+table.short-player-stats th {
+  text-align: left;
+  color: #fff;
+}
+
+table.short-player-stats th, table.short-player-stats td {
+  padding-top: 1px;
+  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border: none;
 }
 
 div.sprite {

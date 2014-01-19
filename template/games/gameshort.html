@@ -1,11 +1,46 @@
 {{/* . GameInfo */}}
 
 {{define "gameshort"}}
-<div>
-  {{range .Game.Players}}
-    {{template "champsmall" .ChampionId}}
-  {{end}}
-  <br />
-  {{.Game}}
+<div class="game-short">
+  <div class="blue-team">
+    {{template "gameshort-team" .BlueTeam}}
+  </div><div class="purple-team">
+    {{template "gameshort-team" .PurpleTeam}}
+  </div>
 </div>
+{{end}}
+
+{{define "gameshort-team"}}
+  <div class="header">
+    <div class="champion-icon-row">
+      {{range .Players}}{{template "champsmall" .ChampionId}}{{end}}
+    </div>
+  </div>
+  <table class="short-player-stats">
+    <tr class="header">
+      <th>Player</th>
+      <th>Lvl</th>
+      <th>K/D/A</th>
+      <th>CS</th>
+      <th>Wards</th>
+    </tr>
+    {{range .PlayerStats}}
+      <tr>
+        <td>{{.Player.Summoner}}</td>
+      {{if .Exists}}
+        {{with .Stats.RiotData}}
+        <td>{{.Level}}</td>
+        <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
+        <td>{{.MinionsKilled}}</td>
+        <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
+        {{end}}
+      {{else}}
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+      {{end}}
+      </tr>
+    {{end}}
+  </table>
 {{end}}

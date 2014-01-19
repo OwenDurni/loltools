@@ -47,18 +47,23 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
     return
   }
 
-  players /*playerKeys*/, _, err := model.TeamAllPlayers(
+  players, _, err := model.TeamAllPlayers(
     c, userKey, leagueKey, teamKey, model.KeysAndEntities)
   if err != nil {
     HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
     return
+  }
+  
+  playerCache := model.NewPlayerCache(c, league.Region)
+  for _, p := range players {
+    playerCache.Add(p)
   }
 
   // Sort players by summoner.
   sort.Sort(model.PlayersBySummoner(players))
 
   // Get recent match history.
-  gameInfos, errors := model.TeamRecentGameInfo(c, 5, leagueKey, teamKey)
+  gameInfos, errors := model.TeamRecentGameInfo(c, 5, playerCache, league, leagueKey, teamKey)
   
   // Populate view context.
   ctx := struct {

@@ -68,9 +68,66 @@ func KeyForPlayerGameStatsId(
     c, "PlayerGameStats", fmt.Sprintf("%s/%s", gameId, playerId), 0, nil)
 }
 
+
 type GameInfo struct {
-  Game        *Game
-  PlayerStats []*PlayerGameStats
+  Game       *Game
+  BlueTeam   *GameTeamInfo
+  PurpleTeam *GameTeamInfo
+  OtherTeam  *GameTeamInfo  // Only used if reported TeamId not recognized.
+}
+type GameTeamInfo struct {
+  Players []*GamePlayerInfo
+  PlayerStats []*GamePlayerStatsInfo
+}
+type GamePlayerInfo struct {
+  Player *Player
+  ChampionId int
+}
+type GamePlayerStatsInfo struct {
+  Exists bool
+  Player *Player
+  Stats  *PlayerGameStats
+}
+func NewGameInfo() *GameInfo {
+  info := new(GameInfo)
+  info.Game = nil
+  info.BlueTeam = NewGameTeamInfo()
+  info.PurpleTeam = NewGameTeamInfo()
+  info.OtherTeam = NewGameTeamInfo()
+  return info
+}
+func NewGameTeamInfo() *GameTeamInfo {
+  info := new(GameTeamInfo)
+  info.Players = make([]*GamePlayerInfo, 0, 5)
+  info.PlayerStats = make([]*GamePlayerStatsInfo, 0, 5)
+  return info
+}
+func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
+  info := new(GamePlayerInfo)
+  info.Player = p
+  info.ChampionId = championId
+  return info
+}
+func NewGamePlayerStatsInfo(player *Player, stats *PlayerGameStats) *GamePlayerStatsInfo {
+  info := new(GamePlayerStatsInfo)
+  info.Exists = (stats != nil)
+  info.Player = player
+  info.Stats = stats
+  return info
+}
+func (ginfo *GameInfo) AddPlayer(teamId int, p *Player, championId int, pstats *PlayerGameStats) {
+  pinfo := NewGamePlayerInfo(p, championId)
+  psinfo := NewGamePlayerStatsInfo(p, pstats)
+  if teamId == riot.BlueTeamId {
+    ginfo.BlueTeam.Players = append(ginfo.BlueTeam.Players, pinfo)
+    ginfo.BlueTeam.PlayerStats = append(ginfo.BlueTeam.PlayerStats, psinfo)
+  } else if teamId == riot.PurpleTeamId {
+    ginfo.PurpleTeam.Players = append(ginfo.PurpleTeam.Players, pinfo)
+    ginfo.PurpleTeam.PlayerStats = append(ginfo.PurpleTeam.PlayerStats, psinfo)
+  } else {
+    ginfo.OtherTeam.Players = append(ginfo.OtherTeam.Players, pinfo)
+    ginfo.OtherTeam.PlayerStats = append(ginfo.OtherTeam.PlayerStats, psinfo)
+  }
 }
 
 func GetOrCreateGame(
@@ -154,6 +211,8 @@ func GetPlayerGameStats(
 func TeamRecentGameInfo(
   c appengine.Context,
   n int,
+  playerCache *PlayerCache,
+  league *League,
   leagueKey *datastore.Key,
   teamKey *datastore.Key) ([]*GameInfo, []error) {
   infos := make([]*GameInfo, 0, n)
@@ -194,24 +253,27 @@ func TeamRecentGameInfo(
   
   for _, game := range games {
     if game == nil { continue }
-    info := new(GameInfo)
+    info := NewGameInfo()
     infos = append(infos, info)
     info.Game = game
-    info.PlayerStats = make([]*PlayerGameStats, len(game.Players))
-    for p := range info.PlayerStats {
-      info.PlayerStats[p] = new(PlayerGameStats)
-    }
-    for p := range game.Players {
-      statKey := KeyForPlayerGameStatsId(
-        c, game.Id(), MakePlayerId(game.Region, game.Players[p].SummonerId))
-      err := datastore.Get(c, statKey, info.PlayerStats[p])
+    
+    for _, playerDto := range game.Players {
+      summonerId := playerDto.SummonerId
+      statKey := KeyForPlayerGameStatsId(c, game.Id(), MakePlayerId(game.Region, summonerId))
+      player, err := playerCache.ById(summonerId)
+      if err != nil {
+        errors = append(errors, errwrap.Wrap(err))
+      }
+      pstats := new(PlayerGameStats)
+      err = datastore.Get(c, statKey, pstats)
       if err != nil {
         if err == datastore.ErrNoSuchEntity {
-          info.PlayerStats[p] = nil
+          pstats = nil
         } else {
           errors = append(errors, errwrap.Wrap(err))
         }
       }
+      info.AddPlayer(playerDto.TeamId, player, playerDto.ChampionId, pstats)
     }
   }
   

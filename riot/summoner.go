@@ -34,3 +34,22 @@ func SummonerByName(
   err = json.Unmarshal(jsonData, s)
   return s, err
 }
+
+func SummonerById(
+  c appengine.Context,
+  riotApiKey string,
+  region string,
+  id int64) (*SummonerDto, error) {
+  loc := ComposeUrl(
+    riotApiKey,
+    fmt.Sprintf("/api/lol/%s/v1.2/summoner/%d", region, id),
+    &url.Values{})
+  jsonData, err := Fetch(c, loc)
+  if err != nil {
+    return nil, err
+  }
+
+  s := new(SummonerDto)
+  err = json.Unmarshal(jsonData, s)
+  return s, err
+}
