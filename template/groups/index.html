@@ -8,9 +8,7 @@
 
 <h2>Create New Group</h2>
 <form id="group-create">
-  <ul>
-    <li>Name: <input type="text" name="name" value="" /></li>
-  </ul>
+  Name: <input type="text" name="name" value="" />
 {{with $x := form "group-create" "/api/groups/create" "Create"}}
 {{template "formEnd" $x}}
 {{end}}

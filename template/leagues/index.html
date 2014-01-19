@@ -7,9 +7,7 @@
 
 <h2>Create New League</h2>
 <form id="league-create">
-  <ul>
-    <li>Name: <input type="text" name="name" value="" /></li>
-  </ul>
+  Name: <input type="text" name="name" value="" />
 {{with $x := form "league-create" "/api/leagues/create" "Create"}}
 {{template "formEnd" $x}}
 {{end}}

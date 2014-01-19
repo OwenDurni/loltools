@@ -1,4 +1,12 @@
+For alpha release:
 - Add ACLs for viewing/editting leagues.
 - Cron to update team game history.
 - Pull in stats from non-team players when saving team game history.
 - Cron to pull in missing game stats.
+
+For beta release:
+- Summoner name verification.
+- Perform user operations by summoner instead of by email.
+- Email should not be public.
+- Tagging league games.
+- Scoreboard W/L
