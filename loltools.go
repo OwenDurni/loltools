@@ -51,6 +51,7 @@ func init() {
   dispatcher.Add("/api/leagues/add-team", view.ApiLeagueAddTeamHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/leagues/teams/add-player", view.ApiTeamAddPlayerHandler)
+  dispatcher.Add("/api/leagues/teams/del-player", view.ApiTeamDelPlayerHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)

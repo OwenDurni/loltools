@@ -132,3 +132,43 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   }
   HttpReplyOkEmpty(w)
 }
+
+func ApiTeamDelPlayerHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  leagueId := r.FormValue("league")
+  teamId := r.FormValue("team")
+  region := r.FormValue("region")
+  summoner := r.FormValue("summoner")
+
+  /*user*/ _, userKey, err := model.GetUser(c)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
+    return
+  }
+
+  _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
+    return
+  }
+
+  _, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
+    return
+  }
+
+  _, playerKey, err := model.GetOrCreatePlayerBySummoner(
+    c, region, summoner)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
+    return
+  }
+
+  err = model.TeamDelPlayer(c, userKey, leagueKey, teamKey, playerKey)
+  if err != nil {
+    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
+    return
+  }
+  HttpReplyOkEmpty(w)
+}

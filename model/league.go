@@ -257,6 +257,27 @@ func TeamAddPlayer(
   return err
 }
 
+func TeamDelPlayer(
+  c appengine.Context,
+  userKey *datastore.Key,
+  leagueKey *datastore.Key,
+  teamKey *datastore.Key,
+  playerKey *datastore.Key) error {
+  return datastore.RunInTransaction(c, func(c appengine.Context) error {
+    q := datastore.NewQuery("TeamMembership").Ancestor(leagueKey).
+           Filter("TeamKey =", teamKey).
+           Filter("PlayerKey =", playerKey).
+           Limit(1).
+           KeysOnly()
+    keys, err := q.GetAll(c, nil)
+    if err != nil { return err }
+    if len(keys) > 0 {
+      return datastore.Delete(c, keys[0])
+    }
+    return nil
+  }, nil)
+}
+
 func LeagueAddGameByTeam(
   c appengine.Context,
   leagueKey *datastore.Key,
