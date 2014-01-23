@@ -15,7 +15,7 @@ var loltools = (function() {
 
       $inputs.prop("disabled", true);
       $result.text("sending...");
-
+      
       req = $.ajax({
         url: submitUrl,
         type: "post",

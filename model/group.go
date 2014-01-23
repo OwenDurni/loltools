@@ -69,6 +69,31 @@ func GroupById(
   return group, groupKey, membership, err
 }
 
+func GetGroupsForUser(
+  c appengine.Context, userKey *datastore.Key) ([]*Group, []*GroupMembership, error) {
+  var groups []*Group
+  var memberships []*GroupMembership
+    
+  err := datastore.RunInTransaction(c, func(c appengine.Context) error {
+    q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
+      Filter("UserKey =", userKey)
+    _, err := q.GetAll(c, &memberships)
+    if err != nil { return err }
+  
+    groupKeys := make([]*datastore.Key, len(memberships))
+    groups = make([]*Group, len(memberships))
+    
+    for i, m := range memberships {
+      groupKeys[i] = m.GroupKey
+      groups[i] = new(Group)
+    }
+    
+    return datastore.GetMulti(c, groupKeys, groups)
+  }, nil)
+  if err != nil { return nil, nil, err }
+  return groups, memberships, nil
+}
+
 func GetGroupMemberships(
   c appengine.Context, groupKey *datastore.Key) ([]*GroupMembership, error) {
   q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).

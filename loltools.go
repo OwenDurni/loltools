@@ -78,7 +78,7 @@ func init() {
   view.AddTemplate("leagues/teams/view.html",
                    "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
   view.AddTemplate("leagues/view.html",
-                   "form.html", "base.html")
+                   "form.html", "types.html", "base.html")
   view.AddTemplate("profiles/edit.html",
                    "form.html", "base.html")
 }

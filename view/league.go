@@ -109,25 +109,14 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     ctx.Teams[i].Fill(t, teamKeys[i], leagueKey)
   }
 
-  // TODO(durni): Fetch this out of the userAcls instead.
   if *league.Owner == *userKey {
-    memberships, err := model.GetGroupMemberships(c, userKey)
+    groupKeys, groups, perms, err := userAcls.PermissionMapFor(c, leagueKey)
     if HandleError(c, w, err) { return }
     
-    ctx.GroupAcls = make([]GroupAcl, len(memberships))
-    
-    for i, m := range memberships {
-      g, _, err := model.GroupByKey(c, m.GroupKey, userKey)
-      if HandleError(c, w, err) { return }
-      
-      gCanView, err := model.AclCan(c, m.GroupKey, model.PermissionView, leagueKey)
-      ctx.ctxBase.AddError(err)
-      
-      gCanEdit, err := model.AclCan(c, m.GroupKey, model.PermissionEdit, leagueKey)
-      ctx.ctxBase.AddError(err)
-      
-      vg := new(Group).Fill(g, m.GroupKey)
-      ctx.GroupAcls[i].Fill(vg, gCanView, gCanEdit)
+    ctx.GroupAcls = make([]GroupAcl, len(groups))
+    for i := range groups {      
+      vg := new(Group).Fill(groups[i], groupKeys[i])
+      ctx.GroupAcls[i].Fill(vg, perms[i])
     }
   }
   

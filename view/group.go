@@ -26,10 +26,10 @@ type GroupAcl struct {
   CanView bool
   CanEdit bool
 }
-func (ga *GroupAcl) Fill(group *Group, canView bool, canEdit bool) *GroupAcl {
+func (ga *GroupAcl) Fill(group *Group, perms map[model.Permission]bool) *GroupAcl {
   ga.Group = group
-  ga.CanView = canView
-  ga.CanEdit = canEdit
+  ga.CanView = perms[model.PermissionView]
+  ga.CanEdit = perms[model.PermissionEdit]
   return ga
 }
 
@@ -50,7 +50,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
 
-  memberships, err := model.GetGroupMemberships(c, userKey)
+  groups, memberships, err := model.GetGroupsForUser(c, userKey)
   if HandleError(c, w, err) { return }
   
   // Populate view context.
@@ -62,8 +62,8 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = "loltools - My Groups"
 
-  for _, m := range memberships {
-    g, _, err := model.GroupByKey(c, m.GroupKey, userKey)
+  for i, m := range memberships {
+    g := groups[i]
     if err != nil {
       ctx.Errors = append(ctx.Errors, err)
       continue
