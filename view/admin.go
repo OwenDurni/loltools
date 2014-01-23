@@ -11,10 +11,7 @@ func AdminIndexHandler(
   c := appengine.NewContext(r)
 
   riotApiKey, err := model.GetRiotApiKey(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   ctx := struct {
     ctxBase
@@ -24,10 +21,8 @@ func AdminIndexHandler(
   ctx.ctxBase.Title = "Admin Console"
   ctx.RiotApiKey = riotApiKey
 
-  if err := RenderTemplate(w, "admin.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "admin.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func ApiAdminRiotKeySetHandler(
@@ -35,9 +30,8 @@ func ApiAdminRiotKeySetHandler(
   c := appengine.NewContext(r)
   apikey := r.FormValue("key")
 
-  if err := model.SetRiotApiKey(c, apikey); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err := model.SetRiotApiKey(c, apikey)
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }

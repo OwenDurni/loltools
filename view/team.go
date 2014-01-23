@@ -4,7 +4,6 @@ import (
   "appengine"
   "fmt"
   "github.com/OwenDurni/loltools/model"
-  "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
   "sort"
 )
@@ -30,29 +29,17 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   teamId := args["teamId"]
 
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   team, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   players, _, err := model.TeamAllPlayers(
     c, userKey, leagueKey, teamKey, model.KeysAndEntities)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   playerCache := model.NewPlayerCache(c, league.Region)
   for _, p := range players {
@@ -87,10 +74,8 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   }
 
   // Render
-  if err := RenderTemplate(w, "leagues/teams/view.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  err = RenderTemplate(w, "leagues/teams/view.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -100,36 +85,21 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   region := r.FormValue("region")
   summoner := r.FormValue("summoner")
 
-  /*user*/ _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  _, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) { return }
 
   _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   _, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
-  _, playerKey, err := model.GetOrCreatePlayerBySummoner(
-    c, region, summoner)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
+  if HandleError(c, w, err) { return }
 
   err = model.TeamAddPlayer(c, userKey, leagueKey, teamKey, playerKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }
 
@@ -140,35 +110,20 @@ func ApiTeamDelPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   region := r.FormValue("region")
   summoner := r.FormValue("summoner")
 
-  /*user*/ _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  _, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) { return }
 
   _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   _, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
 
-  _, playerKey, err := model.GetOrCreatePlayerBySummoner(
-    c, region, summoner)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
+  if HandleError(c, w, err) { return }
 
   err = model.TeamDelPlayer(c, userKey, leagueKey, teamKey, playerKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, errwrap.Wrap(err))
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }

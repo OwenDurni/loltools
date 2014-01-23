@@ -2,6 +2,7 @@ package view
 
 import (
   "appengine"
+  "github.com/OwenDurni/loltools/model"
   "net/http"
   "time"
 )
@@ -28,14 +29,22 @@ func HttpReplyResourceCreated(w http.ResponseWriter, loc string) {
   w.WriteHeader(http.StatusCreated)
 }
 
+func HandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+  if err == nil { return false }
+  if _, ok := err.(model.ErrNotAuthorized); ok {
+    HttpReplyError(c, w, http.StatusForbidden, err)
+    return true
+  }
+  HttpReplyError(c, w, http.StatusInternalServerError, err)
+  return true
+}
+
 // See http://golang.org/pkg/net/http/#pkg-constants for status codes.
 func HttpReplyError(
+  c appengine.Context,
   w http.ResponseWriter,
-  r *http.Request,
   httpStatusCode int,
   err error) {
-  c := appengine.NewContext(r)
-
   errorString := ""
   if err != nil {
     errorString = err.Error()

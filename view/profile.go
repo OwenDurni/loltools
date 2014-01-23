@@ -10,10 +10,7 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]
   c := appengine.NewContext(r)
 
   user, _, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   ctx := struct {
     ctxBase
@@ -23,24 +20,20 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]
   ctx.ctxBase.Title = "Edit Profile"
   ctx.User = user
 
-  if err := RenderTemplate(w, "profiles/edit.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "profiles/edit.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func ProfileSetHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
+  
   user, _, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   user.Name = r.FormValue("name")
   user.SummonerName = r.FormValue("summoner")
-  if err := user.Save(c); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = user.Save(c)
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }

@@ -36,16 +36,10 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
 
   // Lookup data from backend.
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   memberships, err := model.GetGroupsForUser(c, userKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   // Populate view context.
   ctx := struct {
@@ -71,10 +65,8 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   }
 
   // Render
-  if err := RenderTemplate(w, "groups/index.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "groups/index.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -82,22 +74,13 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   groupId := args["groupId"]
   
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   group, groupKey, _, err := model.GroupById(c, userKey, groupId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   memberships, err := model.GetGroupMemberships(c, groupKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   ctx := struct {
     ctxBase
@@ -119,19 +102,15 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   }
   
   // Render
-  if err := RenderTemplate(w, "groups/view.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "groups/view.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func ApiGroupCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, groupKey, err := model.CreateGroup(c, r.FormValue("name"))
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyResourceCreated(w, model.GroupUri(groupKey))
 }
 
@@ -145,35 +124,24 @@ func ApiGroupAddUserHandler(w http.ResponseWriter, r *http.Request, args map[str
   }
 
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   // Only owners of a group can add members.
   if !userMembership.Owner {
-    HttpReplyError(w, r, http.StatusForbidden,
+    HttpReplyError(c, w, http.StatusForbidden,
                    errors.New("Can only add members to a group you own."))
     return
   }
   
   _, addUserKey, err := model.GetUserByEmail(c, addUserEmail)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   err = model.GroupAddMember(c, groupKey, addUserKey, owner)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }
 
@@ -183,34 +151,23 @@ func ApiGroupDelUserHandler(w http.ResponseWriter, r *http.Request, args map[str
   delUserEmail := r.FormValue("email")
 
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   // Only owners of a group can add members.
   if !userMembership.Owner {
-    HttpReplyError(w, r, http.StatusForbidden,
+    HttpReplyError(c, w, http.StatusForbidden,
                    errors.New("Can only remove members to a group you own."))
     return
   }
   
   _, delUserKey, err := model.GetUserByEmail(c, delUserEmail)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
   
   err = model.GroupDelMember(c, groupKey, delUserKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyOkEmpty(w)
 }

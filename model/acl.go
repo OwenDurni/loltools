@@ -3,7 +3,16 @@ package model
 import (
   "appengine"
   "appengine/datastore"
+  "appengine/user"
+  "fmt"
 )
+
+type ErrNotAuthorized struct {
+  Operation string
+}
+func (e ErrNotAuthorized) Error() string {
+  return fmt.Sprintf("Missing authorization for operation: %s", e.Operation)
+}
 
 type Permission int
 const (
@@ -124,6 +133,13 @@ func (res *ResourceAclCache) init(c appengine.Context) error {
 
 func (req *RequestorAclCache) Can(
   perm Permission, res *ResourceAclCache, c appengine.Context) (bool, error) {
+  // Allow application admin to do anything.
+  aeUser := user.Current(c)
+  if aeUser != nil && aeUser.Admin {
+    return true, nil
+  }
+  
+  // Ensure ACL caches are initialized.
   if err := req.init(c); err != nil { return false, err }
   if err := res.init(c); err != nil { return false, err }
   

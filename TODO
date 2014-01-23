@@ -10,3 +10,7 @@ For beta release:
 - Email should not be public.
 - Tagging league games.
 - Scoreboard W/L
+
+Future ideas:
+- Encorporate http://godoc.org/github.com/mjibson/appstats and
+  http://talks.golang.org/2013/highperf.slide#1 to remove performance bottlenecks.

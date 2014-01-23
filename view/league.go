@@ -49,16 +49,10 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
 
   // Lookup data from backend.
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   leagueInfos, err := model.LeaguesForUser(c, userKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   // Populate view context.
   ctx := struct {
@@ -79,10 +73,8 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   }
 
   // Render
-  if err := RenderTemplate(w, "leagues/index.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "leagues/index.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -90,22 +82,13 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   leagueId := args["leagueId"]
 
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   teams, teamKeys, err := model.LeagueAllTeams(c, userKey, leagueKey)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
 
   // Populate view context.
   ctx := struct {
@@ -124,19 +107,15 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   }
 
   // Render
-  if err := RenderTemplate(w, "leagues/view.html", "base", ctx); err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  err = RenderTemplate(w, "leagues/view.html", "base", ctx)
+  if HandleError(c, w, err) { return }
 }
 
 func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, leagueKey, err := model.CreateLeague(c, r.FormValue("name"))
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
   HttpReplyResourceCreated(w, model.LeagueUri(leagueKey))
 }
 
@@ -146,22 +125,15 @@ func ApiLeagueAddTeamHandler(w http.ResponseWriter, r *http.Request, args map[st
   teamName := r.FormValue("team")
 
   _, userKey, err := model.GetUser(c)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  if HandleError(c, w, err) { return }
+  
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  _, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
+  if HandleError(c, w, err) { return }
 
-  _, teamKey, err := model.LeagueAddTeam(c, userKey, leagueId, teamName)
-  if err != nil {
-    HttpReplyError(w, r, http.StatusInternalServerError, err)
-    return
-  }
+  _, teamKey, err := model.LeagueAddTeam(c, userAcls, leagueId, teamName)
+  if HandleError(c, w, err) { return }
 
   HttpReplyResourceCreated(w, model.LeagueTeamUri(leagueKey, teamKey))
 }
