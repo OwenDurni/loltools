@@ -29,6 +29,8 @@ var loltools = (function() {
             // Redirect to created resource.
             window.location.href = loc;
           }
+        } else if (jqXHR.status == 204) {
+          window.location.reload()
         }
         $result.text("sent: " + jqXHR.status);
       });

@@ -206,6 +206,11 @@ func (res *ResourceAclCache) init(c appengine.Context) error {
   }
   return nil
 }
+func (res *ResourceAclCache) IsAuthorizedRequestor(req *datastore.Key) bool {
+  _, exists := res.AuthorizedRequestorKeys[req.Encode()]
+  return exists
+}
+
 func (req *RequestorAclCache) can(perm Permission, res *ResourceAclCache) bool {
   // Check if the user is an authorized requestor.
   if _, exists := res.AuthorizedRequestorKeys[req.EncodedUserKey]; exists {
@@ -244,7 +249,7 @@ func (req *RequestorAclCache) Can(
 // For all the groups this user belongs to, returns a permission map for the given resource.
 func (req *RequestorAclCache) PermissionMapFor(
   c appengine.Context,
-  resKey *datastore.Key) ([]*datastore.Key, []*Group, []map[Permission]bool, error) {
+  resKey *datastore.Key) ([]*Group, []*datastore.Key, []map[Permission]bool, error) {
   if err := req.init(c); err != nil { return nil, nil, nil, err }
   
   resByPerm := make(map[Permission]*ResourceAclCache)
@@ -253,19 +258,19 @@ func (req *RequestorAclCache) PermissionMapFor(
     if err := resByPerm[perm].init(c); err != nil { return nil, nil, nil, err }
   }
   
-  keys := make([]*datastore.Key, len(req.GroupKeys))
-  groups := make([]*Group, len(keys))
-  maps := make([]map[Permission]bool, len(keys))
+  groupKeys := make([]*datastore.Key, len(req.GroupKeys))
+  groups := make([]*Group, len(groupKeys))
+  maps := make([]map[Permission]bool, len(groupKeys))
   
   i := 0
   for v, key := range req.GroupKeys {
-    keys[i] = key
+    groupKeys[i] = key
     groups[i] = req.Groups[v]
     maps[i] = make(map[Permission]bool)
     for _, perm := range AllPermissions() {
-      maps[i][perm] = req.can(perm, resByPerm[perm])
+      maps[i][perm] = resByPerm[perm].IsAuthorizedRequestor(groupKeys[i])
     }
     i++
   }
-  return keys, groups, maps, nil
+  return groups, groupKeys, maps, nil
 }

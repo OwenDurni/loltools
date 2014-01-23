@@ -38,28 +38,28 @@
           <input type="hidden" name="group" value="{{.Group.Id}}" />
           <input type="hidden" name="acl" value="view" />
       {{if .CanView}}
-        {{with $x := form $formid "/api/leagues/revoke-group-acl" "Revoke"}}
+        {{with $x := form $formid "/api/leagues/group-acl-revoke" "Revoke"}}
         {{template "formEnd" $x}}
         {{end}}
       {{else}}
-        {{with $x := form $formid "/api/leagues/grant-group-acl" "Grant"}}
+        {{with $x := form $formid "/api/leagues/group-acl-grant" "Grant"}}
         {{template "formEnd" $x}}
         {{end}}
       {{end}}
       </td>
       <td>
         {{template "bool:yes-no" .CanEdit}}
-        {{$formid := printf "view-%d" $i}}
+        {{$formid := printf "edit-%d" $i}}
         <form id="{{$formid}}">
           <input type="hidden" name="league" value="{{$league.Id}}" />
           <input type="hidden" name="group" value="{{.Group.Id}}" />
           <input type="hidden" name="acl" value="edit" />
       {{if .CanEdit}}
-        {{with $x := form $formid "/api/leagues/revoke-group-acl" "Revoke"}}
+        {{with $x := form $formid "/api/leagues/group-acl-revoke" "Revoke"}}
         {{template "formEnd" $x}}
         {{end}}
       {{else}}
-        {{with $x := form $formid "/api/leagues/grant-group-acl" "Grant"}}
+        {{with $x := form $formid "/api/leagues/group-acl-grant" "Grant"}}
         {{template "formEnd" $x}}
         {{end}}
       {{end}}
@@ -67,7 +67,4 @@
     </tr>
   {{end}}
 </table>
-{{end}}
-
-{{define "cell-grant-view"}}
 {{end}}

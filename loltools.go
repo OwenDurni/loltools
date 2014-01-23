@@ -46,6 +46,8 @@ func init() {
   dispatcher.Add("/api/groups/del-user", view.ApiGroupDelUserHandler)
   dispatcher.Add("/api/leagues/add-team", view.ApiLeagueAddTeamHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
+  dispatcher.Add("/api/leagues/group-acl-grant", view.ApiLeagueGroupAclGrantHandler)
+  dispatcher.Add("/api/leagues/group-acl-revoke", view.ApiLeagueGroupAclRevokeHandler)
   dispatcher.Add("/api/leagues/teams/add-player", view.ApiTeamAddPlayerHandler)
   dispatcher.Add("/api/leagues/teams/del-player", view.ApiTeamDelPlayerHandler)
   dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
