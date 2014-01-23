@@ -6,7 +6,6 @@ import (
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
-  "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
   "time"
 )
@@ -21,48 +20,31 @@ func FetchTeamMatchHistoryHandler(
   teamId := r.FormValue("team")
   
   league, leagueKey, err := model.LeagueById(c, nil, leagueId)
-  if err != nil {
-    ReportPermanentError(
-      c, w, fmt.Sprintf("Failed to lookup league/%s: %v", leagueId, err))
-    return
-  }
+  if ReportError(c, w, err) { return }
+  
   region := league.Region
   
   _, teamKey, err := model.TeamById(c, nil, leagueKey, teamId)
-  if err != nil {
-    ReportPermanentError(
-      c, w, fmt.Sprintf("Failed to lookup league/%s/team/%s: %v", leagueId, teamId, err))
-    return
-  }
+  if ReportError(c, w, err) { return }
   
   players, _, err := model.TeamAllPlayers(
     c, nil, leagueKey, teamKey, model.KeysAndEntities)
-  if err != nil {
-    ReportPermanentError(
-      c, w,
-      fmt.Sprintf("Failed to lookup league/%s/teas/%s/players: %v", leagueId, teamId, err))
-    return
-  }
+  if ReportError(c, w, err) { return }
   
   riotApiKey, err := model.GetRiotApiKey(c)
-  if err != nil {
-    ReportPermanentError(c, w, fmt.Sprintf("Failed to lookup RiotApiKey: %v", err))
-    return
-  }
+  if ReportError(c, w, err) { return }
   
   // First gather games from all players on the team.
   collectiveGameStats := new(model.CollectiveGameStats)
   for _, player := range players {
     if err := model.RiotApiRateLimiter.TryConsume(c, 1); err != nil {
       // Hitting rate limit: break to finish storing what we have already fetched.
-      ReportPermanentError(c, w, fmt.Sprintf("RiotRateLimit: %v", errwrap.Wrap(err)))
+      ReportError(c, w, err)
       break
     }
     recentGamesDto, err := riot.GameStatsForPlayer(c, riotApiKey.Key, region, player.RiotId)
-    if err != nil {
-      ReportPermanentError(c, w, fmt.Sprintf("Error in riot.GameStatsForPlayer(): %v", err))
-      return
-    }
+    if ReportError(c, w, err) { return }
+    
     for _, gameDto := range recentGamesDto.Games {
       gameId := model.MakeGameId(region, gameDto.GameId)
       gameDtoCopy := gameDto
@@ -79,15 +61,11 @@ func FetchTeamMatchHistoryHandler(
                                        sampleStat *riot.GameDto) {
     gameKey := model.KeyForGameId(c, gameId)
     err := model.EnsureGameExists(c, region, gameKey, sampleRiotSummonerId, sampleStat)
-    if err != nil {
-      c.Errorf("Failed to create game %s: %v", gameId, err)
-      return
-    }
+    if ReportError(c, w, err) { return }
+    
     err = model.LeagueAddGameByTeam(
       c, leagueKey, gameKey, teamKey, (time.Time)(sampleStat.CreateDate))
-    if err != nil {
-      c.Errorf("Failed to associate game %s with team %s: %v", gameId, teamId, err)
-    }
+    if ReportError(c, w, err) { return }
   })
   
   collectiveGameStats.ForEachStat(func(gameId string, riotSummonerId int64, stat *riot.GameDto) {
@@ -116,9 +94,7 @@ func FetchTeamMatchHistoryHandler(
       // Nothing to write.
       return nil
     }, nil)
-    if err != nil {
-      c.Errorf("Failed to store stats for %s/%s: %v", gameId, playerId, err)
-    }
+    if ReportError(c, w, err) { return }
   })
   
   // Write some debug info to the response.

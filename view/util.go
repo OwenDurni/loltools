@@ -2,6 +2,7 @@ package view
 
 import (
   "appengine"
+  "fmt"
   "github.com/OwenDurni/loltools/model"
   "net/http"
   "time"
@@ -45,9 +46,10 @@ func HttpReplyError(
   w http.ResponseWriter,
   httpStatusCode int,
   err error) {
+  
   errorString := ""
   if err != nil {
-    errorString = err.Error()
+    errorString = fmt.Sprintf("%d: %s", httpStatusCode, err.Error())
   }
 
   // Log if this was a server-side error
@@ -55,5 +57,16 @@ func HttpReplyError(
     c.Errorf("%d: %s", httpStatusCode, errorString)
   }
 
-  http.Error(w, errorString, httpStatusCode)
+  ctx := struct {
+    ctxBase
+    HttpStatusCode int
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.AddError(err)
+  ctx.HttpStatusCode = httpStatusCode
+
+  if tmplerr := RenderTemplate(w, "httperror.html", "base", ctx); tmplerr != nil {
+    // Fallback to plain old response.
+    http.Error(w, errorString, httpStatusCode) 
+  }
 }

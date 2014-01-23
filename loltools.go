@@ -3,7 +3,6 @@ package loltools
 import (
   "appengine"
   "appengine/user"
-  "errors"
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/task"
@@ -32,12 +31,6 @@ func debugHandler(w http.ResponseWriter, r *http.Request, args map[string]string
   fmt.Fprintf(w, "</pre>\n")
   fmt.Fprintf(w, "</body>\n")
   fmt.Fprintf(w, "</html>\n")
-}
-
-func apiNotImplemented(w http.ResponseWriter, r *http.Request) {
-  err := errors.New("Not implemented")
-  view.HttpReplyError(w, r, http.StatusInternalServerError, err)
-  return
 }
 
 var dispatcher *dispatch.Dispatcher
@@ -70,6 +63,8 @@ func init() {
 
   view.AddTemplate("admin.html",
                    "form.html", "base.html")
+  view.AddTemplate("httperror.html",
+                   "base.html")
   view.AddTemplate("home.html",
                    "base.html")
   view.AddTemplate("groups/index.html",

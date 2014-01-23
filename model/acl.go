@@ -8,10 +8,12 @@ import (
 )
 
 type ErrNotAuthorized struct {
-  Operation string
+  Permission Permission
+  Resource   *datastore.Key
 }
 func (e ErrNotAuthorized) Error() string {
-  return fmt.Sprintf("Missing authorization for operation: %s", e.Operation)
+  return fmt.Sprintf("You are not authorized to %s this %s",
+                     e.Permission.String(), e.Resource.Kind())
 }
 
 type Permission int
@@ -19,6 +21,11 @@ const (
   PermissionView = iota
   PermissionEdit
 )
+func (p Permission) String() string {
+  if p == PermissionView { return "view" }
+  if p == PermissionEdit { return "edit" }
+  return "<unknown_operation>"
+}
 
 // Ancestor: GroupRootKey
 type Acl struct {
@@ -84,6 +91,8 @@ type RequestorAclCache struct {
   UserKey *datastore.Key
   EncodedUserKey string
   GroupKeys map[string]*datastore.Key
+  
+  resCache map[Permission]map[string]*ResourceAclCache
 }
 func NewRequestorAclCache(userKey *datastore.Key) *RequestorAclCache {
   r := new(RequestorAclCache)
@@ -100,6 +109,25 @@ func (req *RequestorAclCache) init(c appengine.Context) error {
     req.GroupKeys[m.GroupKey.Encode()] = m.GroupKey
   }
   return err
+}
+func (req *RequestorAclCache) lookupResourceAcls(
+  perm Permission, resKey *datastore.Key) *ResourceAclCache {
+  encodedResKey := resKey.Encode()
+    
+  if req.resCache == nil {
+    req.resCache = make(map[Permission]map[string]*ResourceAclCache)
+  }
+  caches, exists := req.resCache[perm]
+  if !exists {
+    caches = make(map[string]*ResourceAclCache)
+    req.resCache[perm] = caches
+  }
+  cache, exists := caches[encodedResKey]
+  if !exists {
+    cache = NewResourceAclCache(resKey, perm)
+    caches[encodedResKey] = cache
+  }
+  return cache
 }
 
 type ResourceAclCache struct {
@@ -132,29 +160,31 @@ func (res *ResourceAclCache) init(c appengine.Context) error {
 }
 
 func (req *RequestorAclCache) Can(
-  perm Permission, res *ResourceAclCache, c appengine.Context) (bool, error) {
+  c appengine.Context, perm Permission, resKey *datastore.Key) error {
   // Allow application admin to do anything.
-  aeUser := user.Current(c)
-  if aeUser != nil && aeUser.Admin {
-    return true, nil
+  gaeUser := user.Current(c)
+  if gaeUser != nil && gaeUser.Admin {
+    return nil
   }
   
+  res := req.lookupResourceAcls(perm, resKey)
+  
   // Ensure ACL caches are initialized.
-  if err := req.init(c); err != nil { return false, err }
-  if err := res.init(c); err != nil { return false, err }
+  if err := req.init(c); err != nil { return err }
+  if err := res.init(c); err != nil { return err }
   
   // Check if the user is an authorized requestor.
   if _, exists := res.AuthorizedRequestorKeys[req.EncodedUserKey]; exists {
-    return true, nil
+    return nil
   }
   
   // Check if the user is in a group that is an authorized requestor.
   for encodedRequestor := range req.GroupKeys {
     if _, exists := res.AuthorizedRequestorKeys[encodedRequestor]; exists {
-      return true, nil
+      return nil
     }
   }
   
   // User is not authorized.
-  return false, nil
+  return ErrNotAuthorized{perm, resKey}
 }

@@ -98,6 +98,7 @@ type LeagueInfo struct {
   LeagueKey *datastore.Key
 }
 
+// TODO(durni): Update to use ACLs.
 func LeaguesForUser(
   c appengine.Context, userKey *datastore.Key) ([]*LeagueInfo, error) {
   q := datastore.NewQuery("League").
@@ -120,11 +121,17 @@ func LeaguesForUser(
 
 func LeagueById(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueId string) (*League, *datastore.Key, error) {
   leagueKey, err := DecodeKeyShort(c, "League", leagueId, nil)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
+  }
+  
+  if userAcls != nil {
+    if err = userAcls.Can(c, PermissionView, leagueKey); err != nil {
+      return nil, leagueKey, err
+    }
   }
 
   league := new(League)
@@ -132,13 +139,12 @@ func LeagueById(
     return nil, leagueKey, errwrap.Wrap(err)
   }
 
-  // TODO(durni): Check viewing permissions
   return league, leagueKey, nil
 }
 
 func TeamById(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueKey *datastore.Key,
   teamId string) (*Team, *datastore.Key, error) {
   teamKey, err := DecodeKeyShort(c, "Team", teamId, leagueKey)
@@ -146,27 +152,36 @@ func TeamById(
     return nil, nil, errwrap.Wrap(err)
   }
 
+  if userAcls != nil {
+    if err = userAcls.Can(c, PermissionView, leagueKey); err != nil {
+      return nil, nil, err
+    }
+  }
+  
   team := new(Team)
   if err := datastore.Get(c, teamKey, team); err != nil {
     return nil, teamKey, errwrap.Wrap(err)
   }
 
-  // TODO(durni): Check viewing permissions
   return team, teamKey, nil
 }
 
 func LeagueAddTeam(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueId string,
   teamName string) (*Team, *datastore.Key, error) {
-  // TODO(durni): Check that this user has permissions to add teams to the league.
-
-  _, leagueKey, err := LeagueById(c, userKey, leagueId)
+  _, leagueKey, err := LeagueById(c, userAcls, leagueId)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
 
+  if userAcls != nil {
+    if err = userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+      return nil, nil, err
+    }
+  }
+  
   team := new(Team)
   team.Name = teamName
   var teamKey *datastore.Key
@@ -196,8 +211,15 @@ func LeagueAddTeam(
 
 func LeagueAllTeams(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueKey *datastore.Key) ([]*Team, []*datastore.Key, error) {
+  
+  if userAcls != nil {
+    if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
+      return nil, nil, err
+    }
+  }
+    
   var teams []*Team
   var teamKeys []*datastore.Key
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
@@ -211,10 +233,17 @@ func LeagueAllTeams(
 
 func TeamAllPlayers(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   keysOnly KeysOnlyOption) ([]*Player, []*datastore.Key, error) {
+  
+  if userAcls != nil {
+    if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
+      return nil, nil, err
+    }
+  }
+    
   var memberships []TeamMembership
   q := datastore.NewQuery("TeamMembership").Ancestor(leagueKey).
     Filter("TeamKey =", teamKey)
@@ -244,10 +273,17 @@ func TeamAllPlayers(
 
 func TeamAddPlayer(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   playerKey *datastore.Key) error {
+    
+  if userAcls != nil {
+    if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+      return err
+    }
+  }
+    
   m := &TeamMembership{
     TeamKey:   teamKey,
     PlayerKey: playerKey,
@@ -259,10 +295,17 @@ func TeamAddPlayer(
 
 func TeamDelPlayer(
   c appengine.Context,
-  userKey *datastore.Key,
+  userAcls *RequestorAclCache,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   playerKey *datastore.Key) error {
+    
+  if userAcls != nil {
+    if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+      return err
+    }
+  }
+    
   return datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("TeamMembership").Ancestor(leagueKey).
            Filter("TeamKey =", teamKey).

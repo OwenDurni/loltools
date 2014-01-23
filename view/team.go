@@ -30,15 +30,16 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
 
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  league, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
   if HandleError(c, w, err) { return }
 
-  team, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
+  team, teamKey, err := model.TeamById(c, userAcls, leagueKey, teamId)
   if HandleError(c, w, err) { return }
 
   players, _, err := model.TeamAllPlayers(
-    c, userKey, leagueKey, teamKey, model.KeysAndEntities)
+    c, userAcls, leagueKey, teamKey, model.KeysAndEntities)
   if HandleError(c, w, err) { return }
   
   playerCache := model.NewPlayerCache(c, league.Region)
@@ -87,17 +88,18 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
 
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  _, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
   if HandleError(c, w, err) { return }
 
-  _, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
+  _, teamKey, err := model.TeamById(c, userAcls, leagueKey, teamId)
   if HandleError(c, w, err) { return }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
   if HandleError(c, w, err) { return }
 
-  err = model.TeamAddPlayer(c, userKey, leagueKey, teamKey, playerKey)
+  err = model.TeamAddPlayer(c, userAcls, leagueKey, teamKey, playerKey)
   if HandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
@@ -112,17 +114,18 @@ func ApiTeamDelPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
 
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  _, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  _, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
   if HandleError(c, w, err) { return }
 
-  _, teamKey, err := model.TeamById(c, userKey, leagueKey, teamId)
+  _, teamKey, err := model.TeamById(c, userAcls, leagueKey, teamId)
   if HandleError(c, w, err) { return }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
   if HandleError(c, w, err) { return }
 
-  err = model.TeamDelPlayer(c, userKey, leagueKey, teamKey, playerKey)
+  err = model.TeamDelPlayer(c, userAcls, leagueKey, teamKey, playerKey)
   if HandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)

@@ -83,11 +83,12 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
 
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  league, leagueKey, err := model.LeagueById(c, userKey, leagueId)
+  league, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
   if HandleError(c, w, err) { return }
 
-  teams, teamKeys, err := model.LeagueAllTeams(c, userKey, leagueKey)
+  teams, teamKeys, err := model.LeagueAllTeams(c, userAcls, leagueKey)
   if HandleError(c, w, err) { return }
 
   // Populate view context.

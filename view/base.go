@@ -124,3 +124,7 @@ func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
   ctx.Errors = make([]error, 0)
   return ctx
 }
+
+func (ctx *ctxBase) AddError(err error) {
+  ctx.Errors = append(ctx.Errors, err)
+}

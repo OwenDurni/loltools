@@ -9,6 +9,14 @@ import (
   "time"
 )
 
+type ErrRateLimitExceeded struct {
+  RateLimit *DistributedRateLimiter
+  Debug error
+}
+func (e ErrRateLimitExceeded) Error() string {
+  return fmt.Sprintf("Exceeded rate limit: %s (%v)", e.RateLimit.Name, e.Debug)
+}
+
 // Describes a rate limit that permits MaxEvents in the last IntervalSeconds.
 // Ex: RateLimit{10, 100} would indicate 10 events per 100 seconds.
 type RateLimit struct {
@@ -59,8 +67,7 @@ func (r *DistributedRateLimiter) TryConsume(c appengine.Context, events int) err
     e.addTokens(time.Now().UTC())
     
     if err := e.tryConsume(events); err != nil {
-      // We are being rate limited.
-      return err
+      return ErrRateLimitExceeded{r, err}
     }
     
     // We've consumed the tokens if and only if nothing else has written the
