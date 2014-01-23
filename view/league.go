@@ -50,8 +50,9 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   // Lookup data from backend.
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
 
-  leagueInfos, err := model.LeaguesForUser(c, userKey)
+  leagues, leagueKeys, err := model.LeaguesForUser(c, userAcls)
   if HandleError(c, w, err) { return }
 
   // Populate view context.
@@ -61,10 +62,10 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   }{}
   ctx.ctxBase.init(c)
 
-  ctx.MyLeagues = make([]*League, len(leagueInfos))
-  for i, info := range leagueInfos {
-    league := new(League).Fill(&info.League, info.LeagueKey)
-    if owner, err := model.GetUserByKey(c, info.League.Owner); err == nil {
+  ctx.MyLeagues = make([]*League, len(leagues))
+  for i := range leagues {
+    league := new(League).Fill(leagues[i], leagueKeys[i])
+    if owner, err := model.GetUserByKey(c, leagues[i].Owner); err == nil {
       league.Owner = owner.Email
     } else {
       league.Owner = err.Error()
@@ -85,17 +86,18 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   if HandleError(c, w, err) { return }
   userAcls := model.NewRequestorAclCache(userKey)
 
-  league, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
+  league, leagueKey, err := model.LeagueById(c, leagueId)
   if HandleError(c, w, err) { return }
 
-  teams, teamKeys, err := model.LeagueAllTeams(c, userAcls, leagueKey)
+  teams, teamKeys, err := model.LeagueAllTeams(c, userAcls, league, leagueKey)
   if HandleError(c, w, err) { return }
-
+  
   // Populate view context.
   ctx := struct {
     ctxBase
     League
     Teams []Team
+    GroupAcls []GroupAcl
   }{}
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", league.Name)
@@ -107,6 +109,28 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     ctx.Teams[i].Fill(t, teamKeys[i], leagueKey)
   }
 
+  // TODO(durni): Fetch this out of the userAcls instead.
+  if *league.Owner == *userKey {
+    memberships, err := model.GetGroupMemberships(c, userKey)
+    if HandleError(c, w, err) { return }
+    
+    ctx.GroupAcls = make([]GroupAcl, len(memberships))
+    
+    for i, m := range memberships {
+      g, _, err := model.GroupByKey(c, m.GroupKey, userKey)
+      if HandleError(c, w, err) { return }
+      
+      gCanView, err := model.AclCan(c, m.GroupKey, model.PermissionView, leagueKey)
+      ctx.ctxBase.AddError(err)
+      
+      gCanEdit, err := model.AclCan(c, m.GroupKey, model.PermissionEdit, leagueKey)
+      ctx.ctxBase.AddError(err)
+      
+      vg := new(Group).Fill(g, m.GroupKey)
+      ctx.GroupAcls[i].Fill(vg, gCanView, gCanEdit)
+    }
+  }
+  
   // Render
   err = RenderTemplate(w, "leagues/view.html", "base", ctx)
   if HandleError(c, w, err) { return }
@@ -130,7 +154,7 @@ func ApiLeagueAddTeamHandler(w http.ResponseWriter, r *http.Request, args map[st
   
   userAcls := model.NewRequestorAclCache(userKey)
 
-  _, leagueKey, err := model.LeagueById(c, userAcls, leagueId)
+  _, leagueKey, err := model.LeagueById(c, leagueId)
   if HandleError(c, w, err) { return }
 
   _, teamKey, err := model.LeagueAddTeam(c, userAcls, leagueId, teamName)

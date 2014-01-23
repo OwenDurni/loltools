@@ -93,45 +93,47 @@ func LeagueTeamUri(leagueKey *datastore.Key, teamKey *datastore.Key) string {
     EncodeKeyShort(teamKey))
 }
 
-type LeagueInfo struct {
-  League    League
-  LeagueKey *datastore.Key
-}
-
-// TODO(durni): Update to use ACLs.
 func LeaguesForUser(
-  c appengine.Context, userKey *datastore.Key) ([]*LeagueInfo, error) {
-  q := datastore.NewQuery("League").
-    Filter("Owner =", userKey).
-    Order("Name")
-  var leagues []League
-  leagueKeys, err := q.GetAll(c, &leagues)
-  if err != nil {
-    return nil, errwrap.Wrap(err)
+  c appengine.Context, userAcls *RequestorAclCache) ([]*League, []*datastore.Key, error) {
+  retLeagues := make([]*League, 0, 8)
+  retLeagueKeys := make([]*datastore.Key, 0, 8)
+   
+  // Leagues owned.
+  {
+    q := datastore.NewQuery("League").
+      Filter("Owner =", userAcls.UserKey).
+      Order("Name")
+    var leagues []*League
+    leagueKeys, err := q.GetAll(c, &leagues)
+    if err != nil {
+      return nil, nil, err
+    }
+    retLeagues = append(retLeagues, leagues...)
+    retLeagueKeys = append(retLeagueKeys, leagueKeys...)
   }
-  result := make([]*LeagueInfo, len(leagues))
-  for i := range leagues {
-    info := new(LeagueInfo)
-    info.League = leagues[i]
-    info.LeagueKey = leagueKeys[i]
-    result[i] = info
+  
+  // For each group the user is in, check which leagues they can view.
+  for _, groupKey := range userAcls.GroupKeys {
+    leagueKeys, err := AclFindAll(c, groupKey, "League", PermissionView)
+    if err != nil { return nil, nil, err }
+    
+    leagues := make([]*League, len(leagueKeys))
+    err = datastore.GetMulti(c, leagueKeys, leagues)
+    if err != nil { return nil, nil, err }
+        
+    retLeagues = append(retLeagues, leagues...)
+    retLeagueKeys = append(retLeagueKeys, leagueKeys...)
   }
-  return result, nil
+  
+  return retLeagues, retLeagueKeys, nil
 }
 
 func LeagueById(
   c appengine.Context,
-  userAcls *RequestorAclCache,
   leagueId string) (*League, *datastore.Key, error) {
   leagueKey, err := DecodeKeyShort(c, "League", leagueId, nil)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
-  }
-  
-  if userAcls != nil {
-    if err = userAcls.Can(c, PermissionView, leagueKey); err != nil {
-      return nil, leagueKey, err
-    }
   }
 
   league := new(League)
@@ -145,6 +147,7 @@ func LeagueById(
 func TeamById(
   c appengine.Context,
   userAcls *RequestorAclCache,
+  league *League,
   leagueKey *datastore.Key,
   teamId string) (*Team, *datastore.Key, error) {
   teamKey, err := DecodeKeyShort(c, "Team", teamId, leagueKey)
@@ -153,8 +156,10 @@ func TeamById(
   }
 
   if userAcls != nil {
-    if err = userAcls.Can(c, PermissionView, leagueKey); err != nil {
-      return nil, nil, err
+    if *userAcls.UserKey != *league.Owner {
+      if err = userAcls.Can(c, PermissionView, leagueKey); err != nil {
+        return nil, nil, err
+      }
     }
   }
   
@@ -171,14 +176,16 @@ func LeagueAddTeam(
   userAcls *RequestorAclCache,
   leagueId string,
   teamName string) (*Team, *datastore.Key, error) {
-  _, leagueKey, err := LeagueById(c, userAcls, leagueId)
+  league, leagueKey, err := LeagueById(c, leagueId)
   if err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
 
   if userAcls != nil {
-    if err = userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
-      return nil, nil, err
+    if *userAcls.UserKey != *league.Owner {
+      if err = userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+        return nil, nil, err
+      }
     }
   }
   
@@ -212,14 +219,17 @@ func LeagueAddTeam(
 func LeagueAllTeams(
   c appengine.Context,
   userAcls *RequestorAclCache,
+  league *League,
   leagueKey *datastore.Key) ([]*Team, []*datastore.Key, error) {
   
   if userAcls != nil {
-    if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
-      return nil, nil, err
+    if *userAcls.UserKey != *league.Owner {
+      if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
+        return nil, nil, err
+      }
     }
   }
-    
+  
   var teams []*Team
   var teamKeys []*datastore.Key
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
@@ -234,13 +244,16 @@ func LeagueAllTeams(
 func TeamAllPlayers(
   c appengine.Context,
   userAcls *RequestorAclCache,
+  league *League,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   keysOnly KeysOnlyOption) ([]*Player, []*datastore.Key, error) {
   
   if userAcls != nil {
-    if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
-      return nil, nil, err
+    if *userAcls.UserKey != *league.Owner {
+      if err := userAcls.Can(c, PermissionView, leagueKey); err != nil {
+        return nil, nil, err
+      }
     }
   }
     
@@ -274,13 +287,16 @@ func TeamAllPlayers(
 func TeamAddPlayer(
   c appengine.Context,
   userAcls *RequestorAclCache,
+  league *League,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   playerKey *datastore.Key) error {
     
   if userAcls != nil {
-    if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
-      return err
+    if *userAcls.UserKey != *league.Owner {
+      if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+        return err
+      }
     }
   }
     
@@ -296,13 +312,16 @@ func TeamAddPlayer(
 func TeamDelPlayer(
   c appengine.Context,
   userAcls *RequestorAclCache,
+  league *League,
   leagueKey *datastore.Key,
   teamKey *datastore.Key,
   playerKey *datastore.Key) error {
     
   if userAcls != nil {
-    if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
-      return err
+    if *userAcls.UserKey != *league.Owner {
+      if err := userAcls.Can(c, PermissionEdit, leagueKey); err != nil {
+        return err
+      }
     }
   }
     

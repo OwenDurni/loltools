@@ -30,13 +30,25 @@ func HttpReplyResourceCreated(w http.ResponseWriter, loc string) {
   w.WriteHeader(http.StatusCreated)
 }
 
-func HandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+func ApiHandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+  useTemplate := false
   if err == nil { return false }
   if _, ok := err.(model.ErrNotAuthorized); ok {
-    HttpReplyError(c, w, http.StatusForbidden, err)
+    HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
     return true
   }
-  HttpReplyError(c, w, http.StatusInternalServerError, err)
+  HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
+  return true
+}
+
+func HandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+  useTemplate := true
+  if err == nil { return false }
+  if _, ok := err.(model.ErrNotAuthorized); ok {
+    HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
+    return true
+  }
+  HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
   return true
 }
 
@@ -45,6 +57,7 @@ func HttpReplyError(
   c appengine.Context,
   w http.ResponseWriter,
   httpStatusCode int,
+  useTemplate bool,
   err error) {
   
   errorString := ""
@@ -57,16 +70,22 @@ func HttpReplyError(
     c.Errorf("%d: %s", httpStatusCode, errorString)
   }
 
-  ctx := struct {
-    ctxBase
-    HttpStatusCode int
-  }{}
-  ctx.ctxBase.init(c)
-  ctx.ctxBase.AddError(err)
-  ctx.HttpStatusCode = httpStatusCode
+  if !useTemplate {
+    http.Error(w, err.Error(), httpStatusCode)
+  } else {
+    // Don't send an error code as some browsers won't render html for non-2XX responses.
+  
+    ctx := struct {
+      ctxBase
+      HttpStatusCode int
+    }{}
+    ctx.ctxBase.init(c)
+    ctx.ctxBase.AddError(err)
+    ctx.HttpStatusCode = httpStatusCode
 
-  if tmplerr := RenderTemplate(w, "httperror.html", "base", ctx); tmplerr != nil {
-    // Fallback to plain old response.
-    http.Error(w, errorString, httpStatusCode) 
+    if tmplerr := RenderTemplate(w, "httperror.html", "base", ctx); tmplerr != nil {
+      // Fallback to plain old response.
+      http.Error(w, errorString, httpStatusCode) 
+    }
   }
 }

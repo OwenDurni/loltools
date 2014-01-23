@@ -28,12 +28,12 @@ func ProfileSetHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   c := appengine.NewContext(r)
   
   user, _, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   user.Name = r.FormValue("name")
   user.SummonerName = r.FormValue("summoner")
   err = user.Save(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }

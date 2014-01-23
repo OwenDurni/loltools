@@ -126,5 +126,6 @@ func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
 }
 
 func (ctx *ctxBase) AddError(err error) {
+  if err == nil { return }
   ctx.Errors = append(ctx.Errors, err)
 }

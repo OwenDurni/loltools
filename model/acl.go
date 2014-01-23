@@ -35,10 +35,51 @@ type Acl struct {
   // The key of the protected resource.
   Resource *datastore.Key
   
+  // The entity type of the resource key.
+  ResourceKind string
+  
   Permission Permission
 }
 
-func AclAdd(
+func AclCan(
+  c appengine.Context,
+  requestor *datastore.Key,
+  perm Permission,
+  resource *datastore.Key) (bool, error) {
+  groot := GroupRootKey(c)
+  q := datastore.NewQuery("Acl").Ancestor(groot).
+         Filter("Requestor =", requestor).
+         Filter("Resource =", resource).
+         Filter("Permission =", perm).
+         Limit(1).
+         KeysOnly()
+  keys, err := q.GetAll(c, nil)
+  return len(keys) > 0, err
+}
+
+func AclFindAll(
+  c appengine.Context,
+  requestor *datastore.Key,
+  resourceKind string,
+  perm Permission) ([]*datastore.Key, error) {
+  groot := GroupRootKey(c)
+  q := datastore.NewQuery("Acl").Ancestor(groot).
+         Filter("Requestor =", requestor).
+         Filter("ResourceKind =", resourceKind).
+         Filter("Permission =", perm).
+         Project("Resource")
+  var acls []*Acl
+  if _, err := q.GetAll(c, &acls); err != nil {
+    return nil, err
+  }
+  resources := make([]*datastore.Key, len(acls))
+  for i := range acls {
+    resources[i] = acls[i].Resource
+  }
+  return resources, nil
+}
+
+func AclGrant(
   c appengine.Context,
   requestor *datastore.Key,
   resource *datastore.Key,
@@ -48,6 +89,7 @@ func AclAdd(
   acl := new(Acl)
   acl.Requestor = requestor
   acl.Resource = resource
+  acl.ResourceKind = resource.Kind()
   acl.Permission = perm
   
   return datastore.RunInTransaction(c, func(c appengine.Context) error {
@@ -102,7 +144,7 @@ func NewRequestorAclCache(userKey *datastore.Key) *RequestorAclCache {
 }
 func (req *RequestorAclCache) init(c appengine.Context) error {
   if req.GroupKeys != nil { return nil }
-  memberships, err := GetGroupsForUser(c, req.UserKey)
+  memberships, err := GetGroupMemberships(c, req.UserKey)
   if err != nil { return err }
   req.GroupKeys = make(map[string]*datastore.Key)
   for _, m := range memberships {

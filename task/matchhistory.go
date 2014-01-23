@@ -19,16 +19,16 @@ func FetchTeamMatchHistoryHandler(
   leagueId := r.FormValue("league")
   teamId := r.FormValue("team")
   
-  league, leagueKey, err := model.LeagueById(c, nil, leagueId)
+  league, leagueKey, err := model.LeagueById(c, leagueId)
   if ReportError(c, w, err) { return }
   
   region := league.Region
   
-  _, teamKey, err := model.TeamById(c, nil, leagueKey, teamId)
+  _, teamKey, err := model.TeamById(c, nil, league, leagueKey, teamId)
   if ReportError(c, w, err) { return }
   
   players, _, err := model.TeamAllPlayers(
-    c, nil, leagueKey, teamKey, model.KeysAndEntities)
+    c, nil, league, leagueKey, teamKey, model.KeysAndEntities)
   if ReportError(c, w, err) { return }
   
   riotApiKey, err := model.GetRiotApiKey(c)

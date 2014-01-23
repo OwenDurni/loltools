@@ -69,15 +69,6 @@ func GroupById(
   return group, groupKey, membership, err
 }
 
-func GetGroupsForUser(c appengine.Context, userKey *datastore.Key) ([]*GroupMembership, error) {
-  q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
-    Filter("UserKey =", userKey)
-  
-  var memberships []*GroupMembership
-  _, err := q.GetAll(c, &memberships)
-  return memberships, err
-}
-
 func GetGroupMemberships(
   c appengine.Context, groupKey *datastore.Key) ([]*GroupMembership, error) {
   q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).

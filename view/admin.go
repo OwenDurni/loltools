@@ -31,7 +31,7 @@ func ApiAdminRiotKeySetHandler(
   apikey := r.FormValue("key")
 
   err := model.SetRiotApiKey(c, apikey)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }

@@ -21,6 +21,18 @@ func (g *Group) Fill(m *model.Group, key *datastore.Key) *Group {
   return g
 }
 
+type GroupAcl struct {
+  Group *Group
+  CanView bool
+  CanEdit bool
+}
+func (ga *GroupAcl) Fill(group *Group, canView bool, canEdit bool) *GroupAcl {
+  ga.Group = group
+  ga.CanView = canView
+  ga.CanEdit = canEdit
+  return ga
+}
+
 type Member struct {
   Email string
   Owner bool
@@ -38,7 +50,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   _, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) { return }
 
-  memberships, err := model.GetGroupsForUser(c, userKey)
+  memberships, err := model.GetGroupMemberships(c, userKey)
   if HandleError(c, w, err) { return }
   
   // Populate view context.
@@ -109,7 +121,7 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
 func ApiGroupCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, groupKey, err := model.CreateGroup(c, r.FormValue("name"))
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyResourceCreated(w, model.GroupUri(groupKey))
 }
@@ -124,23 +136,23 @@ func ApiGroupAddUserHandler(w http.ResponseWriter, r *http.Request, args map[str
   }
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   // Only owners of a group can add members.
   if !userMembership.Owner {
-    HttpReplyError(c, w, http.StatusForbidden,
+    HttpReplyError(c, w, http.StatusForbidden, false,
                    errors.New("Can only add members to a group you own."))
     return
   }
   
   _, addUserKey, err := model.GetUserByEmail(c, addUserEmail)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   err = model.GroupAddMember(c, groupKey, addUserKey, owner)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }
@@ -151,23 +163,23 @@ func ApiGroupDelUserHandler(w http.ResponseWriter, r *http.Request, args map[str
   delUserEmail := r.FormValue("email")
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, groupKey, userMembership, err := model.GroupById(c, userKey, groupId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   // Only owners of a group can add members.
   if !userMembership.Owner {
-    HttpReplyError(c, w, http.StatusForbidden,
+    HttpReplyError(c, w, http.StatusForbidden, false,
                    errors.New("Can only remove members to a group you own."))
     return
   }
   
   _, delUserKey, err := model.GetUserByEmail(c, delUserEmail)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   err = model.GroupDelMember(c, groupKey, delUserKey)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }
