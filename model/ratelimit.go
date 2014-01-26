@@ -118,7 +118,7 @@ func (r *DistributedRateLimiter) DebugStr(c appengine.Context) string {
   if err != nil {
     return err.Error()
   }
-  return fmt.Sprintf("%v", item)
+  return fmt.Sprintf("%v", e)
 }
 
 type TokenBucket struct {
