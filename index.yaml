@@ -30,3 +30,9 @@ indexes:
   properties:
   - name: Owner
   - name: Name
+
+- kind: PlayerGameStats
+  properties:
+  - name: NotAvailable
+  - name: Saved
+  - name: PlayerKey

@@ -7,6 +7,7 @@ import (
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
   "io"
+  "strings"
   "time"
 )
 
@@ -39,6 +40,10 @@ func KeyForGame(c appengine.Context, region string, riotGameId int64) *datastore
 }
 func KeyForGameId(c appengine.Context, gameId string) *datastore.Key {
   return datastore.NewKey(c, "Game", gameId, 0, nil)
+}
+
+func RegionForGameId(id string) string {
+  return strings.Split(id, "-")[0]
 }
 
 // The tuple (GameKey, PlayerKey) are unique per entity.
@@ -110,7 +115,7 @@ func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
 }
 func NewGamePlayerStatsInfo(player *Player, stats *PlayerGameStats) *GamePlayerStatsInfo {
   info := new(GamePlayerStatsInfo)
-  info.Exists = (stats != nil)
+  info.Exists = stats.Saved
   info.Player = player
   info.Stats = stats
   return info
@@ -301,6 +306,14 @@ func (c *CollectiveGameStats) Add(
   for _, riotOtherPlayer := range stats.FellowPlayers {
     c.stub(region, gameId, riotOtherPlayer.SummonerId)
   }
+}
+func (c *CollectiveGameStats) Lookup(gameId string, riotSummonerId int64) *riot.GameDto {
+  if c.games == nil { return nil }
+  playerMap, exists := c.games[gameId]
+  if !exists { return nil }
+  stats, exists := playerMap[riotSummonerId]
+  if !exists { return nil }
+  return stats
 }
 // Fills a stub with this player's stats. If no stub exists for these stats this is a no-op.
 func (c *CollectiveGameStats) FillStub(

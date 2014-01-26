@@ -4,9 +4,11 @@ import (
   "appengine"
   "appengine/datastore"
   "appengine/memcache"
+  "errors"
   "fmt"
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
+  "strconv"
   "strings"
   "time"
 )
@@ -79,6 +81,18 @@ func MakePlayerId(region string, riotSummonerId int64) string {
 }
 func KeyForPlayer(c appengine.Context, region string, riotSummonerId int64) *datastore.Key {
   return datastore.NewKey(c, "Player", MakePlayerId(region, riotSummonerId), 0, nil) 
+}
+
+func SplitPlayerKey(key *datastore.Key) (string, int64, error) {
+  parts := strings.Split(key.StringID(), "-")
+  if len(parts) != 2 {
+    return "", 0, errors.New(fmt.Sprintf("Cannot split malformed PlayerKey: %s",
+                                         key.StringID()))
+  }
+  region := parts[0]
+  id, err := strconv.ParseInt(parts[1], 10, 64)
+  if err != nil { return "", 0, err }
+  return region, id, nil
 }
 
 // sort.Interface for []*Player

@@ -2,3 +2,6 @@ cron:
 - description: queue getting history for every team in all leagues
   url: /task/cron/all-team-histories
   schedule: every 3 hours
+- description: fills in some game stats we are missing or marks them unavailable
+  url: /task/cron/get-missing-game-stats
+  schedule: every 10 minutes

@@ -7,10 +7,128 @@ import (
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
+  "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
   "net/url"
   "time"
 )
+
+func MissingGameStats(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  fmt.Fprintf(w, "<html><body><pre>")
+  c := appengine.NewContext(r)
+  
+  riotApiKey, err := model.GetRiotApiKey(c)
+  if ReportError(c, w, errwrap.Wrap(err)) { return }
+  
+  limit := 10
+  q := datastore.NewQuery("PlayerGameStats").
+    Filter("Saved =", false).
+    Filter("NotAvailable =", false).
+    Order("PlayerKey").
+    Limit(limit)
+  
+  var stats []*model.PlayerGameStats
+  statKeys, err := q.GetAll(c, &stats)
+  if ReportError(c, w, errwrap.Wrap(err)) { return }
+  
+  fmt.Fprintf(
+    w, "Attempting to fill %d PlayerGameStats (limit is %d)\n", len(statKeys), limit)
+  
+  playerKeyMap := make(map[string]*datastore.Key)
+  gameKeyMap := make(map[string]*datastore.Key)
+  for _, stat := range stats {
+    playerKeyMap[stat.PlayerKey.Encode()] = stat.PlayerKey
+    gameKeyMap[stat.GameKey.Encode()] = stat.GameKey
+  }
+
+  players := make([]*model.Player, 0, len(playerKeyMap))
+  playerKeys := make([]*datastore.Key, 0, len(playerKeyMap))
+  playerMap := make(map[string]*model.Player)
+  for _, key := range playerKeyMap {
+    region, riotSummonerId, err := model.SplitPlayerKey(key)
+    if ReportError(c, w, errwrap.Wrap(err)) { return }
+    _, _, err = model.GetOrCreatePlayerByRiotId(c, region, riotSummonerId)
+    if ReportError(c, w, errwrap.Wrap(err)) { return }
+    players = append(players, new(model.Player))
+    playerKeys = append(playerKeys, key)
+  }
+  err = datastore.GetMulti(c, playerKeys, players)
+  if ReportError(c, w, errwrap.Wrap(err)) { return }
+  for i := range players {
+    playerMap[playerKeys[i].Encode()] = players[i]
+    fmt.Fprintf(w, "Including player: %s\n", players[i].Summoner)
+  }
+  
+  games := make([]*model.Game, 0, len(gameKeyMap))
+  gameKeys := make([]*datastore.Key, 0, len(gameKeyMap))
+  gameMap := make(map[string]*model.Game)
+  for _, key := range gameKeyMap {
+    games = append(games, new(model.Game))
+    gameKeys = append(gameKeys, key)
+  }
+  err = datastore.GetMulti(c, gameKeys, games)
+  if ReportError(c, w, errwrap.Wrap(err)) { return }
+  for i := range games {
+    gameMap[gameKeys[i].Encode()] = games[i]
+  }
+  
+  collectiveGameStats := new(model.CollectiveGameStats)
+  for _, player := range players {
+    if err := model.RiotApiRateLimiter.Consume(c, 1); err != nil {
+      // Hitting rate limit: break to finish storing what we have already fetched.
+      ReportError(c, w, errwrap.Wrap(err))
+      return
+    }
+    recentGamesDto, err := riot.GameStatsForPlayer(
+      c, riotApiKey.Key, player.Region, player.RiotId)
+    if ReportError(c, w, errwrap.Wrap(err)) { return }
+    
+    for _, gameDto := range recentGamesDto.Games {
+      gameId := model.MakeGameId(player.Region, gameDto.GameId)
+      gameDtoCopy := gameDto
+      collectiveGameStats.Add(player.Region, gameId, player.RiotId, &gameDtoCopy)
+    }
+  }
+  
+  foundCount := 0
+  expiredCount := 0
+  
+  for i, stat := range stats {
+    statKey := statKeys[i]
+    game := gameMap[stat.GameKey.Encode()]
+    player := playerMap[stat.PlayerKey.Encode()]
+    
+    riotData := collectiveGameStats.Lookup(game.Id(), player.RiotId)
+    
+    err = datastore.RunInTransaction(c, func (c appengine.Context) error {
+      playerGameStats := new(model.PlayerGameStats)
+      err := datastore.Get(c, statKey, playerGameStats)
+      if err != nil { return errwrap.Wrap(err) }
+      // Only write if the entity hasn't been saved yet.
+      if !playerGameStats.Saved {
+        if (riotData != nil) {
+          playerGameStats.Saved = true
+          playerGameStats.RiotData = riotData.Stats
+          playerGameStats.NotAvailable = false
+          foundCount++
+        } else {
+          playerGameStats.Saved = false
+          playerGameStats.NotAvailable = true
+          expiredCount++
+        }
+        _, err = datastore.Put(c, statKey, playerGameStats)
+        return errwrap.Wrap(err)
+      }
+      // Nothing to write.
+      return nil
+    }, nil)
+    if ReportError(c, w, errwrap.Wrap(err)) { return }
+  }
+  
+  fmt.Fprintf(w, "  Found: %d\n", foundCount)
+  fmt.Fprintf(w, "  Not Available: %d\n", expiredCount)
+  fmt.Fprintf(w, "</pre></body></html>")
+}
 
 func AllTeamHistories(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
@@ -101,7 +219,6 @@ func FetchTeamMatchHistoryHandler(
   })
   
   collectiveGameStats.ForEachStat(func(gameId string, riotSummonerId int64, stat *riot.GameDto) {
-    if stat == nil { return }
     gameKey := model.KeyForGameId(c, gameId)
     playerKey := model.KeyForPlayer(c, region, riotSummonerId)
     playerId := model.MakePlayerId(region, riotSummonerId)
@@ -117,9 +234,11 @@ func FetchTeamMatchHistoryHandler(
       if !playerGameStats.Saved {
         playerGameStats.GameKey = gameKey
         playerGameStats.PlayerKey = playerKey
-        playerGameStats.Saved = true
+        playerGameStats.Saved = (stat != nil)
         playerGameStats.NotAvailable = false
-        playerGameStats.RiotData = stat.Stats
+        if stat != nil {
+          playerGameStats.RiotData = stat.Stats
+        }
         _, err = datastore.Put(c, statsKey, playerGameStats)
         return err
       }
