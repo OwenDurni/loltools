@@ -110,7 +110,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     ctx.Teams[i].Fill(t, teamKeys[i], leagueKey)
   }
 
-  if *league.Owner == *userKey {
+  //if *league.Owner == *userKey {
     groups, groupKeys, perms, err := userAcls.PermissionMapFor(c, leagueKey)
     if HandleError(c, w, err) { return }
     
@@ -119,7 +119,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
       vg := new(Group).Fill(groups[i], groupKeys[i])
       ctx.GroupAcls[i].Fill(vg, perms[i])
     }
-  }
+  //}
   
   // Render
   err = RenderTemplate(w, "leagues/view.html", "base", ctx)
@@ -129,7 +129,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
 func ApiLeagueCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   _, leagueKey, err := model.CreateLeague(c, r.FormValue("name"))
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyResourceCreated(w, model.LeagueUri(leagueKey))
 }
@@ -140,15 +140,15 @@ func ApiLeagueAddTeamHandler(w http.ResponseWriter, r *http.Request, args map[st
   teamName := r.FormValue("team")
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   userAcls := model.NewRequestorAclCache(userKey)
 
   _, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, teamKey, err := model.LeagueAddTeam(c, userAcls, leagueId, teamName)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   HttpReplyResourceCreated(w, model.LeagueTeamUri(leagueKey, teamKey))
 }
@@ -165,33 +165,33 @@ func ApiLeagueGroupAclGrantHandler(
     case "view": perm = model.PermissionView
     case "edit": perm = model.PermissionEdit
     default:
-      HandleError(c, w, errors.New(fmt.Sprintf("Unrecognized acl '%s'", permId)))
+      ApiHandleError(c, w, errors.New(fmt.Sprintf("Unrecognized acl '%s'", permId)))
       return
   }
   
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   if *league.Owner != *userKey {
-    HandleError(c, w, errors.New("Only league owner can edit group acls"))
+    ApiHandleError(c, w, errors.New("Only league owner can edit group acls"))
     return
   }
   
   _, groupKey, _, err := model.GroupById(c, userKey, groupId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   switch perm {
     case model.PermissionView:
       err = model.AclGrant(c, groupKey, leagueKey, model.PermissionView)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
     case model.PermissionEdit:
       err = model.AclGrant(c, groupKey, leagueKey, model.PermissionView)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
       err = model.AclGrant(c, groupKey, leagueKey, model.PermissionEdit)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
   }
   
   HttpReplyOkEmpty(w)
@@ -209,33 +209,33 @@ func ApiLeagueGroupAclRevokeHandler(
     case "view": perm = model.PermissionView
     case "edit": perm = model.PermissionEdit
     default:
-      HandleError(c, w, errors.New(fmt.Sprintf("Unrecognized acl '%s'", permId)))
+      ApiHandleError(c, w, errors.New(fmt.Sprintf("Unrecognized acl '%s'", permId)))
       return
   }
   
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   if *league.Owner != *userKey {
-    HandleError(c, w, errors.New("Only league owner can edit group acls"))
+    ApiHandleError(c, w, errors.New("Only league owner can edit group acls"))
     return
   }
   
   _, groupKey, _, err := model.GroupById(c, userKey, groupId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   switch perm {
     case model.PermissionView:
       err = model.AclRevoke(c, groupKey, leagueKey, model.PermissionEdit)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
       err = model.AclRevoke(c, groupKey, leagueKey, model.PermissionView)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
     case model.PermissionEdit:
       err = model.AclRevoke(c, groupKey, leagueKey, model.PermissionEdit)
-      if HandleError(c, w, err) { return }
+      if ApiHandleError(c, w, err) { return }
   }
   
   HttpReplyOkEmpty(w)

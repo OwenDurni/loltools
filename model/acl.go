@@ -246,6 +246,28 @@ func (req *RequestorAclCache) Can(
   }
 }
 
+func (req *RequestorAclCache) FindAll(
+  c appengine.Context, resourceKind string, perm Permission) ([]*datastore.Key, error) {
+  if err := req.init(c); err != nil { return nil, err }
+  
+  allKeySet := make(map[string]*datastore.Key)
+  
+  for _, groupKey := range req.GroupKeys {
+    keys, err := AclFindAll(c, groupKey, resourceKind, perm)
+    if err != nil { return nil, err }
+    
+    for _, key := range keys {
+      allKeySet[key.Encode()] = key
+    }
+  }
+  
+  allKeys := make([]*datastore.Key, 0, len(allKeySet))
+  for _, key := range allKeySet {
+    allKeys = append(allKeys, key)
+  }
+  return allKeys, nil
+}
+
 // For all the groups this user belongs to, returns a permission map for the given resource.
 func (req *RequestorAclCache) PermissionMapFor(
   c appengine.Context,

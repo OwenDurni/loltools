@@ -97,7 +97,7 @@ func LeaguesForUser(
   c appengine.Context, userAcls *RequestorAclCache) ([]*League, []*datastore.Key, error) {
   retLeagues := make([]*League, 0, 8)
   retLeagueKeys := make([]*datastore.Key, 0, 8)
-   
+  
   // Leagues owned.
   {
     q := datastore.NewQuery("League").
@@ -112,18 +112,18 @@ func LeaguesForUser(
     retLeagueKeys = append(retLeagueKeys, leagueKeys...)
   }
   
-  // For each group the user is in, check which leagues they can view.
-  for _, groupKey := range userAcls.GroupKeys {
-    leagueKeys, err := AclFindAll(c, groupKey, "League", PermissionView)
-    if err != nil { return nil, nil, err }
+  leagueKeys, err := userAcls.FindAll(c, "League", PermissionView)
+  if err != nil { return nil, nil, err }
     
-    leagues := make([]*League, len(leagueKeys))
-    err = datastore.GetMulti(c, leagueKeys, leagues)
-    if err != nil { return nil, nil, err }
-        
-    retLeagues = append(retLeagues, leagues...)
-    retLeagueKeys = append(retLeagueKeys, leagueKeys...)
+  leagues := make([]*League, len(leagueKeys))
+  for i := range leagues {
+    leagues[i] = new(League)
   }
+  err = datastore.GetMulti(c, leagueKeys, leagues)
+  if err != nil { return nil, nil, err }
+        
+  retLeagues = append(retLeagues, leagues...)
+  retLeagueKeys = append(retLeagueKeys, leagueKeys...)
   
   return retLeagues, retLeagueKeys, nil
 }

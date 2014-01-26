@@ -10,6 +10,14 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Acl
+  ancestor: yes
+  properties:
+  - name: Permission
+  - name: Requestor
+  - name: ResourceKind
+  - name: Resource
+
 - kind: GameByTeam
   ancestor: yes
   properties:

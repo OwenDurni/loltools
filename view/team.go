@@ -87,20 +87,20 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   summoner := r.FormValue("summoner")
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   err = model.TeamAddPlayer(c, userAcls, league, leagueKey, teamKey, playerKey)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }
@@ -113,20 +113,20 @@ func ApiTeamDelPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   summoner := r.FormValue("summoner")
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
 
   err = model.TeamDelPlayer(c, userAcls, league, leagueKey, teamKey, playerKey)
-  if HandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) { return }
   
   HttpReplyOkEmpty(w)
 }
