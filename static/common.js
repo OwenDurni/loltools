@@ -10,7 +10,6 @@ var loltools = (function() {
       var $errors = $("#errors")
       var $form = $(this);
       var $inputs = $form.find("input, select, button, textarea");
-      var $result = $form.find("#result");
       var $submit = $form.find("#submit");
 
       var data = $form.serialize()
