@@ -19,14 +19,15 @@
   <ul class="nav right">
     <li>{{.ctxBase.User}}</li>
   </ul>
-</div>
 {{if .ctxBase.Errors}}
   <div id="errors">
   {{range .ctxBase.Errors}}
-  <div>{{.}}</div>
+    <div>{{.}}</div>
   {{end}}
   </div>
 {{end}}
+</div>
+
 <div id="content">
   {{template "content" .}}
 </div>

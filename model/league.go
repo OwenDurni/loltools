@@ -95,37 +95,39 @@ func LeagueTeamUri(leagueKey *datastore.Key, teamKey *datastore.Key) string {
 
 func LeaguesForUser(
   c appengine.Context, userAcls *RequestorAclCache) ([]*League, []*datastore.Key, error) {
-  retLeagues := make([]*League, 0, 8)
-  retLeagueKeys := make([]*datastore.Key, 0, 8)
+    
+  leagueKeyMap := make(map[string]*datastore.Key)
   
   // Leagues owned.
   {
     q := datastore.NewQuery("League").
       Filter("Owner =", userAcls.UserKey).
-      Order("Name")
-    var leagues []*League
-    leagueKeys, err := q.GetAll(c, &leagues)
+      KeysOnly()
+    leagueKeys, err := q.GetAll(c, nil)
     if err != nil {
       return nil, nil, err
     }
-    retLeagues = append(retLeagues, leagues...)
-    retLeagueKeys = append(retLeagueKeys, leagueKeys...)
+    for _, k := range leagueKeys {
+      leagueKeyMap[k.Encode()] = k
+    }
   }
   
   leagueKeys, err := userAcls.FindAll(c, "League", PermissionView)
   if err != nil { return nil, nil, err }
-    
-  leagues := make([]*League, len(leagueKeys))
-  for i := range leagues {
-    leagues[i] = new(League)
+  for _, k := range leagueKeys {
+    leagueKeyMap[k.Encode()] = k
+  }
+  
+  leagues := make([]*League, 0, len(leagueKeyMap))
+  leagueKeys = make([]*datastore.Key, 0, len(leagueKeyMap))
+  for _, key := range leagueKeyMap {
+    leagues = append(leagues, new(League))
+    leagueKeys = append(leagueKeys, key)
   }
   err = datastore.GetMulti(c, leagueKeys, leagues)
   if err != nil { return nil, nil, err }
-        
-  retLeagues = append(retLeagues, leagues...)
-  retLeagueKeys = append(retLeagueKeys, leagueKeys...)
   
-  return retLeagues, retLeagueKeys, nil
+  return leagues, leagueKeys, nil
 }
 
 func LeagueById(
