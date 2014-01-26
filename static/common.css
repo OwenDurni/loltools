@@ -168,6 +168,13 @@ table.short-player-stats th, table.short-player-stats td {
   border: none;
 }
 
+.short-player-stats .blend {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.4);
+  font-style: italic;
+  font-size: 75%;
+}
+
 div.sprite {
   display: inline-block;
   position: relative;

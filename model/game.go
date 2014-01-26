@@ -89,7 +89,8 @@ type GamePlayerInfo struct {
   ChampionId int
 }
 type GamePlayerStatsInfo struct {
-  Exists bool
+  Saved bool
+  NotAvailable bool
   Player *Player
   Stats  *PlayerGameStats
 }
@@ -115,7 +116,8 @@ func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
 }
 func NewGamePlayerStatsInfo(player *Player, stats *PlayerGameStats) *GamePlayerStatsInfo {
   info := new(GamePlayerStatsInfo)
-  info.Exists = stats.Saved
+  info.Saved = stats.Saved
+  info.NotAvailable = stats.NotAvailable
   info.Player = player
   info.Stats = stats
   return info

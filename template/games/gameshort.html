@@ -27,18 +27,19 @@
     {{range .PlayerStats}}
       <tr>
         <td>{{.Player.Summoner}}</td>
-      {{if .Exists}}
-        {{with .Stats.RiotData}}
-        <td>{{.Level}}</td>
-        <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
-        <td>{{.MinionsKilled}}</td>
-        <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
-        {{end}}
+      {{if .NotAvailable}}
+        <td colspan="4" class="blend">no longer available</td>
       {{else}}
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
+        {{if .Saved}}
+          {{with .Stats.RiotData}}
+            <td>{{.Level}}</td>
+            <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
+            <td>{{.MinionsKilled}}</td>
+            <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
+          {{end}}
+        {{else}}
+          <td colspan="4" class="blend">not fetched yet</td>
+        {{end}}
       {{end}}
       </tr>
     {{end}}
