@@ -7,14 +7,19 @@ var loltools = (function() {
       if (req) {
         req.abort();
       }
+      var $errors = $("#errors")
       var $form = $(this);
       var $inputs = $form.find("input, select, button, textarea");
       var $result = $form.find("#result");
+      var $submit = $form.find("#submit");
 
       var data = $form.serialize()
 
+      var originalSubmitVal = $submit.val()
+      
+      $errors.empty();
+      $submit.val("sending...");
       $inputs.prop("disabled", true);
-      $result.text("sending...");
       
       req = $.ajax({
         url: submitUrl,
@@ -32,13 +37,13 @@ var loltools = (function() {
         } else if (jqXHR.status == 204) {
           window.location.reload()
         }
-        $result.text("sent: " + jqXHR.status);
       });
       req.fail(function (jqXHR, textStatus, errorThrown){
-        $result.text("error: " + errorThrown + ": " + jqXHR.responseText);
+        $errors.append("<div>error: " + errorThrown + ": " + jqXHR.responseText + "</div>");
       });
       req.always(function () {
         $inputs.prop("disabled", false);
+        $submit.val(originalSubmitVal);
       });
       event.preventDefault();
     });

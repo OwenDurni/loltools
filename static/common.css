@@ -15,9 +15,22 @@ body {
   float: right;
 }
 
-div#errors {
-  background-color: #fee;
-  padding: .2em;
+#errors {
+  position: fixed;
+  bottom: 20px;
+  width: 100%;
+  background-color: rgba(255,239,239,0.7);
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
+}
+#errors:hover {
+  background-color: rgba(255,239,239,1);
+}
+
+#errors div {
+  padding: .5em;
+  border: thin dotted red;
 }
 
 #footer {
