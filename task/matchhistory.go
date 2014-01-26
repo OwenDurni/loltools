@@ -20,7 +20,7 @@ func MissingGameStats(w http.ResponseWriter, r *http.Request, args map[string]st
   riotApiKey, err := model.GetRiotApiKey(c)
   if ReportError(c, w, errwrap.Wrap(err)) { return }
   
-  limit := 10
+  limit := 80
   q := datastore.NewQuery("PlayerGameStats").
     Filter("Saved =", false).
     Filter("NotAvailable =", false).

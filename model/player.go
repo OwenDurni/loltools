@@ -32,7 +32,7 @@ func (cache *PlayerCache) ById(riotId int64) (*Player, error) {
   if p, exists := cache.byId[riotId]; exists {
     return p, nil
   }
-  p, _, err := GetOrCreatePlayerByRiotId(cache.c, cache.Region, riotId)
+  p, _, err := GetPlayerByRiotIdOrStub(cache.c, cache.Region, riotId)
   if err == nil {
     cache.Add(p)
   }
@@ -106,6 +106,32 @@ func (a PlayersBySummoner) Less(i, j int) bool {
 }
 func (a PlayersBySummoner) Swap(i, j int) {
   a[i], a[j] = a[j], a[i]
+}
+
+func GetPlayerByRiotIdOrStub(
+  c appengine.Context,
+  region string,
+  riotId int64) (*Player, *datastore.Key, error) {
+  player := new(Player)
+  playerKey := KeyForPlayer(c, region, riotId)
+  
+  // Try memcache first.
+  mkey := fmt.Sprintf("Player/%s-%d", region, riotId)
+  if _, err := memcache.JSON.Get(c, mkey, player); err == nil {
+    return player, playerKey, nil
+  }
+  
+  err := datastore.Get(c, playerKey, player)
+  if err == datastore.ErrNoSuchEntity {
+    // Return a stub.
+    player.Summoner = fmt.Sprintf("<%s-%d>", region, riotId)
+    player.Region = region
+    player.RiotId = riotId
+    return player, playerKey, nil
+  } else if err != nil {
+    return nil, nil, err
+  }
+  return player, playerKey, nil
 }
 
 func GetOrCreatePlayerByRiotId(

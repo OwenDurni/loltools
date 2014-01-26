@@ -42,17 +42,8 @@
             <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
             <td>{{.MinionsKilled}}</td>
             <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
-            <td><!--<span>
-              {{template "summonersmall" $p.SummonerSpell1}}</span><span>
-              {{template "summonersmall" $p.SummonerSpell2}}</span>--></td>
-            <td><!--<span>
-              {{template "itemsmall" .Item0}}</span><span>
-              {{template "itemsmall" .Item1}}</span><span>
-              {{template "itemsmall" .Item2}}</span><span>
-              {{template "itemsmall" .Item3}}</span><span>
-              {{template "itemsmall" .Item4}}</span><span>
-              {{template "itemsmall" .Item5}}</span><span>
-              {{template "itemsmall" .Item6}}</span>--></td>
+            <td>{{template "summonersmall" $p.SummonerSpell1}}{{template "summonersmall" $p.SummonerSpell2}}</td>
+            <td>{{template "itemsmall" .Item0}}{{template "itemsmall" .Item1}}{{template "itemsmall" .Item2}}{{template "itemsmall" .Item3}}{{template "itemsmall" .Item4}}{{template "itemsmall" .Item5}}{{template "itemsmall" .Item6}}</td>
           {{end}}
         {{else}}
           <td colspan="6" class="blend">not fetched yet</td>

@@ -111,6 +111,16 @@ func (r *DistributedRateLimiter) TryConsume(c appengine.Context, events int) err
   return errors.New(fmt.Sprintf("RetryLimit for memcache.CompareAndSwap reached: %s", key))
 }
 
+func (r *DistributedRateLimiter) DebugStr(c appengine.Context) string {
+  e := new(DistributedRateLimiterEntity)
+  key := fmt.Sprintf("DistributedRateLimiterEntity/%s", r.Name)
+  item, err := memcache.JSON.Get(c, key, e)
+  if err != nil {
+    return err.Error()
+  }
+  return fmt.Sprintf("%v", item)
+}
+
 type TokenBucket struct {
   Limit RateLimit
 

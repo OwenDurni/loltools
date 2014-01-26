@@ -8,4 +8,8 @@ Key: <input type="text" name="key" value="{{with .RiotApiKey}}{{.Key}}{{end}}" /
 {{template "formEnd" $x}}
 {{end}}
 
+<h2>Debug</h2>
+<p><b>GameStats Backlog:</b> {{.GameStatsBacklogCount}}</p>
+<p><b>RiotRateLimiter:</b> {{.RiotRateLimit}}</p>
+
 {{end}}
