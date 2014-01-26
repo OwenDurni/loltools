@@ -118,6 +118,7 @@ func (r *DistributedRateLimiter) DebugStr(c appengine.Context) string {
   if err != nil {
     return err.Error()
   }
+  e.addTokens(time.Now().UTC())
   return fmt.Sprintf("%v", e)
 }
 
