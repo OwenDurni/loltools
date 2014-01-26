@@ -58,6 +58,7 @@ func init() {
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
+  dispatcher.Add("/task/cron/all-team-histories", task.AllTeamHistories)
   dispatcher.Add("/task/riot/get/team/history", task.FetchTeamMatchHistoryHandler)
   dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
 

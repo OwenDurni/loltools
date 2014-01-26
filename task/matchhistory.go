@@ -3,12 +3,44 @@ package task
 import (
   "appengine"
   "appengine/datastore"
+  "appengine/taskqueue"
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
   "net/http"
+  "net/url"
   "time"
 )
+
+func AllTeamHistories(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  
+  q := datastore.NewQuery("League")
+  var leagues []*model.League
+  leagueKeys, err := q.GetAll(c, &leagues)
+  if ReportError(c, w, err) { return }
+  
+  teamCount := 0
+  
+  for i := range leagues {
+    teams, teamKeys, err := model.LeagueAllTeams(c, nil, leagues[i], leagueKeys[i])
+    if ReportError(c, w, err) { return }
+    for j := range teams {
+      args := &url.Values{}
+      args.Add("league", model.EncodeKeyShort(leagueKeys[i]))
+      args.Add("team", model.EncodeKeyShort(teamKeys[j]))
+      task := taskqueue.NewPOSTTask("/task/riot/get/team/history", *args)
+      task.RetryOptions = new(taskqueue.RetryOptions)
+      task.RetryOptions.RetryLimit = 1
+      taskqueue.Add(c, task, "")
+      teamCount++
+    }
+  }
+  
+  fmt.Fprintf(w, "<html><body><pre>")
+  fmt.Fprintf(w, "Queueing /task/riot/get/team/history for %d team(s)\n", teamCount)
+  fmt.Fprintf(w, "</pre></body></html>")
+}
 
 // Note(durni): This is optimized to minimize the number of datastore write ops at
 // the cost of potentially increased network ops into the riot api. Datastore write
@@ -37,7 +69,7 @@ func FetchTeamMatchHistoryHandler(
   // First gather games from all players on the team.
   collectiveGameStats := new(model.CollectiveGameStats)
   for _, player := range players {
-    if err := model.RiotApiRateLimiter.TryConsume(c, 1); err != nil {
+    if err := model.RiotApiRateLimiter.Consume(c, 1); err != nil {
       // Hitting rate limit: break to finish storing what we have already fetched.
       ReportError(c, w, err)
       break

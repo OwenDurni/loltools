@@ -1,0 +1,4 @@
+cron:
+- description: queue getting history for every team in all leagues
+  url: /task/cron/all-team-histories
+  schedule: every 3 hours

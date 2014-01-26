@@ -111,7 +111,7 @@ func GetOrCreatePlayerByRiotId(
   for attempt := 0; attempt < 3; attempt++ {
     err := datastore.Get(c, playerKey, player)
     if err == datastore.ErrNoSuchEntity {
-      if err := RiotApiRateLimiter.TryConsume(c, 1); err != nil {
+      if err := RiotApiRateLimiter.Consume(c, 1); err != nil {
         return nil, nil, errwrap.Wrap(err)
       }
       riotApiKey, err := GetRiotApiKey(c)
@@ -147,7 +147,7 @@ func GetOrCreatePlayerBySummoner(
   c appengine.Context,
   region string,
   summoner string) (*Player, *datastore.Key, error) {
-  if err := RiotApiRateLimiter.TryConsume(c, 1); err != nil {
+  if err := RiotApiRateLimiter.Consume(c, 1); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
   riotApiKey, err := GetRiotApiKey(c)

@@ -18,8 +18,8 @@ var RiotApiRateLimiter = DistributedRateLimiter{
 }
 
 var RiotDevRateLimits = []RateLimit{
-  RateLimit{10, 10},
-  RateLimit{500, 10 * 60},
+  RateLimit{5, 10},
+  RateLimit{250, 10 * 60},
 }
 
 type RiotApiKey struct {

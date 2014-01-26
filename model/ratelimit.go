@@ -46,6 +46,36 @@ func (r DistributedRateLimiter) Init(c appengine.Context) error {
   return err
 }
 
+// Blocks for up to 1 minute.
+func(r *DistributedRateLimiter) Consume(
+  c appengine.Context,
+  events int) error {
+    
+  tryResult := make(chan error)
+  timeout := time.After(1 * time.Minute)
+  
+  try := func() {
+    tryResult <- r.TryConsume(c, events)
+  }
+  
+  for {
+    go try()
+    select {
+      case err := <-tryResult:
+        if _, ok := err.(ErrRateLimitExceeded); ok {
+          time.Sleep(1 * time.Second)
+          continue
+        }
+        return err
+      case <-timeout:
+        return ErrRateLimitExceeded{
+          r,
+          errors.New("Consume() timeout after 1 minute."),
+        }
+    }
+  }
+}
+
 // Consumes tokens from the rate limiter if nil is returned.
 // Otherwise an error is returned describing why tokens could not
 // be consumed.
@@ -116,8 +146,7 @@ func (b *TokenBucket) SetLimit(limit RateLimit) {
     return
   }
   b.Limit = limit
-  // Assume 50% of the tokens when creating a new instance.
-  b.Tokens = float64(limit.MaxEvents) / 2.0
+  b.Tokens = 0.0
   b.LastCheckTime = time.Now().UTC()
 }
 
