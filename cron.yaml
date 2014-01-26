@@ -4,4 +4,4 @@ cron:
   schedule: every 3 hours
 - description: fills in some game stats we are missing or marks them unavailable
   url: /task/cron/get-missing-game-stats
-  schedule: every 10 minutes
+  schedule: every 2 minutes
