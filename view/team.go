@@ -79,6 +79,47 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   if HandleError(c, w, err) { return }
 }
 
+func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  leagueId := args["leagueId"]
+  teamId := args["teamId"]
+
+  _, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) { return }
+  userAcls := model.NewRequestorAclCache(userKey)
+
+  league, leagueKey, err := model.LeagueById(c, leagueId)
+  if HandleError(c, w, err) { return }
+
+  team, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
+  if HandleError(c, w, err) { return }
+
+  // Get "all" match history.
+  // TODO(durni): This should likely be paginated or use infinite scroll. Currently
+  // just shows 100 games.
+  playerCache := model.NewPlayerCache(c, league.Region)
+  gameInfos, errors := model.TeamRecentGameInfo(
+    c, 100, playerCache, league, leagueKey, teamKey)
+  
+  // Populate view context.
+  ctx := struct {
+    ctxBase
+    League
+    Team
+    RecentGames []*model.GameInfo
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
+  ctx.ctxBase.Errors = errors
+  ctx.League.Fill(league, leagueKey)
+  ctx.Team.Fill(team, teamKey, leagueKey)
+  ctx.RecentGames = gameInfos
+
+  // Render
+  err = RenderTemplate(w, "leagues/teams/history.html", "base", ctx)
+  if HandleError(c, w, err) { return } 
+}
+
 func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   leagueId := r.FormValue("league")

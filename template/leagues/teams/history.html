@@ -1,0 +1,16 @@
+{{/* extends base.html */}}
+{{define "content"}}
+
+<h2>{{.Team.Name}} ({{.League.Name}})</h2>
+
+<div>
+{{range .RecentGames}}
+  {{template "gamelong" .}}
+{{else}}
+  <p>No history available</p>
+{{end}}
+</div>
+
+<div id="foot" />
+
+{{end}}

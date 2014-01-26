@@ -17,7 +17,8 @@ body {
 
 #errors {
   position: fixed;
-  bottom: 20px;
+  left: 0;
+  top: 50px;
   width: 100%;
   background-color: rgba(255,239,239,0.7);
   padding: 0;
@@ -74,7 +75,7 @@ table.base {
   border-collapse:collapse;
 }
 
-table.base th, td {
+table.base th, table.base td {
   border: thin solid gray;
   padding: 3px 7px 2px 7px;
 }
@@ -98,14 +99,22 @@ table.base tr:hover td {
   background-color: #efe;
 }
 
-.blue-team, .purple-team {
+.game-short {
+  margin-bottom: 10px;
+}
+
+.game-long {
+  margin-bottom: 3em;
+}
+
+.game-short .blue-team, .game-short .purple-team {
   display: inline-block;
+}
+
+.blue-team, .purple-team {
+  margin: 0;
   padding: 0;
   border: thick solid;
-  margin-left: 0;
-  margin-right: 0;
-  margin-top: 0;
-  margin-bottom: 10px;
 }
 
 .blue-team {
@@ -113,8 +122,12 @@ table.base tr:hover td {
   background-color: #adf;
   border-color: #036;
 }
-.blue-team table.short-player-stats th, .blue-team .header {
+.blue-team table th, .blue-team .header {
+  color: #fff;
   background-color: #036;
+}
+.blue-team tr.odd td {
+  background-color: #a3d3f3;
 }
 
 .purple-team {
@@ -122,8 +135,12 @@ table.base tr:hover td {
   background-color: #daf;
   border-color: #306;
 }
-.purple-team table.short-player-stats th, .purple-team .header {
+.purple-team table th, .purple-team .header {
+  color: #fff;
   background-color: #306;
+}
+.purple-team tr.odd td {
+  background-color: #d3a3f3;
 }
 
 .champion-icon-row {
@@ -152,12 +169,11 @@ table.base tr:hover td {
 }
 
 table.short-player-stats {
-  border-collapse:collapse;
+  border-collapse: collapse;
 }
 
 table.short-player-stats th {
   text-align: left;
-  color: #fff;
 }
 
 table.short-player-stats th, table.short-player-stats td {
@@ -173,6 +189,30 @@ table.short-player-stats th, table.short-player-stats td {
   color: rgba(0, 0, 0, 0.4);
   font-style: italic;
   font-size: 75%;
+}
+
+.long-player-stats {
+  width: 100%;
+}
+
+table.long-player-stats {
+  border-collapse:collapse;
+}
+
+table.long-player-stats th {
+  text-align: left;
+}
+
+table.long-player-stats th, table.long-player-stats td {
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.long-player-stats .blend {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.4);
+  font-style: italic;
 }
 
 div.sprite {

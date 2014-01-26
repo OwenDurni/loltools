@@ -24,6 +24,9 @@ func tmpl_form(id, uri, text string) interface{} {
   }
 }
 
+func tmpl_ddc_name(id int) string {
+  return riot.Lookup.Champions[id].Name
+}
 func tmpl_ddc_s(id int) string {
   return riot.Lookup.Champions[id].Sprite.Url
 }
@@ -46,6 +49,56 @@ func tmpl_ddc_sy(id int) int {
   return riot.Lookup.Champions[id].Sprite.Y
 }
 
+func tmpl_ddi_name(id int) string {
+  return riot.Lookup.Items[id].Name
+}
+func tmpl_ddi_s(id int) string {
+  return riot.Lookup.Items[id].Sprite.Url
+}
+func tmpl_ddi_stw() int {
+  return 480
+}
+func tmpl_ddi_sth() int {
+  return 1104
+}
+func tmpl_ddi_sw(id int) int {
+  return riot.Lookup.Items[id].Sprite.W
+}
+func tmpl_ddi_sh(id int) int {
+  return riot.Lookup.Items[id].Sprite.H
+}
+func tmpl_ddi_sx(id int) int {
+  return riot.Lookup.Items[id].Sprite.X
+}
+func tmpl_ddi_sy(id int) int {
+  return riot.Lookup.Items[id].Sprite.Y
+}
+
+func tmpl_dds_name(id int) string {
+  return riot.Lookup.Summoners[id].Name
+}
+func tmpl_dds_s(id int) string {
+  return riot.Lookup.Summoners[id].Sprite.Url
+}
+func tmpl_dds_stw() int {
+  return 480
+}
+func tmpl_dds_sth() int {
+  return 192
+}
+func tmpl_dds_sw(id int) int {
+  return riot.Lookup.Summoners[id].Sprite.W
+}
+func tmpl_dds_sh(id int) int {
+  return riot.Lookup.Summoners[id].Sprite.H
+}
+func tmpl_dds_sx(id int) int {
+  return riot.Lookup.Summoners[id].Sprite.X
+}
+func tmpl_dds_sy(id int) int {
+  return riot.Lookup.Summoners[id].Sprite.Y
+}
+
 func tmpl_even(i int) bool {
   return i%2 == 0
 }
@@ -56,6 +109,8 @@ func tmpl_odd(i int) bool {
 
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
+  // dd champion functions
+  "ddc_name": tmpl_ddc_name,
   "ddc_s": tmpl_ddc_s,
   "ddc_stw": tmpl_ddc_stw,
   "ddc_sth": tmpl_ddc_sth,
@@ -63,6 +118,27 @@ var tmplFuncRegistry = template.FuncMap{
   "ddc_sh": tmpl_ddc_sh,
   "ddc_sx": tmpl_ddc_sx,
   "ddc_sy": tmpl_ddc_sy,
+  
+  // dd item functions
+  "ddi_name": tmpl_ddi_name,
+  "ddi_s": tmpl_ddi_s,
+  "ddi_stw": tmpl_ddi_stw,
+  "ddi_sth": tmpl_ddi_sth,
+  "ddi_sw": tmpl_ddi_sw,
+  "ddi_sh": tmpl_ddi_sh,
+  "ddi_sx": tmpl_ddi_sx,
+  "ddi_sy": tmpl_ddi_sy,
+  
+  // dd summoner functions
+  "dds_name": tmpl_dds_name,
+  "dds_s": tmpl_dds_s,
+  "dds_stw": tmpl_dds_stw,
+  "dds_sth": tmpl_dds_sth,
+  "dds_sw": tmpl_dds_sw,
+  "dds_sh": tmpl_dds_sh,
+  "dds_sx": tmpl_dds_sx,
+  "dds_sy": tmpl_dds_sy,
+  
   "even": tmpl_even,
   "form": tmpl_form,
   "odd":  tmpl_odd,

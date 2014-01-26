@@ -58,6 +58,7 @@ func init() {
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
+  dispatcher.Add("/leagues/<leagueId>/teams/<teamId>/history", view.TeamGameHistory)
   dispatcher.Add("/task/cron/all-team-histories", task.AllTeamHistories)
   dispatcher.Add("/task/cron/get-missing-game-stats", task.MissingGameStats)
   dispatcher.Add("/task/riot/get/team/history", task.FetchTeamMatchHistoryHandler)
@@ -79,6 +80,9 @@ func init() {
                    "form.html", "base.html")
   view.AddTemplate("leagues/index.html",
                    "form.html", "base.html")
+  view.AddTemplate("leagues/teams/history.html",
+                   "games/gamelong.html", "games/champsmall.html", "games/itemsmall.html",
+                   "games/summonersmall.html", "base.html")
   view.AddTemplate("leagues/teams/view.html",
                    "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
   view.AddTemplate("leagues/view.html",

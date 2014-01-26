@@ -1,6 +1,6 @@
 For alpha release:
 - Update to (batched) summoner-v1.3 api.
-- Cron to pull in missing game stats.
+- Tweak limits and crontab for missing game stats.
 
 For beta release:
 - Summoner name verification.

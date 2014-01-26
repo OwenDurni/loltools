@@ -36,17 +36,20 @@ type DDSprite struct {
 }
 type DDItem struct {
   Id        int
+  Name      string
   ImageUrl  string
   Sprite DDSprite
 }
 type DDChampion struct {
   Id int
+  Name string
   ImageUrl string
   SplashUrl string
   Sprite DDSprite
 }
 type DDSummoner struct {
   Id int
+  Name string
   ImageUrl string
   Sprite DDSprite
 }
@@ -106,6 +109,7 @@ func (dd *DDragon) ParseVersionJson(jsonData []byte) {
 
 // "data":
 //   "{{ItemNumber}}":
+//     "name": "{{Name}}"
 //     "image":
 //       "full": "{{ItemImageFile}}"
 //       "sprite":
@@ -118,6 +122,7 @@ type itemRootJson struct {
   Data map[string]itemJson `json:"data"`
 }
 type itemJson struct {
+  Name  string    `json:"name"`
   Image imageJson `json:"image"`
 }
 type imageJson struct {
@@ -139,6 +144,7 @@ func (dd *DDragon) ParseItemJson(jsonData []byte) {
     if err != nil { panic(err) }
     var item DDItem
     item.Id = itemId
+    item.Name = itemJ.Name
     
     imageJ := itemJ.Image
     item.ImageUrl = dd.UrlItemImage(imageJ.Full)
@@ -168,7 +174,8 @@ type championRootJson struct {
   Data map[string]championJson `json:"data"`
 }
 type championJson struct {
-  Key string `json:"key"`
+  Key   string    `json:"key"`
+  Name  string    `json:"name"`
   Image imageJson `json:"image"`
 }
 func (dd *DDragon) ParseChampionJson(jsonData []byte) {
@@ -182,6 +189,7 @@ func (dd *DDragon) ParseChampionJson(jsonData []byte) {
     if err != nil { panic(err) }
     var champion DDChampion
     champion.Id = championId
+    champion.Name = championJ.Name
     
     imageJ := championJ.Image
     champion.ImageUrl = dd.UrlChampionImage(imageJ.Full)
@@ -213,6 +221,7 @@ type summonerRootJson struct {
 }
 type summonerJson struct {
   Key string `json:"key"`
+  Name string `json:"name"`
   Image imageJson `json:"image"`
 }
 func (dd *DDragon) ParseSummonerJson(jsonData []byte) {
@@ -226,6 +235,7 @@ func (dd *DDragon) ParseSummonerJson(jsonData []byte) {
     if err != nil { panic(err) }
     var summoner DDSummoner
     summoner.Id = summonerId
+    summoner.Name = summonerJ.Name
     
     imageJ := summonerJ.Image
     summoner.ImageUrl = dd.UrlSummonerImage(imageJ.Full)
