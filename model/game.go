@@ -120,8 +120,10 @@ func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
 }
 func NewGamePlayerStatsInfo(player *Player, stats *PlayerGameStats) *GamePlayerStatsInfo {
   info := new(GamePlayerStatsInfo)
-  info.Saved = stats.Saved
-  info.NotAvailable = stats.NotAvailable
+  if stats != nil {
+    info.Saved = stats.Saved
+    info.NotAvailable = stats.NotAvailable
+  }
   info.Player = player
   info.Stats = stats
   return info
