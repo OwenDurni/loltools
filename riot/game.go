@@ -159,12 +159,19 @@ func GameStatsForPlayer(
     riotApiKey,
     fmt.Sprintf("/api/lol/%s/v1.3/game/by-summoner/%d/recent", region, riotSummonerId),
     &url.Values{})
+  g := new(RecentGamesDto)
+  g.SummonerId = riotSummonerId
+  
   jsonData, err := Fetch(c, loc)
   if err != nil {
+    if err, ok := err.(ErrRiotRestApi); ok && err.HttpStatusCode == 404 {
+      // 404 means no match history for this summoner id.
+      return g, nil
+    }
+      
     return nil, err
   }
   
-  g := new(RecentGamesDto)
   err = json.Unmarshal(jsonData, g)
   return g, err
 }

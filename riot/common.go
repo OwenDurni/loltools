@@ -3,11 +3,12 @@ package riot
 import (
   "appengine"
   "appengine/urlfetch"
-  "errors"
   "fmt"
   "io/ioutil"
   "net/url"
+  "strings"
 )
+
 
 const (
   BlueTeamId = 100
@@ -34,6 +35,24 @@ func ComposeUrl(riotApiKey string, path string, args *url.Values) string {
   return u.String()
 }
 
+func stripArgs(loc string) string {
+  return strings.Split(loc, "?")[0]
+}
+
+type ErrRiotRestApi struct {
+  Url string
+  HttpStatusCode int
+}
+func NewErrRiotRestApi(loc string, httpStatusCode int) ErrRiotRestApi {
+  var e ErrRiotRestApi
+  e.Url = stripArgs(loc)
+  e.HttpStatusCode = httpStatusCode
+  return e
+}
+func (e ErrRiotRestApi) Error() string {
+  return fmt.Sprintf("%s returned ErrRiotRestApi(%d)", e.Url, e.HttpStatusCode)
+}
+
 func Fetch(c appengine.Context, loc string) ([]byte, error) {
   client := urlfetch.Client(c)
   resp, err := client.Get(loc)
@@ -42,8 +61,7 @@ func Fetch(c appengine.Context, loc string) ([]byte, error) {
   }
   if resp.StatusCode < 200 || resp.StatusCode > 299 {
     c.Errorf("RiotApi fetch failed with status %d: %s", resp.StatusCode, loc)
-    return nil, errors.New(
-      fmt.Sprintf("RiotApi fetch failed with status %d", resp.StatusCode))
+    return nil, NewErrRiotRestApi(loc, resp.StatusCode)
   } else {
     c.Infof("RiotApi fetch status %d: %s", resp.StatusCode, loc)
   }
