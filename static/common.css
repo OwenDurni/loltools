@@ -186,9 +186,15 @@ table.short-player-stats th, table.short-player-stats td {
 
 .short-player-stats .blend {
   text-align: center;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 0, 0, 0.5);
   font-style: italic;
   font-size: 75%;
+}
+
+.short-player-stats tr.member {
+}
+.short-player-stats tr.other {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .long-player-stats {
@@ -211,8 +217,14 @@ table.long-player-stats th, table.long-player-stats td {
 
 .long-player-stats .blend {
   text-align: center;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 0, 0, 0.5);
   font-style: italic;
+}
+
+.long-player-stats tr.member {
+}
+.long-player-stats tr.other {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 div.sprite {

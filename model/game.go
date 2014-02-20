@@ -76,13 +76,27 @@ func KeyForPlayerGameStatsId(
 
 type GameInfo struct {
   Game       *Game
+  
   BlueTeam   *GameTeamInfo
   PurpleTeam *GameTeamInfo
-  OtherTeam  *GameTeamInfo  // Only used if reported TeamId not recognized.
+  
+  // Aliases for BlueTeam/PurpleTeam based on which side has more summoners that are players
+  // of the team someone is inspecting in the application.
+  ThisTeam   *GameTeamInfo
+  OtherTeam  *GameTeamInfo
+  
+  // Set of summoner ids for members of the team someone is inspecting in the application.
+  appTeamSummonerIdSet map[int64]bool
+  
+  // Map from {riot team id}
+  // to {number of summoners on that team that are in appTeamSummonerIdSet}
+  riotTeamPlayerCounts map[int]int
 }
 type GameTeamInfo struct {
-  Players []*GamePlayerInfo
-  PlayerStats []*GamePlayerStatsInfo
+  IsBlueTeam   bool
+  IsPurpleTeam bool
+  Players      []*GamePlayerInfo
+  PlayerStats  []*GamePlayerStatsInfo
 }
 type GamePlayerInfo struct {
   Player *Player
@@ -93,6 +107,7 @@ type GamePlayerInfo struct {
 type GamePlayerStatsInfo struct {
   Saved bool
   NotAvailable bool
+  IsOnAppTeam bool
   Player *Player
   Stats  *PlayerGameStats
 }
@@ -100,8 +115,13 @@ func NewGameInfo() *GameInfo {
   info := new(GameInfo)
   info.Game = nil
   info.BlueTeam = NewGameTeamInfo()
+  info.BlueTeam.IsBlueTeam = true
   info.PurpleTeam = NewGameTeamInfo()
-  info.OtherTeam = NewGameTeamInfo()
+  info.PurpleTeam.IsPurpleTeam = true
+  info.ThisTeam = info.BlueTeam
+  info.OtherTeam = info.PurpleTeam
+  info.appTeamSummonerIdSet = make(map[int64]bool)
+  info.riotTeamPlayerCounts = make(map[int]int)
   return info
 }
 func NewGameTeamInfo() *GameTeamInfo {
@@ -118,28 +138,56 @@ func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
   info.SummonerSpell2 = 1
   return info
 }
-func NewGamePlayerStatsInfo(player *Player, stats *PlayerGameStats) *GamePlayerStatsInfo {
+func NewGamePlayerStatsInfo(
+  player *Player, stats *PlayerGameStats, isOnAppTeam bool) *GamePlayerStatsInfo {
   info := new(GamePlayerStatsInfo)
   if stats != nil {
     info.Saved = stats.Saved
     info.NotAvailable = stats.NotAvailable
   }
+  info.IsOnAppTeam = isOnAppTeam
   info.Player = player
   info.Stats = stats
   return info
 }
-func (ginfo *GameInfo) AddPlayer(teamId int, p *Player, championId int, pstats *PlayerGameStats) {
+// When this game was looked up in the context of a team registered with the application,
+// this adds that player to the GameInfo.
+func (ginfo *GameInfo) AddAppTeamPlayer(p *Player) {
+  ginfo.appTeamSummonerIdSet[p.RiotId] = true
+}
+// Adds a player and their in-game-stats to the GameInfo.
+func (ginfo *GameInfo) AddGamePlayer(
+  teamId int, p *Player, championId int, pstats *PlayerGameStats) {
+  
+  isOnAppTeam := ginfo.appTeamSummonerIdSet[p.RiotId]
+  
   pinfo := NewGamePlayerInfo(p, championId)
-  psinfo := NewGamePlayerStatsInfo(p, pstats)
+  psinfo := NewGamePlayerStatsInfo(p, pstats, isOnAppTeam)
+  
+  var gtinfo *GameTeamInfo
   if teamId == riot.BlueTeamId {
-    ginfo.BlueTeam.Players = append(ginfo.BlueTeam.Players, pinfo)
-    ginfo.BlueTeam.PlayerStats = append(ginfo.BlueTeam.PlayerStats, psinfo)
+    gtinfo = ginfo.BlueTeam
   } else if teamId == riot.PurpleTeamId {
-    ginfo.PurpleTeam.Players = append(ginfo.PurpleTeam.Players, pinfo)
-    ginfo.PurpleTeam.PlayerStats = append(ginfo.PurpleTeam.PlayerStats, psinfo)
+    gtinfo = ginfo.PurpleTeam
   } else {
-    ginfo.OtherTeam.Players = append(ginfo.OtherTeam.Players, pinfo)
-    ginfo.OtherTeam.PlayerStats = append(ginfo.OtherTeam.PlayerStats, psinfo)
+    // We don't know which team to add the player to...
+    return
+  }
+  
+  if isOnAppTeam {
+    ginfo.riotTeamPlayerCounts[teamId]++
+  }
+  
+  if gtinfo != nil {
+    gtinfo.Players = append(gtinfo.Players, pinfo)
+    gtinfo.PlayerStats = append(gtinfo.PlayerStats, psinfo)
+  }
+}
+// Fills fields of GameInfo that are derived from other fields.
+func (ginfo *GameInfo) computeDerivedData() {
+  if ginfo.riotTeamPlayerCounts[riot.PurpleTeamId] > ginfo.riotTeamPlayerCounts[riot.BlueTeamId] {
+    ginfo.ThisTeam = ginfo.PurpleTeam
+    ginfo.OtherTeam = ginfo.BlueTeam
   }
 }
 
@@ -223,6 +271,7 @@ func GetPlayerGameStats(
 // Note that sometimes partial results are returned even if there is an error.
 func TeamRecentGameInfo(
   c appengine.Context,
+  userAcls *RequestorAclCache,
   n int,
   playerCache *PlayerCache,
   league *League,
@@ -230,6 +279,12 @@ func TeamRecentGameInfo(
   teamKey *datastore.Key) ([]*GameInfo, []error) {
   infos := make([]*GameInfo, 0, n)
   errors := make([]error, 0)
+  
+  players, _, err := TeamAllPlayers(c, userAcls, league, leagueKey, teamKey, KeysAndEntities)
+  if err != nil {
+    errors = append(errors, errwrap.Wrap(err))
+    return nil, errors
+  }
   
   var gameKeys []*datastore.Key
   {
@@ -270,6 +325,10 @@ func TeamRecentGameInfo(
     infos = append(infos, info)
     info.Game = game
     
+    for _, p := range players {
+      info.AddAppTeamPlayer(p)
+    }
+    
     for _, playerDto := range game.Players {
       summonerId := playerDto.SummonerId
       statKey := KeyForPlayerGameStatsId(c, game.Id(), MakePlayerId(game.Region, summonerId))
@@ -286,8 +345,9 @@ func TeamRecentGameInfo(
           errors = append(errors, errwrap.Wrap(err))
         }
       }
-      info.AddPlayer(playerDto.TeamId, player, playerDto.ChampionId, pstats)
+      info.AddGamePlayer(playerDto.TeamId, player, playerDto.ChampionId, pstats)
     }
+    info.computeDerivedData()
   }
   
   return infos, errors

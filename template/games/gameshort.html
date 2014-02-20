@@ -2,15 +2,11 @@
 
 {{define "gameshort"}}
 <div class="game-short">
-  <div class="blue-team">
-    {{template "gameshort-team" .BlueTeam}}
-  </div><div class="purple-team">
-    {{template "gameshort-team" .PurpleTeam}}
-  </div>
+  {{template "gameshort-team" .ThisTeam}}{{template "gameshort-team" .OtherTeam}}
 </div>
 {{end}}
 
-{{define "gameshort-team"}}
+{{define "gameshort-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}}">
   <div class="header">
     <div class="champion-icon-row">
       {{range .Players}}{{template "champsmall" .ChampionId}}{{end}}
@@ -25,7 +21,7 @@
       <th>Wards</th>
     </tr>
     {{range .PlayerStats}}
-      <tr>
+      <tr class="{{if .IsOnAppTeam}}member{{else}}other{{end}}">
         <td>{{.Player.Summoner}}</td>
       {{if .NotAvailable}}
         <td colspan="4" class="blend">no longer available</td>
@@ -44,4 +40,4 @@
       </tr>
     {{end}}
   </table>
-{{end}}
+</div>{{end}}

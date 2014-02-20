@@ -2,15 +2,11 @@
 
 {{define "gamelong"}}
 <div class="game-long">
-  <div class="blue-team">
-    {{template "gamelong-team" .BlueTeam}}
-  </div><div class="purple-team">
-    {{template "gamelong-team" .PurpleTeam}}
-  </div>
+  {{template "gamelong-team" .ThisTeam}}{{template "gamelong-team" .OtherTeam}}
 </div>
 {{end}}
 
-{{define "gamelong-team"}}
+{{define "gamelong-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}}">
   {{$team := .}}
   <div class="header">
     <!-- TODO team stat totals -->
@@ -27,7 +23,7 @@
       <th>Items</th>
     </tr>
     {{range $i, $stats := $team.PlayerStats}}
-      <tr class="{{if even $i}}even{{else}}odd{{end}}">
+      <tr class="{{if even $i}}even{{else}}odd{{end}} {{if .IsOnAppTeam}}member{{else}}other{{end}}">
         <td>
           {{$p := index $team.Players $i}}
           {{template "champsmall" $p.ChampionId}}
@@ -52,4 +48,4 @@
       </tr>
     {{end}}
   </table>
-{{end}}
+</div>{{end}}

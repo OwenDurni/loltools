@@ -51,7 +51,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   sort.Sort(model.PlayersBySummoner(players))
 
   // Get recent match history.
-  gameInfos, errors := model.TeamRecentGameInfo(c, 5, playerCache, league, leagueKey, teamKey)
+  gameInfos, errors := model.TeamRecentGameInfo(c, userAcls, 5, playerCache, league, leagueKey, teamKey)
   
   // Populate view context.
   ctx := struct {
@@ -99,7 +99,7 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
   // just shows 100 games.
   playerCache := model.NewPlayerCache(c, league.Region)
   gameInfos, errors := model.TeamRecentGameInfo(
-    c, 100, playerCache, league, leagueKey, teamKey)
+    c, userAcls, 100, playerCache, league, leagueKey, teamKey)
   
   // Populate view context.
   ctx := struct {
