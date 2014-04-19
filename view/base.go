@@ -59,7 +59,7 @@ func tmpl_ddi_stw() int {
   return 480
 }
 func tmpl_ddi_sth() int {
-  return 1104
+  return 480
 }
 func tmpl_ddi_sw(id int) int {
   return riot.Lookup.Items[id].Sprite.W
