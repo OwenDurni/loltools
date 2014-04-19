@@ -30,11 +30,11 @@ func tmpl_ddc_name(id int) string {
 func tmpl_ddc_s(id int) string {
   return riot.Lookup.Champions[id].Sprite.Url
 }
-func tmpl_ddc_stw() int {
-  return 480
+func tmpl_ddc_stw(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_ddc_s(id)].W
 }
-func tmpl_ddc_sth() int {
-  return 144
+func tmpl_ddc_sth(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_ddc_s(id)].H
 }
 func tmpl_ddc_sw(id int) int {
   return riot.Lookup.Champions[id].Sprite.W
@@ -55,11 +55,11 @@ func tmpl_ddi_name(id int) string {
 func tmpl_ddi_s(id int) string {
   return riot.Lookup.Items[id].Sprite.Url
 }
-func tmpl_ddi_stw() int {
-  return 480
+func tmpl_ddi_stw(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_ddi_s(id)].W
 }
-func tmpl_ddi_sth() int {
-  return 480
+func tmpl_ddi_sth(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_ddi_s(id)].H
 }
 func tmpl_ddi_sw(id int) int {
   return riot.Lookup.Items[id].Sprite.W
@@ -80,11 +80,11 @@ func tmpl_dds_name(id int) string {
 func tmpl_dds_s(id int) string {
   return riot.Lookup.Summoners[id].Sprite.Url
 }
-func tmpl_dds_stw() int {
-  return 480
+func tmpl_dds_stw(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_dds_s(id)].W
 }
-func tmpl_dds_sth() int {
-  return 192
+func tmpl_dds_sth(id int) int {
+  return riot.Lookup.SpriteSheets[tmpl_dds_s(id)].H
 }
 func tmpl_dds_sw(id int) int {
   return riot.Lookup.Summoners[id].Sprite.W

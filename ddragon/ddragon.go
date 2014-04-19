@@ -1,11 +1,28 @@
 package ddragon
 
 import (
+  "bytes"
   "encoding/json"
   "fmt"
+  "net/http"
+  "image"
   "io"
+  "io/ioutil"
+  "os"
   "strconv"
+
+  _ "image/png"
 )
+
+func FetchUrl(loc string) []byte {
+  fmt.Fprintf(os.Stderr, "Fetch: %s\n", loc)
+  res, err := http.Get(loc)
+  if err != nil { panic(err) }
+  defer res.Body.Close()
+  data, err := ioutil.ReadAll(res.Body)
+  if err != nil { panic(err) }
+  return data
+}
 
 type DDragon struct {
   Debug io.Writer
@@ -17,6 +34,7 @@ type DDragon struct {
   Items map[int]DDItem
   Champions map[int]DDChampion
   Summoners map[int]DDSummoner
+  SpriteSheets map[string]DDSpriteSheet
 }
 func NewDDragon(region string, debug io.Writer) *DDragon {
   dd := new(DDragon)
@@ -25,7 +43,13 @@ func NewDDragon(region string, debug io.Writer) *DDragon {
   dd.Items = make(map[int]DDItem)
   dd.Champions = make(map[int]DDChampion)
   dd.Summoners = make(map[int]DDSummoner)
+  dd.SpriteSheets = make(map[string]DDSpriteSheet)
   return dd
+}
+type DDSpriteSheet struct {
+  Url string
+  H int
+  W int
 }
 type DDSprite struct {
   Url string
@@ -82,7 +106,25 @@ func (dd *DDragon) UrlSummonerImage(filename string) string {
   return fmt.Sprintf("%s/%s/img/summoner/%s", dd.CdnRoot, dd.Version, filename)
 }
 func (dd *DDragon) UrlSprite(filename string) string {
-  return fmt.Sprintf("%s/%s/img/sprite/%s", dd.CdnRoot, dd.Version, filename)
+  url := fmt.Sprintf("%s/%s/img/sprite/%s", dd.CdnRoot, dd.Version, filename)
+  dd.AddSpriteSheet(url)
+  return url
+}
+
+func (dd *DDragon) AddSpriteSheet(url string) {
+  if _, exists := dd.SpriteSheets[url]; exists {
+    return
+  }
+  var ss DDSpriteSheet
+  ss.Url = url
+
+  imageBytes := FetchUrl(url)
+  image, _, err := image.Decode(bytes.NewReader(imageBytes))
+  if err != nil { panic(err) }
+  ss.W = image.Bounds().Dx()
+  ss.H = image.Bounds().Dy()
+
+  dd.SpriteSheets[url] = ss
 }
 
 // "v": "{{Version}}"

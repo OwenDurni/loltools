@@ -26,11 +26,13 @@ func FetchUrl(loc string) []byte {
 func main() {
   var debug io.Writer = nil // io.Writer(os.Stderr)
   dd := ddragon.NewDDragon(Region, debug)
+
   dd.ParseVersionJson(FetchUrl(dd.UrlVersionJson()))
   dd.ParseItemJson(FetchUrl(dd.UrlItemJson()))
   dd.ParseChampionJson(FetchUrl(dd.UrlChampionJson()))
   dd.ParseSummonerJson(FetchUrl(dd.UrlSummonerJson()))
-  
+
+  fmt.Fprintf(os.Stderr, "Most recent ddragon version is %s\n", dd.Version)
   fmt.Fprintf(os.Stderr, "Found %d Items.\n", len(dd.Items))
   fmt.Fprintf(os.Stderr, "Found %d Champions.\n", len(dd.Champions))
   fmt.Fprintf(os.Stderr, "Found %d Summoners.\n", len(dd.Summoners))
