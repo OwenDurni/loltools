@@ -5,8 +5,8 @@ import (
   "appengine/user"
   "errors"
   "fmt"
-  "html/template"
   "github.com/OwenDurni/loltools/riot"
+  "html/template"
   "io/ioutil"
   "net/http"
   "time"
@@ -111,34 +111,34 @@ var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
   // dd champion functions
   "ddc_name": tmpl_ddc_name,
-  "ddc_s": tmpl_ddc_s,
-  "ddc_stw": tmpl_ddc_stw,
-  "ddc_sth": tmpl_ddc_sth,
-  "ddc_sw": tmpl_ddc_sw,
-  "ddc_sh": tmpl_ddc_sh,
-  "ddc_sx": tmpl_ddc_sx,
-  "ddc_sy": tmpl_ddc_sy,
-  
+  "ddc_s":    tmpl_ddc_s,
+  "ddc_stw":  tmpl_ddc_stw,
+  "ddc_sth":  tmpl_ddc_sth,
+  "ddc_sw":   tmpl_ddc_sw,
+  "ddc_sh":   tmpl_ddc_sh,
+  "ddc_sx":   tmpl_ddc_sx,
+  "ddc_sy":   tmpl_ddc_sy,
+
   // dd item functions
   "ddi_name": tmpl_ddi_name,
-  "ddi_s": tmpl_ddi_s,
-  "ddi_stw": tmpl_ddi_stw,
-  "ddi_sth": tmpl_ddi_sth,
-  "ddi_sw": tmpl_ddi_sw,
-  "ddi_sh": tmpl_ddi_sh,
-  "ddi_sx": tmpl_ddi_sx,
-  "ddi_sy": tmpl_ddi_sy,
-  
+  "ddi_s":    tmpl_ddi_s,
+  "ddi_stw":  tmpl_ddi_stw,
+  "ddi_sth":  tmpl_ddi_sth,
+  "ddi_sw":   tmpl_ddi_sw,
+  "ddi_sh":   tmpl_ddi_sh,
+  "ddi_sx":   tmpl_ddi_sx,
+  "ddi_sy":   tmpl_ddi_sy,
+
   // dd summoner functions
   "dds_name": tmpl_dds_name,
-  "dds_s": tmpl_dds_s,
-  "dds_stw": tmpl_dds_stw,
-  "dds_sth": tmpl_dds_sth,
-  "dds_sw": tmpl_dds_sw,
-  "dds_sh": tmpl_dds_sh,
-  "dds_sx": tmpl_dds_sx,
-  "dds_sy": tmpl_dds_sy,
-  
+  "dds_s":    tmpl_dds_s,
+  "dds_stw":  tmpl_dds_stw,
+  "dds_sth":  tmpl_dds_sth,
+  "dds_sw":   tmpl_dds_sw,
+  "dds_sh":   tmpl_dds_sh,
+  "dds_sx":   tmpl_dds_sx,
+  "dds_sy":   tmpl_dds_sy,
+
   "even": tmpl_even,
   "form": tmpl_form,
   "odd":  tmpl_odd,
@@ -185,10 +185,10 @@ func RenderTemplate(w http.ResponseWriter, id string, name string, ctx interface
 }
 
 type ctxBase struct {
-  Title    string
-  TimeNow  string
-  User     string
-  Errors   []error
+  Title   string
+  TimeNow string
+  User    string
+  Errors  []error
 }
 
 func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
@@ -202,6 +202,8 @@ func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
 }
 
 func (ctx *ctxBase) AddError(err error) {
-  if err == nil { return }
+  if err == nil {
+    return
+  }
   ctx.Errors = append(ctx.Errors, err)
 }

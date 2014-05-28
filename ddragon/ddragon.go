@@ -4,10 +4,10 @@ import (
   "bytes"
   "encoding/json"
   "fmt"
-  "net/http"
   "image"
   "io"
   "io/ioutil"
+  "net/http"
   "os"
   "strconv"
 
@@ -17,25 +17,30 @@ import (
 func FetchUrl(loc string) []byte {
   fmt.Fprintf(os.Stderr, "Fetch: %s\n", loc)
   res, err := http.Get(loc)
-  if err != nil { panic(err) }
+  if err != nil {
+    panic(err)
+  }
   defer res.Body.Close()
   data, err := ioutil.ReadAll(res.Body)
-  if err != nil { panic(err) }
+  if err != nil {
+    panic(err)
+  }
   return data
 }
 
 type DDragon struct {
-  Debug io.Writer
-  Region string
-  Version string
+  Debug    io.Writer
+  Region   string
+  Version  string
   Language string
-  CdnRoot string
-  
-  Items map[int]DDItem
-  Champions map[int]DDChampion
-  Summoners map[int]DDSummoner
+  CdnRoot  string
+
+  Items        map[int]DDItem
+  Champions    map[int]DDChampion
+  Summoners    map[int]DDSummoner
   SpriteSheets map[string]DDSpriteSheet
 }
+
 func NewDDragon(region string, debug io.Writer) *DDragon {
   dd := new(DDragon)
   dd.Debug = debug
@@ -46,39 +51,43 @@ func NewDDragon(region string, debug io.Writer) *DDragon {
   dd.SpriteSheets = make(map[string]DDSpriteSheet)
   return dd
 }
+
 type DDSpriteSheet struct {
   Url string
-  H int
-  W int
+  H   int
+  W   int
 }
 type DDSprite struct {
   Url string
-  X int
-  Y int
-  W int
-  H int
+  X   int
+  Y   int
+  W   int
+  H   int
 }
 type DDItem struct {
+  Id       int
+  Name     string
+  ImageUrl string
+  Sprite   DDSprite
+}
+type DDChampion struct {
   Id        int
   Name      string
   ImageUrl  string
-  Sprite DDSprite
-}
-type DDChampion struct {
-  Id int
-  Name string
-  ImageUrl string
   SplashUrl string
-  Sprite DDSprite
+  Sprite    DDSprite
 }
 type DDSummoner struct {
-  Id int
-  Name string
+  Id       int
+  Name     string
   ImageUrl string
-  Sprite DDSprite
+  Sprite   DDSprite
 }
+
 func (dd *DDragon) Debugf(format string, args ...interface{}) {
-  if dd.Debug == nil { return }
+  if dd.Debug == nil {
+    return
+  }
   fmt.Fprintf(dd.Debug, fmt.Sprintf("%s\n", format), args...)
 }
 func (dd *DDragon) UrlBase() string {
@@ -120,7 +129,9 @@ func (dd *DDragon) AddSpriteSheet(url string) {
 
   imageBytes := FetchUrl(url)
   image, _, err := image.Decode(bytes.NewReader(imageBytes))
-  if err != nil { panic(err) }
+  if err != nil {
+    panic(err)
+  }
   ss.W = image.Bounds().Dx()
   ss.H = image.Bounds().Dy()
 
@@ -131,10 +142,11 @@ func (dd *DDragon) AddSpriteSheet(url string) {
 // "l": "{{Language}}"
 // "cdn": "{{CdnRoot}}"
 type versionRootJson struct {
-  Version string `json:"v"`
+  Version  string `json:"v"`
   Language string `json:"l"`
-  CdnRoot string `json:"cdn"`
+  CdnRoot  string `json:"cdn"`
 }
+
 func (dd *DDragon) ParseVersionJson(jsonData []byte) {
   versionRootJ := new(versionRootJson)
   if err := json.Unmarshal(jsonData, versionRootJ); err != nil {
@@ -143,7 +155,7 @@ func (dd *DDragon) ParseVersionJson(jsonData []byte) {
   dd.Version = versionRootJ.Version
   dd.Language = versionRootJ.Language
   dd.CdnRoot = versionRootJ.CdnRoot
-  
+
   dd.Debugf("DD.Version: %s", dd.Version)
   dd.Debugf("DD.Language: %s", dd.Language)
   dd.Debugf("DD.CdnRoot: %s", dd.CdnRoot)
@@ -168,13 +180,14 @@ type itemJson struct {
   Image imageJson `json:"image"`
 }
 type imageJson struct {
-  Full string `json:"full"`
-  Sprite string `json:"sprite"`
-  SpriteX int `json:"x"`
-  SpriteY int `json:"y"`
-  SpriteW int `json:"w"`
-  SpriteH int `json:"h"`
+  Full    string `json:"full"`
+  Sprite  string `json:"sprite"`
+  SpriteX int    `json:"x"`
+  SpriteY int    `json:"y"`
+  SpriteW int    `json:"w"`
+  SpriteH int    `json:"h"`
 }
+
 func (dd *DDragon) ParseItemJson(jsonData []byte) {
   itemRootJ := new(itemRootJson)
   if err := json.Unmarshal(jsonData, itemRootJ); err != nil {
@@ -183,11 +196,13 @@ func (dd *DDragon) ParseItemJson(jsonData []byte) {
   dd.Debugf("DD.Items: ")
   for itemIdStr, itemJ := range itemRootJ.Data {
     itemId, err := strconv.Atoi(itemIdStr)
-    if err != nil { panic(err) }
+    if err != nil {
+      panic(err)
+    }
     var item DDItem
     item.Id = itemId
     item.Name = itemJ.Name
-    
+
     imageJ := itemJ.Image
     item.ImageUrl = dd.UrlItemImage(imageJ.Full)
     item.Sprite.Url = dd.UrlSprite(imageJ.Sprite)
@@ -195,7 +210,7 @@ func (dd *DDragon) ParseItemJson(jsonData []byte) {
     item.Sprite.Y = imageJ.SpriteY
     item.Sprite.W = imageJ.SpriteW
     item.Sprite.H = imageJ.SpriteH
-    
+
     dd.Items[itemId] = item
     dd.Debugf("DD.Items[%d]: %v\n", item.Id, item)
   }
@@ -220,6 +235,7 @@ type championJson struct {
   Name  string    `json:"name"`
   Image imageJson `json:"image"`
 }
+
 func (dd *DDragon) ParseChampionJson(jsonData []byte) {
   championRootJ := new(championRootJson)
   if err := json.Unmarshal(jsonData, championRootJ); err != nil {
@@ -228,20 +244,22 @@ func (dd *DDragon) ParseChampionJson(jsonData []byte) {
   dd.Debugf("DD.Champions: ")
   for _, championJ := range championRootJ.Data {
     championId, err := strconv.Atoi(championJ.Key)
-    if err != nil { panic(err) }
+    if err != nil {
+      panic(err)
+    }
     var champion DDChampion
     champion.Id = championId
     champion.Name = championJ.Name
-    
+
     imageJ := championJ.Image
     champion.ImageUrl = dd.UrlChampionImage(imageJ.Full)
-    
+
     champion.Sprite.Url = dd.UrlSprite(imageJ.Sprite)
     champion.Sprite.X = imageJ.SpriteX
     champion.Sprite.Y = imageJ.SpriteY
     champion.Sprite.W = imageJ.SpriteW
     champion.Sprite.H = imageJ.SpriteH
-    
+
     dd.Champions[championId] = champion
     dd.Debugf("DD.Champions[%d]: %v\n", champion.Id, champion)
   }
@@ -262,10 +280,11 @@ type summonerRootJson struct {
   Data map[string]summonerJson `json:"data"`
 }
 type summonerJson struct {
-  Key string `json:"key"`
-  Name string `json:"name"`
+  Key   string    `json:"key"`
+  Name  string    `json:"name"`
   Image imageJson `json:"image"`
 }
+
 func (dd *DDragon) ParseSummonerJson(jsonData []byte) {
   summonerRootJ := new(summonerRootJson)
   if err := json.Unmarshal(jsonData, summonerRootJ); err != nil {
@@ -274,20 +293,22 @@ func (dd *DDragon) ParseSummonerJson(jsonData []byte) {
   dd.Debugf("DD.Summoners: ")
   for _, summonerJ := range summonerRootJ.Data {
     summonerId, err := strconv.Atoi(summonerJ.Key)
-    if err != nil { panic(err) }
+    if err != nil {
+      panic(err)
+    }
     var summoner DDSummoner
     summoner.Id = summonerId
     summoner.Name = summonerJ.Name
-    
+
     imageJ := summonerJ.Image
     summoner.ImageUrl = dd.UrlSummonerImage(imageJ.Full)
-    
+
     summoner.Sprite.Url = dd.UrlSprite(imageJ.Sprite)
     summoner.Sprite.X = imageJ.SpriteX
     summoner.Sprite.Y = imageJ.SpriteY
     summoner.Sprite.W = imageJ.SpriteW
     summoner.Sprite.H = imageJ.SpriteH
-    
+
     dd.Summoners[summonerId] = summoner
     dd.Debugf("DD.Summoners[%d]: %v\n", summoner.Id, summoner)
   }

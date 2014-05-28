@@ -10,7 +10,9 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]
   c := appengine.NewContext(r)
 
   user, _, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 
   ctx := struct {
     ctxBase
@@ -21,19 +23,25 @@ func ProfileEditHandler(w http.ResponseWriter, r *http.Request, args map[string]
   ctx.User = user
 
   err = RenderTemplate(w, "profiles/edit.html", "base", ctx)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 }
 
 func ProfileSetHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
-  
+
   user, _, err := model.GetUser(c)
-  if ApiHandleError(c, w, err) { return }
-  
+  if ApiHandleError(c, w, err) {
+    return
+  }
+
   user.Name = r.FormValue("name")
   user.SummonerName = r.FormValue("summoner")
   err = user.Save(c)
-  if ApiHandleError(c, w, err) { return }
-  
+  if ApiHandleError(c, w, err) {
+    return
+  }
+
   HttpReplyOkEmpty(w)
 }

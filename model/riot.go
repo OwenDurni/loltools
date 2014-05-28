@@ -13,7 +13,7 @@ const (
 )
 
 var RiotApiRateLimiter = DistributedRateLimiter{
-  Name: "riot-rest-api",
+  Name:   "riot-rest-api",
   Limits: RiotDevRateLimits,
 }
 
@@ -28,12 +28,12 @@ type RiotApiKey struct {
 
 func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
   var r = new(RiotApiKey)
-  
+
   // First try memcache.
   if _, err := memcache.JSON.Get(c, "RiotApiKey/dev", r); err == nil {
     return r, nil
   }
-  
+
   // Next try datastore.
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
   if err := datastore.Get(c, key, r); err == datastore.ErrNoSuchEntity {
@@ -41,7 +41,7 @@ func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
   } else if err != nil {
     return nil, err
   }
-  
+
   // Best effort put into datastore before returning.
   memcache.JSON.Set(c, &memcache.Item{Key: "RiotApiKey/dev", Object: r})
   return r, nil
@@ -50,7 +50,7 @@ func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
 func SetRiotApiKey(c appengine.Context, apikey string) error {
   r := new(RiotApiKey)
   r.Key = apikey
-  
+
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
   _, err := datastore.Put(c, key, r)
   if err != nil {

@@ -15,11 +15,12 @@ import (
 
 // Caches player data within a region.
 type PlayerCache struct {
-  Region string
-  c appengine.Context
-  byId map[int64]*Player
+  Region     string
+  c          appengine.Context
+  byId       map[int64]*Player
   bySummoner map[string]*Player
 }
+
 func NewPlayerCache(c appengine.Context, region string) *PlayerCache {
   cache := new(PlayerCache)
   cache.Region = region
@@ -66,9 +67,10 @@ type Player struct {
 
   // This player's in game level.
   Level int
-  
+
   LastUpdated time.Time
 }
+
 func (p *Player) Id() string {
   return MakePlayerId(p.Region, p.RiotId)
 }
@@ -80,18 +82,20 @@ func MakePlayerId(region string, riotSummonerId int64) string {
   return fmt.Sprintf("%s-%d", region, riotSummonerId)
 }
 func KeyForPlayer(c appengine.Context, region string, riotSummonerId int64) *datastore.Key {
-  return datastore.NewKey(c, "Player", MakePlayerId(region, riotSummonerId), 0, nil) 
+  return datastore.NewKey(c, "Player", MakePlayerId(region, riotSummonerId), 0, nil)
 }
 
 func SplitPlayerKey(key *datastore.Key) (string, int64, error) {
   parts := strings.Split(key.StringID(), "-")
   if len(parts) != 2 {
     return "", 0, errors.New(fmt.Sprintf("Cannot split malformed PlayerKey: %s",
-                                         key.StringID()))
+      key.StringID()))
   }
   region := parts[0]
   id, err := strconv.ParseInt(parts[1], 10, 64)
-  if err != nil { return "", 0, err }
+  if err != nil {
+    return "", 0, err
+  }
   return region, id, nil
 }
 
@@ -114,13 +118,13 @@ func GetPlayerByRiotIdOrStub(
   riotId int64) (*Player, *datastore.Key, error) {
   player := new(Player)
   playerKey := KeyForPlayer(c, region, riotId)
-  
+
   // Try memcache first.
   mkey := fmt.Sprintf("Player/%s-%d", region, riotId)
   if _, err := memcache.JSON.Get(c, mkey, player); err == nil {
     return player, playerKey, nil
   }
-  
+
   err := datastore.Get(c, playerKey, player)
   if err == datastore.ErrNoSuchEntity {
     // Return a stub.
@@ -139,15 +143,15 @@ func GetOrCreatePlayerByRiotId(
   region string,
   riotId int64) (*Player, *datastore.Key, error) {
   player := new(Player)
-  
+
   // Try memcache first.
   mkey := fmt.Sprintf("Player/%s-%d", region, riotId)
   if _, err := memcache.JSON.Get(c, mkey, player); err == nil {
     return player, KeyForPlayer(c, region, player.RiotId), nil
   }
-  
+
   playerKey := KeyForPlayer(c, region, riotId)
-  
+
   for attempt := 0; attempt < 3; attempt++ {
     err := datastore.Get(c, playerKey, player)
     if err == datastore.ErrNoSuchEntity {
@@ -180,7 +184,7 @@ func GetOrCreatePlayerByRiotId(
       return nil, nil, err
     }
   }
-  
+
   // Best effort put into memcache.
   memcache.JSON.Set(c, &memcache.Item{Key: mkey, Object: player})
   return player, playerKey, nil
@@ -214,6 +218,6 @@ func GetOrCreatePlayerBySummoner(
   if _, err = datastore.Put(c, playerKey, player); err != nil {
     return nil, nil, errwrap.Wrap(err)
   }
-  
+
   return player, playerKey, nil
 }

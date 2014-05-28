@@ -14,5 +14,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request, args map[string]string)
   ctx.ctxBase.init(c)
 
   err := RenderTemplate(w, "home.html", "base", ctx)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 }

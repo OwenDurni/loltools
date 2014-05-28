@@ -8,13 +8,14 @@ import (
 )
 
 // Root entity for all groups and acls.
-type GroupRoot struct {}
+type GroupRoot struct{}
+
 func GroupRootKey(c appengine.Context) *datastore.Key {
   return datastore.NewKey(c, "GroupRoot", "dev", 0, nil)
 }
 
 type Group struct {
-  Name    string
+  Name string
 }
 
 type GroupMembership struct {
@@ -36,9 +37,9 @@ func GroupByKey(
   groupKey *datastore.Key,
   userKey *datastore.Key) (*Group, *GroupMembership, error) {
   q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
-         Filter("GroupKey =", groupKey).
-         Filter("UserKey =", userKey).
-         Limit(1)
+    Filter("GroupKey =", groupKey).
+    Filter("UserKey =", userKey).
+    Limit(1)
   var memberships []*GroupMembership
   _, err := q.GetAll(c, &memberships)
   if err != nil {
@@ -46,7 +47,7 @@ func GroupByKey(
   }
   if len(memberships) == 0 {
     return nil, nil, errors.New(fmt.Sprintf("User is not a member of group: %s",
-                                            EncodeKeyShort(groupKey)))
+      EncodeKeyShort(groupKey)))
   }
 
   group := new(Group)
@@ -73,24 +74,28 @@ func GetGroupsForUser(
   c appengine.Context, userKey *datastore.Key) ([]*Group, []*GroupMembership, error) {
   var groups []*Group
   var memberships []*GroupMembership
-    
+
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
       Filter("UserKey =", userKey)
     _, err := q.GetAll(c, &memberships)
-    if err != nil { return err }
-  
+    if err != nil {
+      return err
+    }
+
     groupKeys := make([]*datastore.Key, len(memberships))
     groups = make([]*Group, len(memberships))
-    
+
     for i, m := range memberships {
       groupKeys[i] = m.GroupKey
       groups[i] = new(Group)
     }
-    
+
     return datastore.GetMulti(c, groupKeys, groups)
   }, nil)
-  if err != nil { return nil, nil, err }
+  if err != nil {
+    return nil, nil, err
+  }
   return groups, memberships, nil
 }
 
@@ -98,7 +103,7 @@ func GetGroupMemberships(
   c appengine.Context, groupKey *datastore.Key) ([]*GroupMembership, error) {
   q := datastore.NewQuery("GroupMembership").Ancestor(GroupRootKey(c)).
     Filter("GroupKey =", groupKey)
-  
+
   var memberships []*GroupMembership
   _, err := q.GetAll(c, &memberships)
   return memberships, err
@@ -112,11 +117,11 @@ func CreateGroup(c appengine.Context, name string) (*Group, *datastore.Key, erro
   }
 
   groot := GroupRootKey(c)
-  
+
   group := new(Group)
   group.Name = name
   var groupKey *datastore.Key
-  
+
   err = datastore.RunInTransaction(c, func(c appengine.Context) error {
     groupKey, err = datastore.Put(c, datastore.NewIncompleteKey(c, "Group", groot), group)
     if err != nil {
@@ -129,7 +134,7 @@ func CreateGroup(c appengine.Context, name string) (*Group, *datastore.Key, erro
       Owner:    true,
     }
     _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "GroupMembership", groot),
-                           groupMembership)
+      groupMembership)
     return err
   }, nil)
   if err != nil {
@@ -143,14 +148,18 @@ func GroupAddMember(
   groot := GroupRootKey(c)
   return datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("GroupMembership").Ancestor(groot).
-           Filter("GroupKey =", groupKey).
-           Filter("UserKey =", userKey).
-           Limit(1).
-           KeysOnly()
+      Filter("GroupKey =", groupKey).
+      Filter("UserKey =", userKey).
+      Limit(1).
+      KeysOnly()
     membershipKeys, err := q.GetAll(c, nil)
-    if err != nil {return err}
-    if len(membershipKeys) > 0 {return nil}
-    
+    if err != nil {
+      return err
+    }
+    if len(membershipKeys) > 0 {
+      return nil
+    }
+
     membership := new(GroupMembership)
     membership.GroupKey = groupKey
     membership.UserKey = userKey
@@ -166,11 +175,13 @@ func GroupDelMember(
   groot := GroupRootKey(c)
   return datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("GroupMembership").Ancestor(groot).
-           Filter("GroupKey =", groupKey).
-           Filter("UserKey =", userKey).
-           KeysOnly()
+      Filter("GroupKey =", groupKey).
+      Filter("UserKey =", userKey).
+      KeysOnly()
     membershipKeys, err := q.GetAll(c, nil)
-    if err != nil {return err}
+    if err != nil {
+      return err
+    }
     return datastore.DeleteMulti(c, membershipKeys)
-  }, nil)  
+  }, nil)
 }

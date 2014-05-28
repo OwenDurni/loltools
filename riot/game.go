@@ -51,8 +51,8 @@ type RawStatsDto struct {
   Win        bool `json:"win"`
   TimePlayed int  `json:"timePlayed"`
   //Team       int  `json:"team"`
-  ChampionId int  /* populated from GameDto */
-  
+  ChampionId int /* populated from GameDto */
+
   // KDA
   ChampionsKilled int `json:"championsKilled"`
   NumDeaths       int `json:"numDeaths"`
@@ -61,7 +61,7 @@ type RawStatsDto struct {
   //BarracksKilled  int `json:"barracksKilled"`
 
   // Gold/XP
-  Level      int `json:"level"`
+  Level int `json:"level"`
   //Gold       int `json:"gold"`
   GoldEarned int `json:"goldEarned"`
   //GoldSpent  int `json:"goldSpent"`
@@ -75,18 +75,18 @@ type RawStatsDto struct {
   SuperMonstersKilled             int `json:"superMonsterKilled"`
 
   // Items
-  Item0                 int `json:"item0"`
-  Item1                 int `json:"item1"`
-  Item2                 int `json:"item2"`
-  Item3                 int `json:"item3"`
-  Item4                 int `json:"item4"`
-  Item5                 int `json:"item5"`
-  Item6                 int `json:"item6"`
+  Item0 int `json:"item0"`
+  Item1 int `json:"item1"`
+  Item2 int `json:"item2"`
+  Item3 int `json:"item3"`
+  Item4 int `json:"item4"`
+  Item5 int `json:"item5"`
+  Item6 int `json:"item6"`
   //ItemsPurchased        int `json:"itemsPurchased"`
   //ConsumablesPurchased  int `json:"consumablesPurchased"`
   //NumItemsBought        int `json:"numItemsBought"`
   //LegendaryItemsCreated int `json:"legendaryItemsCreated"`
-  
+
   // Vision
   WardPlaced        int `json:"wardPlaced"`
   SightWardsBought  int `json:"sightWardsBought"`
@@ -96,7 +96,7 @@ type RawStatsDto struct {
   // Summoners
   SummonerSpell1 int /* populated from GameDto */
   SummonerSpell2 int /* populated from GameDto */
-  
+
   // Damage Dealt
   //DamageDealtPlayer              int `json:"damageDealtPlayer"`
   //TotalDamageDealt               int `json:"totalDamageDealt"`
@@ -104,9 +104,9 @@ type RawStatsDto struct {
   //PhysicalDamageDealtPlayer      int `json:"physicalDamageDealtPlayer"`
   PhysicalDamageDealtToChampions int `json:"physicalDamageDealtToChampions"`
   //MagicDamageDealtPlayer         int `json:"magicDamageDealtPlayer"`
-  MagicDamageDealtToChampions    int `json:"magicDamageDealtToChampions"`
+  MagicDamageDealtToChampions int `json:"magicDamageDealtToChampions"`
   //TrueDamageDealtPlayer          int `json:"trueDamageDealtPlayer"`
-  TrueDamageDealtToChampions     int `json:"trueDamageDealtToChampions"`
+  TrueDamageDealtToChampions int `json:"trueDamageDealtToChampions"`
 
   // Damage Taken
   //TotalDamageTaken    int `json:"totalDamageTaken"`
@@ -122,14 +122,14 @@ type RawStatsDto struct {
   // Vanity stats.
   //KillingSprees         int  `json:"killingSprees"`
   //LargestKillingSpree   int  `json:"largestKillingSpree"`
-  LargestMultiKill      int  `json:"largestMultiKill"`
+  LargestMultiKill int `json:"largestMultiKill"`
   //DoubleKills           int  `json:"doubleKills"`
   //TripleKills           int  `json:"tripleKills"`
   //QuadraKills           int  `json:"quadraKills"`
   //PentaKills            int  `json:"pentaKills"`
   //UnrealKills           int  `json:"unrealKills"`
   //NexusKilled           bool `json:"nexusKilled"`
-  FirstBlood            int  `json:"firstBlood"`
+  FirstBlood int `json:"firstBlood"`
   //LargestCriticalStrike int  `json:"largestCriticalStrike"`
 
   // Number of times various spells were cast.
@@ -166,20 +166,20 @@ func GameStatsForPlayer(
     &url.Values{})
   g := new(RecentGamesDto)
   g.SummonerId = riotSummonerId
-  
+
   jsonData, err := Fetch(c, loc)
   if err != nil {
     if err, ok := err.(ErrRiotRestApi); ok && err.HttpStatusCode == 404 {
       // 404 means no match history for this summoner id.
       return g, nil
     }
-      
+
     return nil, err
   }
-  
+
   if err = json.Unmarshal(jsonData, g); err == nil {
     // Do some post-processing.
-    for i, _ := range(g.Games) {
+    for i, _ := range g.Games {
       var gameDto *GameDto = &g.Games[i]
       gameDto.Stats.ChampionId = gameDto.ChampionId
       gameDto.Stats.SummonerSpell1 = gameDto.SummonerSpell1

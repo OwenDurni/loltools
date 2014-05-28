@@ -9,9 +9,8 @@ import (
   "strings"
 )
 
-
 const (
-  BlueTeamId = 100
+  BlueTeamId   = 100
   PurpleTeamId = 200
 )
 
@@ -40,9 +39,10 @@ func stripArgs(loc string) string {
 }
 
 type ErrRiotRestApi struct {
-  Url string
+  Url            string
   HttpStatusCode int
 }
+
 func NewErrRiotRestApi(loc string, httpStatusCode int) ErrRiotRestApi {
   var e ErrRiotRestApi
   e.Url = stripArgs(loc)

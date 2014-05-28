@@ -9,14 +9,16 @@ import (
 )
 
 func ReportError(c appengine.Context, w http.ResponseWriter, err error) bool {
-  if err == nil { return false }
-  
+  if err == nil {
+    return false
+  }
+
   shouldRetry := false
-  
+
   if _, ok := err.(model.ErrRateLimitExceeded); ok {
     shouldRetry = true
   }
-  
+
   if shouldRetry {
     // We write a non-2XX response so that the task is retried.
     c.Warningf("[Temporary Task Error] %v", err)

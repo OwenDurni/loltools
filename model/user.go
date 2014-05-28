@@ -42,8 +42,8 @@ func GetUserByKey(c appengine.Context, userKey *datastore.Key) (*User, error) {
 
 func GetUserByEmail(c appengine.Context, email string) (*User, *datastore.Key, error) {
   q := datastore.NewQuery("User").
-         Filter("Email =", email).
-         Limit(1)
+    Filter("Email =", email).
+    Limit(1)
   var users []*User
   userKeys, err := q.GetAll(c, &users)
   if err != nil {

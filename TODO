@@ -1,13 +1,5 @@
-For alpha release:
-- Update to (batched) summoner-v1.3 api.
-- Tweak limits and crontab for missing game stats.
-
 For beta release:
-- Summoner name verification.
-- Perform user operations by summoner instead of by email.
-- Email should not be public.
-- Tagging league games.
-- Scoreboard W/L
+- https://docs.google.com/a/google.com/document/d/1JuUAwHEM7neulzPvlOqHp2MzECuu263vgatSllU1af4/edit
 
 Future ideas:
 - Encorporate http://godoc.org/github.com/mjibson/appstats and

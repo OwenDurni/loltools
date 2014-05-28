@@ -67,26 +67,26 @@ func init() {
   http.HandleFunc("/", dispatcher.RootHandler)
 
   view.AddTemplate("admin.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
   view.AddTemplate("httperror.html",
-                   "base.html")
+    "base.html")
   view.AddTemplate("home.html",
-                   "base.html")
+    "base.html")
   view.AddTemplate("groups/index.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
   view.AddTemplate("groups/view.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
   view.AddTemplate("leagues/create.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
   view.AddTemplate("leagues/index.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
   view.AddTemplate("leagues/teams/history.html",
-                   "games/gamelong.html", "games/champsmall.html", "games/itemsmall.html",
-                   "games/summonersmall.html", "base.html")
+    "games/gamelong.html", "games/champsmall.html", "games/itemsmall.html",
+    "games/summonersmall.html", "base.html")
   view.AddTemplate("leagues/teams/view.html",
-                   "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
+    "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
   view.AddTemplate("leagues/view.html",
-                   "form.html", "types.html", "base.html")
+    "form.html", "types.html", "base.html")
   view.AddTemplate("profiles/edit.html",
-                   "form.html", "base.html")
+    "form.html", "base.html")
 }

@@ -29,19 +29,27 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   teamId := args["teamId"]
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 
   team, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 
   players, _, err := model.TeamAllPlayers(
     c, userAcls, league, leagueKey, teamKey, model.KeysAndEntities)
-  if HandleError(c, w, err) { return }
-  
+  if HandleError(c, w, err) {
+    return
+  }
+
   playerCache := model.NewPlayerCache(c, league.Region)
   for _, p := range players {
     playerCache.Add(p)
@@ -52,7 +60,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
 
   // Get recent match history.
   gameInfos, errors := model.TeamRecentGameInfo(c, userAcls, 5, playerCache, league, leagueKey, teamKey)
-  
+
   // Populate view context.
   ctx := struct {
     ctxBase
@@ -76,7 +84,9 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
 
   // Render
   err = RenderTemplate(w, "leagues/teams/view.html", "base", ctx)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 }
 
 func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -85,14 +95,20 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
   teamId := args["teamId"]
 
   _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 
   team, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if HandleError(c, w, err) { return }
+  if HandleError(c, w, err) {
+    return
+  }
 
   // Get "all" match history.
   // TODO(durni): This should likely be paginated or use infinite scroll. Currently
@@ -100,7 +116,7 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
   playerCache := model.NewPlayerCache(c, league.Region)
   gameInfos, errors := model.TeamRecentGameInfo(
     c, userAcls, 100, playerCache, league, leagueKey, teamKey)
-  
+
   // Populate view context.
   ctx := struct {
     ctxBase
@@ -117,7 +133,9 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
 
   // Render
   err = RenderTemplate(w, "leagues/teams/history.html", "base", ctx)
-  if HandleError(c, w, err) { return } 
+  if HandleError(c, w, err) {
+    return
+  }
 }
 
 func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
@@ -128,21 +146,31 @@ func ApiTeamAddPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   summoner := r.FormValue("summoner")
 
   _, userKey, err := model.GetUser(c)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   _, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   err = model.TeamAddPlayer(c, userAcls, league, leagueKey, teamKey, playerKey)
-  if ApiHandleError(c, w, err) { return }
-  
+  if ApiHandleError(c, w, err) {
+    return
+  }
+
   HttpReplyOkEmpty(w)
 }
 
@@ -154,20 +182,30 @@ func ApiTeamDelPlayerHandler(w http.ResponseWriter, r *http.Request, args map[st
   summoner := r.FormValue("summoner")
 
   _, userKey, err := model.GetUser(c)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
   userAcls := model.NewRequestorAclCache(userKey)
 
   league, leagueKey, err := model.LeagueById(c, leagueId)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   _, teamKey, err := model.TeamById(c, userAcls, league, leagueKey, teamId)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   _, playerKey, err := model.GetOrCreatePlayerBySummoner(c, region, summoner)
-  if ApiHandleError(c, w, err) { return }
+  if ApiHandleError(c, w, err) {
+    return
+  }
 
   err = model.TeamDelPlayer(c, userAcls, league, leagueKey, teamKey, playerKey)
-  if ApiHandleError(c, w, err) { return }
-  
+  if ApiHandleError(c, w, err) {
+    return
+  }
+
   HttpReplyOkEmpty(w)
 }

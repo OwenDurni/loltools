@@ -11,8 +11,9 @@ import (
 
 type ErrRateLimitExceeded struct {
   RateLimit *DistributedRateLimiter
-  Debug error
+  Debug     error
 }
+
 func (e ErrRateLimitExceeded) Error() string {
   return fmt.Sprintf("Exceeded rate limit: %s (%v)", e.RateLimit.Name, e.Debug)
 }
@@ -38,40 +39,40 @@ func (r DistributedRateLimiter) Init(c appengine.Context) error {
   for i, _ := range e.Buckets {
     e.Buckets[i].SetLimit(r.Limits[i])
   }
-  
+
   err := memcache.JSON.Set(c, &memcache.Item{
-    Key: fmt.Sprintf("DistributedRateLimiterEntity/%s", r.Name),
+    Key:    fmt.Sprintf("DistributedRateLimiterEntity/%s", r.Name),
     Object: e,
   })
   return err
 }
 
 // Blocks for up to 1 minute.
-func(r *DistributedRateLimiter) Consume(
+func (r *DistributedRateLimiter) Consume(
   c appengine.Context,
   events int) error {
-    
+
   tryResult := make(chan error)
   timeout := time.After(1 * time.Minute)
-  
+
   try := func() {
     tryResult <- r.TryConsume(c, events)
   }
-  
+
   for {
     go try()
     select {
-      case err := <-tryResult:
-        if _, ok := err.(ErrRateLimitExceeded); ok {
-          time.Sleep(1 * time.Second)
-          continue
-        }
-        return err
-      case <-timeout:
-        return ErrRateLimitExceeded{
-          r,
-          errors.New("Consume() timeout after 1 minute."),
-        }
+    case err := <-tryResult:
+      if _, ok := err.(ErrRateLimitExceeded); ok {
+        time.Sleep(1 * time.Second)
+        continue
+      }
+      return err
+    case <-timeout:
+      return ErrRateLimitExceeded{
+        r,
+        errors.New("Consume() timeout after 1 minute."),
+      }
     }
   }
 }
@@ -93,13 +94,13 @@ func (r *DistributedRateLimiter) TryConsume(c appengine.Context, events int) err
         return err
       }
     }
-    
+
     e.addTokens(time.Now().UTC())
-    
+
     if err := e.tryConsume(events); err != nil {
       return ErrRateLimitExceeded{r, err}
     }
-    
+
     // We've consumed the tokens if and only if nothing else has written the
     // entry back to memcache since we got it.
     item.Object = e

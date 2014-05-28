@@ -37,7 +37,7 @@ func SummonerByName(
   region string,
   name string) (*SummonerDto, error) {
   name = CanonicalizeSummoner(name)
-    
+
   loc := ComposeUrl(
     riotApiKey,
     fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", region, name),
@@ -49,7 +49,6 @@ func SummonerByName(
     return nil, err
   }
 
-  // jsonData is a map from canonical summoner to json SummonerDto
   if dto, ok := data[name]; ok {
     return dto, nil
   } else {
@@ -64,19 +63,19 @@ func SummonersById(
   region string,
   ids ...int64) ([]*SummonerDto, error) {
   ret := make([]*SummonerDto, len(ids))
-  
+
   // API supports up to 40 summoners at a time.
   begin := 0
   end := min(len(ret), 40)
-  
+
   idStrings := make([]string, len(ids))
   for i := 0; i < len(ids); i++ {
     idStrings[i] = strconv.FormatInt(ids[i], 10)
   }
-  
+
   for ; ; begin, end = begin+40, min(len(ret), end+40) {
     batch := idStrings[begin:end]
-    
+
     loc := ComposeUrl(
       riotApiKey,
       fmt.Sprintf("/api/lol/%s/v1.4/summoner/%s", region, strings.Join(batch, ",")),
@@ -87,14 +86,14 @@ func SummonersById(
     if err != nil {
       return nil, err
     }
-    
+
     for i := begin; i < end; i++ {
       if dto, ok := data[idStrings[i]]; ok {
         ret[i] = dto
       }
     }
     if end == len(ret) {
-      break;
+      break
     }
   }
   return ret, nil
