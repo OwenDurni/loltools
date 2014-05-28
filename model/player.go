@@ -158,11 +158,14 @@ func GetOrCreatePlayerByRiotId(
       if err != nil {
         return nil, nil, errwrap.Wrap(err)
       }
-      riotSummoner, err := riot.SummonerById(c, riotApiKey.Key, region, riotId)
+      riotSummoners, err := riot.SummonersById(c, riotApiKey.Key, region, riotId)
       if err != nil {
         return nil, nil, errwrap.Wrap(err)
       }
-
+      riotSummoner := riotSummoners[0]
+      if riotSummoner == nil {
+        return nil, nil, errwrap.Wrap(errors.New(fmt.Sprintf("Summoner id not found: %d", riotId)))
+      }
       player.Summoner = riotSummoner.Name
       player.Region = region
       player.RiotId = riotSummoner.Id
