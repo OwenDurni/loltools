@@ -101,8 +101,6 @@ type GameTeamInfo struct {
 type GamePlayerInfo struct {
   Player *Player
   ChampionId int
-  SummonerSpell1 int
-  SummonerSpell2 int
 }
 type GamePlayerStatsInfo struct {
   Saved bool
@@ -134,8 +132,6 @@ func NewGamePlayerInfo(p *Player, championId int) *GamePlayerInfo {
   info := new(GamePlayerInfo)
   info.Player = p
   info.ChampionId = championId
-  info.SummonerSpell1 = 1
-  info.SummonerSpell2 = 1
   return info
 }
 func NewGamePlayerStatsInfo(

@@ -38,7 +38,7 @@
             <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
             <td>{{.MinionsKilled}}</td>
             <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
-            <td>{{template "summonersmall" $p.SummonerSpell1}}{{template "summonersmall" $p.SummonerSpell2}}</td>
+            <td>{{template "summonersmall" .SummonerSpell1}}{{template "summonersmall" .SummonerSpell2}}</td>
             <td>{{template "itemsmall" .Item0}}{{template "itemsmall" .Item1}}{{template "itemsmall" .Item2}}{{template "itemsmall" .Item3}}{{template "itemsmall" .Item4}}{{template "itemsmall" .Item5}}{{template "itemsmall" .Item6}}</td>
           {{end}}
         {{else}}

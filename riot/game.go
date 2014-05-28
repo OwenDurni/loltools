@@ -51,7 +51,8 @@ type RawStatsDto struct {
   Win        bool `json:"win"`
   TimePlayed int  `json:"timePlayed"`
   //Team       int  `json:"team"`
-
+  ChampionId int  /* populated from GameDto */
+  
   // KDA
   ChampionsKilled int `json:"championsKilled"`
   NumDeaths       int `json:"numDeaths"`
@@ -68,10 +69,10 @@ type RawStatsDto struct {
   // CS
   //MinionsDenied                   int `json:"minionsDenied"`
   MinionsKilled                   int `json:"minionsKilled"`
-  //NeutralMinionsKilled            int `json:"neutralMinionsKilled"`
+  NeutralMinionsKilled            int `json:"neutralMinionsKilled"`
   NeutralMinionsKilledEnemyJungle int `json:"neutralMinionsKilledEnemyJungle"`
   NeutralMinionsKilledYourJungle  int `json:"neutralMinionsKilledYourJungle"`
-  //SuperMonstersKilled             int `json:"superMonsterKilled"`
+  SuperMonstersKilled             int `json:"superMonsterKilled"`
 
   // Items
   Item0                 int `json:"item0"`
@@ -85,13 +86,17 @@ type RawStatsDto struct {
   //ConsumablesPurchased  int `json:"consumablesPurchased"`
   //NumItemsBought        int `json:"numItemsBought"`
   //LegendaryItemsCreated int `json:"legendaryItemsCreated"`
-
+  
   // Vision
   WardPlaced        int `json:"wardPlaced"`
   SightWardsBought  int `json:"sightWardsBought"`
   VisionWardsBought int `json:"visionWardsBought"`
   WardKilled        int `json:"wardKilled"`
 
+  // Summoners
+  SummonerSpell1 int /* populated from GameDto */
+  SummonerSpell2 int /* populated from GameDto */
+  
   // Damage Dealt
   //DamageDealtPlayer              int `json:"damageDealtPlayer"`
   //TotalDamageDealt               int `json:"totalDamageDealt"`
@@ -110,21 +115,21 @@ type RawStatsDto struct {
   TrueDamageTaken     int `json:"trueDamageTaken"`
 
   // Misc Dealt Stats
-  TotalTimeCrowdCotrolDealt int `json:"totalTimeCrowdControlDealt"`
-  //TotalHeal                 int `json:"totalHeal"`
-  //TotalUnitsHealed          int `json:"totalUnitsHealed"`
+  TotalTimeCrowdControlDealt int `json:"totalTimeCrowdControlDealt"`
+  //TotalHeal                  int `json:"totalHeal"`
+  //TotalUnitsHealed           int `json:"totalUnitsHealed"`
 
   // Vanity stats.
   //KillingSprees         int  `json:"killingSprees"`
   //LargestKillingSpree   int  `json:"largestKillingSpree"`
-  //LargestMultiKill      int  `json:"largestMultiKill"`
+  LargestMultiKill      int  `json:"largestMultiKill"`
   //DoubleKills           int  `json:"doubleKills"`
   //TripleKills           int  `json:"tripleKills"`
   //QuadraKills           int  `json:"quadraKills"`
   //PentaKills            int  `json:"pentaKills"`
   //UnrealKills           int  `json:"unrealKills"`
   //NexusKilled           bool `json:"nexusKilled"`
-  //FirstBlood            int  `json:"firstBlood"`
+  FirstBlood            int  `json:"firstBlood"`
   //LargestCriticalStrike int  `json:"largestCriticalStrike"`
 
   // Number of times various spells were cast.
@@ -172,6 +177,14 @@ func GameStatsForPlayer(
     return nil, err
   }
   
-  err = json.Unmarshal(jsonData, g)
+  if err = json.Unmarshal(jsonData, g); err == nil {
+    // Do some post-processing.
+    for i, _ := range(g.Games) {
+      var gameDto *GameDto = &g.Games[i]
+      gameDto.Stats.ChampionId = gameDto.ChampionId
+      gameDto.Stats.SummonerSpell1 = gameDto.SummonerSpell1
+      gameDto.Stats.SummonerSpell2 = gameDto.SummonerSpell2
+    }
+  }
   return g, err
 }
