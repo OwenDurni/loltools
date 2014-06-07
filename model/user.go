@@ -6,12 +6,26 @@ import (
   "appengine/user"
   "errors"
   "fmt"
+  "time"
 )
 
 type User struct {
-  Name         string
-  SummonerName string
-  Email        string
+  Email string
+}
+
+type UnverifiedSummoner struct {
+  User     *datastore.Key
+  Region   string
+  Summoner string
+  Token    string
+  Created  time.Time
+}
+
+type VerifiedSummoner struct {
+  User           *datastore.Key
+  Region         string
+  Summoner       string
+  RiotSummonerId int64
 }
 
 // Fetches the user from the datastore if it exists, otherwise puts a new user into
