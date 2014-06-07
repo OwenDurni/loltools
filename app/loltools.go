@@ -88,5 +88,5 @@ func init() {
   view.AddTemplate("leagues/view.html",
     "form.html", "types.html", "base.html")
   view.AddTemplate("settings/index.html",
-    "form.html", "base.html")
+    "common/region_dropdown.html", "form.html", "base.html")
 }

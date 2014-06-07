@@ -1,0 +1,23 @@
+{{/* extends base.html:base */}}
+{{define "content"}}{{with $root := .}}
+
+<h2>Settings</h2>
+
+<h3>Summoners</h3>
+
+<p>To validate a summoner, change the name of one of your runepages to the code
+in the table below and then hit the "Verify" button.</p>
+
+<form id="add-summoner"></form>
+<script>loltools.registerForm("add-summoner", "/api/user/add-summoner")</script>
+
+<table class="base">
+  <tr><th>Region</th><th>Summoner</th><th>Status</th><th>Runepage Code</th></tr>
+  <tr>
+    <td>{{template "region_dropdown" unzip "regions" $root.ctxBase.Regions "form" "add-summoner"}}</td>
+    <td><input type="text" name="summoner" form="add-summoner" /></td>
+    <td><input type="submit" value="Add Summoner" form="add-summoner" /></td>
+  </tr>
+</table>
+  
+{{end}}{{end}}

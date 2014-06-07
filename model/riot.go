@@ -12,6 +12,12 @@ const (
   RegionEUNE = "eune"
 )
 
+var Regions = []string{
+  RegionNA,
+  RegionEUW,
+  RegionEUNE,
+}
+
 var RiotApiRateLimiter = DistributedRateLimiter{
   Name:   "riot-rest-api",
   Limits: RiotDevRateLimits,

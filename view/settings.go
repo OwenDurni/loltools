@@ -14,4 +14,14 @@ func SettingsIndexHandler(
   if HandleError(c, w, err) {
     return
   }
+  
+  ctx := struct {
+    ctxBase
+  }{}
+  ctx.ctxBase.init(c)
+
+  err = RenderTemplate(w, "settings/index.html", "base", ctx)
+  if HandleError(c, w, err) {
+    return
+  }
 }
