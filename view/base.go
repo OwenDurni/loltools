@@ -144,6 +144,12 @@ var tmplFuncRegistry = template.FuncMap{
   "odd":  tmpl_odd,
 }
 
+var root string;
+// Sets the root for further calls to AddTemplate
+func SetTemplateRoot(newroot string) {
+  root = newroot;
+}
+
 // Adds a template to the registry.
 //
 // templates is a list of template file name relative to the template/ directory
@@ -155,7 +161,7 @@ func AddTemplate(paths ...string) *template.Template {
   }
   id := paths[0]
   for i, v := range paths {
-    paths[i] = fmt.Sprintf("template/%s", v)
+    paths[i] = fmt.Sprintf("%s%s", root, v)
   }
   tmpl := template.New("").Funcs(tmplFuncRegistry)
   for _, path := range paths {
