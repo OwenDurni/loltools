@@ -5,6 +5,15 @@ body {
 form {
   margin: 0
 }
+form .label {
+  margin-left: 2px;
+  font-weight: bold;
+}
+form .tip {
+  margin-left: 2px;
+  font-size: small;
+  color: rgba(0,0,0,0.7);
+}
 
 #header {
   background-color: #ccc;

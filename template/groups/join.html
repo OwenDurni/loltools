@@ -1,0 +1,14 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>Join {{.Group.Id}}</h2>
+
+<form id="join-group">
+  <input type="hidden" name="group" value="{{.Group.Id}}" />
+  <div class="label">Notes</div>
+  <div class="tip">Add some notes so the group owner knows who you are.</div>
+  <textarea rows="4" cols="80" name="notes"></textarea><br />
+  <input type="submit" value="Apply For Membership" form="join-group" />
+</form>
+<script>loltools.registerForm("join-group", "/api/groups/join")</script>
+
+{{end}}

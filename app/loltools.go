@@ -44,6 +44,7 @@ func init() {
   dispatcher.Add("/api/groups/add-user", view.ApiGroupAddUserHandler)
   dispatcher.Add("/api/groups/create", view.ApiGroupCreateHandler)
   dispatcher.Add("/api/groups/del-user", view.ApiGroupDelUserHandler)
+  dispatcher.Add("/api/groups/join", view.ApiGroupJoinHandler)
   dispatcher.Add("/api/leagues/add-team", view.ApiLeagueAddTeamHandler)
   dispatcher.Add("/api/leagues/create", view.ApiLeagueCreateHandler)
   dispatcher.Add("/api/leagues/group-acl-grant", view.ApiLeagueGroupAclGrantHandler)
@@ -75,6 +76,8 @@ func init() {
   view.AddTemplate("home.html",
     "base.html")
   view.AddTemplate("groups/index.html",
+    "form.html", "base.html")
+  view.AddTemplate("groups/join.html",
     "form.html", "base.html")
   view.AddTemplate("groups/view.html",
     "form.html", "base.html")

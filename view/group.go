@@ -14,9 +14,10 @@ type Group struct {
   Id   string
   Uri  string
 }
-
 func (g *Group) Fill(m *model.Group, key *datastore.Key) *Group {
-  g.Name = m.Name
+  if m != nil {
+    g.Name = m.Name
+  }
   g.Id = model.GroupId(key)
   g.Uri = model.GroupUri(key)
   return g
@@ -39,10 +40,19 @@ type Member struct {
   Email string
   Owner bool
 }
-
 func (m *Member) Fill(u *model.User, membership *model.GroupMembership) *Member {
   m.Email = u.Email
   m.Owner = membership.Owner
+  return m
+}
+
+type ProposedMember struct {
+  Email    string
+  Notes    string
+}
+func (m *ProposedMember) Fill(u *model.User, proposal *model.ProposedGroupMembership) *ProposedMember {
+  m.Email = u.Email
+  m.Notes = proposal.Notes
   return m
 }
 
@@ -100,11 +110,22 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   }
 
   group, groupKey, _, err := model.GroupById(c, userKey, groupId)
-  if HandleError(c, w, err) {
+  switch e := err.(type) {
+  case model.ErrNotAuthorized:
+    GroupViewNotAuthorizedHandler(w, c, userKey, e.Resource)
     return
+  default:
+    if HandleError(c, w, e) {
+      return
+    }
   }
 
   memberships, err := model.GetGroupMemberships(c, groupKey)
+  if HandleError(c, w, err) {
+    return
+  }
+  
+  proposedMemberships, err := model.GetProposedGroupMemberships(c, groupKey)
   if HandleError(c, w, err) {
     return
   }
@@ -112,12 +133,14 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   ctx := struct {
     ctxBase
     Group
-    Members []*Member
+    Members         []*Member
+    ProposedMembers []*ProposedMember
   }{}
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", group.Name)
   ctx.Group.Fill(group, groupKey)
   ctx.Members = make([]*Member, 0, len(memberships))
+  ctx.ProposedMembers = make([]*ProposedMember, 0, len(proposedMemberships))
 
   for _, m := range memberships {
     user, err := model.GetUserByKey(c, m.UserKey)
@@ -127,9 +150,34 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
     }
     ctx.Members = append(ctx.Members, new(Member).Fill(user, m))
   }
+  
+  for _, m := range proposedMemberships {
+    user, err := model.GetUserByKey(c, m.UserKey)
+    if err != nil {
+      ctx.ctxBase.Errors = append(ctx.ctxBase.Errors, err)
+      continue
+    }
+    ctx.ProposedMembers = append(ctx.ProposedMembers, new(ProposedMember).Fill(user, m))
+  }
 
   // Render
   err = RenderTemplate(w, "groups/view.html", "base", ctx)
+  if HandleError(c, w, err) {
+    return
+  }
+}
+func GroupViewNotAuthorizedHandler(
+  w http.ResponseWriter, c appengine.Context, userKey *datastore.Key, groupKey *datastore.Key) {
+  
+  ctx := struct {
+    ctxBase
+    Group
+  }{}
+  ctx.ctxBase.init(c)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools - group %s", model.GroupId(groupKey))
+  ctx.Group.Fill(nil, groupKey)
+  
+  err := RenderTemplate(w, "groups/join.html", "base", ctx)
   if HandleError(c, w, err) {
     return
   }
@@ -143,6 +191,29 @@ func ApiGroupCreateHandler(w http.ResponseWriter, r *http.Request, args map[stri
   }
 
   HttpReplyResourceCreated(w, model.GroupUri(groupKey))
+}
+
+func ApiGroupJoinHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  groupId := r.FormValue("group")
+  notes := r.FormValue("notes")
+  
+  groupKey, err := model.GroupKeyById(c, groupId)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  _, userKey, err := model.GetUser(c)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  err = model.GroupAddProposedMember(c, groupKey, userKey, notes)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+
+  HttpReplyOkEmpty(w)
 }
 
 func ApiGroupAddUserHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {

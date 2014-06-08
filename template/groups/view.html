@@ -9,7 +9,42 @@
   {{end}}
 </ul>
 
-<h3>Add Member</h2>
+<h3>Proposed Members</h3>
+{{if .ProposedMembers}}
+<table class="base">
+  <tr>
+    <th>User</th><th>Notes</th><th></th>
+  </tr>
+  {{range $i, $m := .ProposedMembers}}
+  <tr>
+    <td>{{.Email}}</td>
+    <td>{{.Notes}}</td>
+    <td>
+      {{with $f := printf "accept-proposal-%d" $i}}
+      <form style="display:inline-block" id="{{$f}}">
+        <input type="hidden" name="email" value="{{$m.Email}}" />
+        <input type="hidden" name="group" value="{{$.Group.Id}}" />
+        <input type="submit" value="Accept" />
+      </form>
+      <script>loltools.registerForm("{{$f}}", "/api/groups/add-user")</script>
+      {{end}}
+      {{with $f := printf "reject-proposal-%d" $i}}
+      <form style="display:inline-block" id="{{$f}}">
+        <input type="hidden" name="email" value="{{$m.Email}}" />
+        <input type="hidden" name="group" value="{{$.Group.Id}}" />
+        <input type="submit" value="Reject" />
+      </form>
+      <script>loltools.registerForm("{{$f}}", "/api/groups/del-user")</script>
+      {{end}}
+    </td>
+  </tr>
+  {{end}}
+</table>
+{{else}}
+<p>None</p>
+{{end}}
+
+<h3>Add Member</h3>
 <form id="add-member">
   <input type="hidden" name="group" value="{{.Group.Id}}" />
   User Email: <input type="text" name="email" value="" /><br />
@@ -18,7 +53,7 @@
 {{template "formEnd" $x}}
 {{end}}
 
-<h3>Remove Member</h2>
+<h3>Remove Member</h3>
 <form id="del-member">
   <input type="hidden" name="group" value="{{.Group.Id}}" />
   User Email: <input type="text" name="email" value="" /><br />
