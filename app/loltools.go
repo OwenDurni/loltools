@@ -51,6 +51,7 @@ func init() {
   dispatcher.Add("/api/leagues/teams/add-player", view.ApiTeamAddPlayerHandler)
   dispatcher.Add("/api/leagues/teams/del-player", view.ApiTeamDelPlayerHandler)
   dispatcher.Add("/api/user/add-summoner", view.ApiUserAddSummoner)
+  dispatcher.Add("/api/user/verify-summoner", view.ApiUserVerifySummoner)
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
   dispatcher.Add("/groups", view.GroupIndexHandler)

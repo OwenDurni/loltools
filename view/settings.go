@@ -4,22 +4,30 @@ import (
   "appengine"
   "github.com/OwenDurni/loltools/model"
   "net/http"
+  "strconv"
 )
 
 func SettingsIndexHandler(
   w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
-
-  _, _, err := model.GetUser(c)
-  if HandleError(c, w, err) {
-    return
-  }
   
   ctx := struct {
     ctxBase
+    Summoners []*model.SummonerData
   }{}
   ctx.ctxBase.init(c)
 
+  _, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) {
+    return
+  }
+
+  summoners, err := model.GetSummonerDatas(c, userKey)
+  if HandleError(c, w, err) {
+    return
+  }
+  ctx.Summoners = summoners
+  
   err = RenderTemplate(w, "settings/index.html", "base", ctx)
   if HandleError(c, w, err) {
     return
@@ -44,3 +52,30 @@ func ApiUserAddSummoner(
   
   HttpReplyOkEmpty(w)
 }
+
+func ApiUserVerifySummoner(
+  w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  region := r.FormValue("region")
+  summonerId, err := strconv.ParseInt(r.FormValue("summonerid"), 10, 64)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  _, userKey, err := model.GetUser(c)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  player, playerKey, err := model.GetOrCreatePlayerByRiotId(c, region, summonerId)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  err = model.VerifySummoner(c, userKey, playerKey, player)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  HttpReplyOkEmpty(w)
+} 

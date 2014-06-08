@@ -32,7 +32,6 @@ func AdminIndexHandler(
   ctx.GameStatsBacklogCount = len(gameStatsKeys)
   ctx.ctxBase.AddError(err)
   
-  
   ctx.RiotRateLimit = model.RiotApiRateLimiter.DebugStr(c)
 
   err = RenderTemplate(w, "admin.html", "base", ctx)

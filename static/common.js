@@ -37,14 +37,16 @@ var loltools = (function() {
             window.location.href = loc;
           }
         } else if (jqXHR.status == 204) {
-          window.location.reload()
+          // Artificial delay to ensure next query hits updated datastore.
+          setTimeout(window.location.reload.bind(window.location), 100);
         }
       });
       req.fail(function (jqXHR, textStatus, errorThrown){
         $errors.append("<div>error: " + errorThrown + ": " + jqXHR.responseText + "</div>");
       });
       req.always(function () {
-        $inputs.prop("disabled", false);
+        // Artificial delay to ensure page reloads happen before enable/disable.
+        setTimeout(function() { $inputs.prop("disabled", false); }, 200);
       });
     });
   }

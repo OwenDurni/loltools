@@ -6,6 +6,8 @@ import (
   "appengine/user"
   "errors"
   "fmt"
+  "github.com/OwenDurni/loltools/riot"
+  "github.com/OwenDurni/loltools/util/errwrap"
   "math/rand"
   "time"
 )
@@ -26,6 +28,12 @@ type UnverifiedSummoner struct {
 type VerifiedSummoner struct {
   User   *datastore.Key
   Player *datastore.Key
+}
+
+type SummonerData struct {
+  Player   *Player
+  Verified bool
+  Token    string
 }
 
 // Fetches the user from the datastore if it exists, otherwise puts a new user into
@@ -67,6 +75,117 @@ func GetUserByEmail(c appengine.Context, email string) (*User, *datastore.Key, e
     return nil, nil, errors.New(fmt.Sprintf("User does not exist: %s", email))
   }
   return users[0], userKeys[0], nil
+}
+
+func GetSummonerDatas(c appengine.Context, userKey *datastore.Key) ([]*SummonerData, error) {
+  // Get unverified summoners for this user.
+  q := datastore.NewQuery("UnverifiedSummoner").
+         Filter("User =", userKey)
+  var unverifiedSummoners []UnverifiedSummoner
+  _, err := q.GetAll(c, &unverifiedSummoners)
+  if err != nil {
+    return nil, errwrap.Wrap(err)
+  }
+  
+  // Get verified summoners for this user.
+  q = datastore.NewQuery("VerifiedSummoner").
+        Filter("User =", userKey)
+  var verifiedSummoners []VerifiedSummoner
+  _, err = q.GetAll(c, &verifiedSummoners)
+  if err != nil {
+    return nil, errwrap.Wrap(err)
+  }
+  
+  // Collect all player keys so we can look up corresponding players.
+  numPlayers := len(unverifiedSummoners)+len(verifiedSummoners)
+  ret := make([]*SummonerData, numPlayers)
+  playerKeys := make([]*datastore.Key, numPlayers)
+  players := make([]*Player, numPlayers)
+  
+  r := 0
+  for _, s := range verifiedSummoners {
+    ret[r] = &SummonerData{Player: nil, Verified: true, Token: ""}
+    players[r] = new(Player)
+    playerKeys[r] = s.Player
+    r++
+  }
+  for _, s := range unverifiedSummoners {
+    ret[r] = &SummonerData{Player: nil, Verified: false, Token: s.Token}
+    players[r] = new(Player)
+    playerKeys[r] = s.Player
+    r++
+  }
+  
+  // Lookup players.
+  err = datastore.GetMulti(c, playerKeys, players)
+  if err != nil {
+    return nil, errwrap.Wrap(err)
+  }
+  
+  // Populate players
+  for r := 0; r < numPlayers; r++ {
+    ret[r].Player = players[r]
+  }
+  
+  return ret, nil
+}
+
+func VerifySummoner(
+  c appengine.Context,
+  userKey *datastore.Key,
+  playerKey *datastore.Key,
+  player *Player) error {
+  // Get the unverified summoner if one exists.
+  keyName := fmt.Sprintf("%s:%s", userKey.StringID(), playerKey.StringID())
+  unverifiedKey := datastore.NewKey(c, "UnverifiedSummoner", keyName, 0, nil)
+  unverifiedSummoner := new(UnverifiedSummoner)
+  err := datastore.Get(c, unverifiedKey, unverifiedSummoner)
+  if err != nil {
+    return err
+  }
+  
+  // Lookup rune pages for player.
+  riotApiKey, err := GetRiotApiKey(c)
+  if err != nil {
+    return err
+  }
+  if err = RiotApiRateLimiter.Consume(c, 1); err != nil {
+    return err
+  }
+  runePagesDto, err := riot.RunesBySummonerId(c, riotApiKey.Key, player.Region, player.RiotId)
+  if err != nil {
+    return err
+  }
+  
+  // Find rune page with name matching code to verify.
+  for _, runePageDto := range runePagesDto.Pages {
+    if runePageDto.Name == unverifiedSummoner.Token {
+      verifiedSummonerKey := datastore.NewKey(c, "VerifiedSummoner", keyName, 0, nil)
+      verifiedSummoner := new(VerifiedSummoner)
+      verifiedSummoner.User = userKey
+      verifiedSummoner.Player = playerKey
+      
+      // Remove the unverified summoner and add a verified one.
+      err = datastore.RunInTransaction(c, func(c appengine.Context) error {
+        err = datastore.Get(c, unverifiedKey, unverifiedSummoner)
+        if err != nil {
+          return err
+        }
+        err = datastore.Delete(c, unverifiedKey)
+        if err != nil {
+          return err
+        }
+        _, err := datastore.Put(c, verifiedSummonerKey, verifiedSummoner)
+        return err
+      }, &datastore.TransactionOptions{XG: true})
+      if err != nil {
+        return err
+      }
+      return err
+    }
+  }
+    
+  return errors.New(fmt.Sprintf("error: %s did not have a runepage with the correct code", player.Summoner))
 }
 
 func AddUnverifiedSummoner(

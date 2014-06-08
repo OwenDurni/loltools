@@ -1,5 +1,5 @@
 {{/* extends base.html:base */}}
-{{define "content"}}{{with $root := .}}
+{{define "content"}}
 
 <h2>Settings</h2>
 
@@ -13,11 +13,33 @@ in the table below and then hit the "Verify" button.</p>
 
 <table class="base">
   <tr><th>Region</th><th>Summoner</th><th>Status</th><th>Runepage Code</th></tr>
+  {{range $s := .Summoners}}
   <tr>
-    <td>{{template "region_dropdown" unzip "regions" $root.ctxBase.Regions "form" "add-summoner"}}</td>
+    <td>{{$s.Player.Region}}</td>
+    <td>{{$s.Player.Summoner}}</td>
+    {{if $s.Verified}}
+      <td>Verified</td>
+      <td></td>
+    {{else}}
+      <td>
+        {{with $f := printf "verify-summoner-%s-%d" $s.Player.Region $s.Player.RiotId}}
+        <form id="{{$f}}">
+          <input type="hidden" name="region" value="{{$s.Player.Region}}" />
+          <input type="hidden" name="summonerid" value="{{$s.Player.RiotId}}" />
+          <input type="submit" value="Verify" form="{{$f}}" />
+        </form>
+        <script>loltools.registerForm("{{$f}}", "/api/user/verify-summoner")</script>
+        {{end}}
+      </td>
+      <td>{{.Token}}</td>
+    {{end}}
+  </tr>
+  {{end}}
+  <tr>
+    <td>{{template "region_dropdown" unzip "regions" $.ctxBase.Regions "form" "add-summoner"}}</td>
     <td><input type="text" name="summoner" form="add-summoner" /></td>
     <td><input type="submit" value="Add Summoner" form="add-summoner" /></td>
   </tr>
 </table>
   
-{{end}}{{end}}
+{{end}}
