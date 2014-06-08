@@ -6,6 +6,11 @@ import (
   "appengine/memcache"
 )
 
+type ErrorNoRiotApiKey struct {}
+func (e ErrorNoRiotApiKey) Error() string {
+  return "Application administrator needs to enter a Riot API Key"
+}
+
 const (
   RegionNA   = "na"
   RegionEUW  = "euw"
@@ -43,7 +48,7 @@ func GetRiotApiKey(c appengine.Context) (*RiotApiKey, error) {
   // Next try datastore.
   key := datastore.NewKey(c, "RiotApiKey", "dev", 0, nil)
   if err := datastore.Get(c, key, r); err == datastore.ErrNoSuchEntity {
-    return nil, nil
+    return nil, ErrorNoRiotApiKey{}
   } else if err != nil {
     return nil, err
   }

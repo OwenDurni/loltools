@@ -11,20 +11,6 @@ func AdminIndexHandler(
   w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
 
-  riotApiKey, err := model.GetRiotApiKey(c)
-  if HandleError(c, w, err) {
-    return
-  }
-
-  q := datastore.NewQuery("PlayerGameStats").
-    Filter("Saved =", false).
-    Filter("NotAvailable =", false).
-    KeysOnly()
-  gameStatsKeys, err := q.GetAll(c, nil)
-  if HandleError(c, w, err) {
-    return
-  }
-
   ctx := struct {
     ctxBase
     RiotApiKey            *model.RiotApiKey
@@ -33,8 +19,20 @@ func AdminIndexHandler(
   }{}
   ctx.ctxBase.init(c)
   ctx.ctxBase.Title = "Admin Console"
+  
+  riotApiKey, err := model.GetRiotApiKey(c)
   ctx.RiotApiKey = riotApiKey
+  ctx.ctxBase.AddError(err)
+
+  q := datastore.NewQuery("PlayerGameStats").
+    Filter("Saved =", false).
+    Filter("NotAvailable =", false).
+    KeysOnly()
+  gameStatsKeys, err := q.GetAll(c, nil)
   ctx.GameStatsBacklogCount = len(gameStatsKeys)
+  ctx.ctxBase.AddError(err)
+  
+  
   ctx.RiotRateLimit = model.RiotApiRateLimiter.DebugStr(c)
 
   err = RenderTemplate(w, "admin.html", "base", ctx)

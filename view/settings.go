@@ -25,3 +25,22 @@ func SettingsIndexHandler(
     return
   }
 }
+
+func ApiUserAddSummoner(
+  w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  region := r.FormValue("region")
+  summoner := r.FormValue("summoner")
+  
+  _, userKey, err := model.GetUser(c)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  err = model.AddUnverifiedSummoner(c, userKey, region, summoner)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  HttpReplyOkEmpty(w)
+}
