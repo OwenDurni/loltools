@@ -2,6 +2,10 @@ body {
   font-family: Arial, sans-serif;
 }
 
+form {
+  margin: 0
+}
+
 #header {
   background-color: #ccc;
   height: 40;
@@ -176,7 +180,7 @@ table.short-player-stats th {
   text-align: left;
 }
 
-table.short-player-stats th, table.short-player-stats td {
+table.short-player-stats th, table.short-pverify-summoner-{{$s.Player.Region}}-{{$s.Player.RiotId}}layer-stats td {
   padding-top: 1px;
   padding-bottom: 2px;
   padding-left: 5px;

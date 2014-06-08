@@ -1,0 +1,10 @@
+{{/*
+region_dropdown.go:
+  regions []string  list of regions
+  form    string    (optional) name of the form attribute
+*/}}
+{{define "region_dropdown"}}<select name="region" {{if .form}}form="{{.form}}"{{end}}>
+  {{range $r := .regions}}
+    <option value="{{$r}}">{{$r}}</option>
+  {{end}}
+</select>{{end}}

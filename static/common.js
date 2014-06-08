@@ -3,21 +3,24 @@ var loltools = (function() {
   
   module.registerForm = function(formId, submitUrl) {
     var req;
-    $("#"+formId).submit(function(event){
+    $("form#"+formId).submit(function(event){
+      event.preventDefault();
       if (req) {
         req.abort();
       }
       var $errors = $("#errors")
       var $form = $(this);
-      var $inputs = $form.find("input, select, button, textarea");
-      var $submit = $form.find("#submit");
+      var $inputs = $.merge(
+        $form.find("input, select, button, textarea"),
+        $("input[form='"+formId+"'], select[form='"+formId+"'],"+
+          "button[form='"+formId+"'], textarea[form='"+formId+"']"));
+      var $submit = $.merge(
+        $form.find("#submit"),
+        $("input[type='submit'][form='"+formId+"']"));
 
       var data = $form.serialize()
-
-      var originalSubmitVal = $submit.val()
       
       $errors.empty();
-      $submit.val("sending...");
       $inputs.prop("disabled", true);
       
       req = $.ajax({
@@ -34,17 +37,17 @@ var loltools = (function() {
             window.location.href = loc;
           }
         } else if (jqXHR.status == 204) {
-          window.location.reload()
+          // Artificial delay to ensure next query hits updated datastore.
+          setTimeout(window.location.reload.bind(window.location), 100);
         }
       });
       req.fail(function (jqXHR, textStatus, errorThrown){
         $errors.append("<div>error: " + errorThrown + ": " + jqXHR.responseText + "</div>");
       });
       req.always(function () {
-        $inputs.prop("disabled", false);
-        $submit.val(originalSubmitVal);
+        // Artificial delay to ensure page reloads happen before enable/disable.
+        setTimeout(function() { $inputs.prop("disabled", false); }, 200);
       });
-      event.preventDefault();
     });
   }
   
