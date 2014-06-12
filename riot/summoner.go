@@ -19,6 +19,22 @@ type SummonerDto struct {
   SummonerLevel int      `json:"summonerLevel"`
 }
 
+// v1.4: http://developer.riotgames.com/api/methods#!/620/1932
+type RunePagesDto struct {
+  Pages      []*RunePageDto `json:"pages"`
+  SummonerId int64          `json:"summonerId"`
+}
+type RunePageDto struct {
+  Current bool           `json:"current"`
+  Id      int64          `json:"id"`
+  Name    string         `json:"name"`
+  Slots   []*RuneSlotDto `json:"slots"`
+}
+type RuneSlotDto struct {
+  RuneId     int `json:"runeId"`
+  RuneSlotId int `json:"runeSlotId"`
+}
+
 func min(x int, y int) int {
   if x < y {
     return x
@@ -97,4 +113,27 @@ func SummonersById(
     }
   }
   return ret, nil
+}
+
+func RunesBySummonerId(
+  c appengine.Context,
+  riotApiKey string,
+  region string,
+  riotId int64) (*RunePagesDto, error) {
+  loc := ComposeUrl(
+    riotApiKey,
+    fmt.Sprintf("/api/lol/%s/v1.4/summoner/%d/runes", region, riotId),
+    &url.Values{})
+  jsonData, err := Fetch(c, loc)
+  data := make(map[string]*RunePagesDto)
+  json.Unmarshal(jsonData, &data)
+  if err != nil {
+    return nil, err
+  }
+
+  if dto, ok := data[fmt.Sprintf("%d", riotId)]; ok {
+    return dto, nil
+  } else {
+    return nil, errors.New(fmt.Sprintf("Summoner does not exist: %s-%d", region, riotId))
+  }
 }

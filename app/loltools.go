@@ -50,7 +50,8 @@ func init() {
   dispatcher.Add("/api/leagues/group-acl-revoke", view.ApiLeagueGroupAclRevokeHandler)
   dispatcher.Add("/api/leagues/teams/add-player", view.ApiTeamAddPlayerHandler)
   dispatcher.Add("/api/leagues/teams/del-player", view.ApiTeamDelPlayerHandler)
-  dispatcher.Add("/api/profiles/set", view.ProfileSetHandler)
+  dispatcher.Add("/api/user/add-summoner", view.ApiUserAddSummoner)
+  dispatcher.Add("/api/user/verify-summoner", view.ApiUserVerifySummoner)
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
   dispatcher.Add("/groups", view.GroupIndexHandler)
@@ -62,7 +63,7 @@ func init() {
   dispatcher.Add("/task/cron/all-team-histories", task.AllTeamHistories)
   dispatcher.Add("/task/cron/get-missing-game-stats", task.MissingGameStats)
   dispatcher.Add("/task/riot/get/team/history", task.FetchTeamMatchHistoryHandler)
-  dispatcher.Add("/profiles/edit", view.ProfileEditHandler)
+  dispatcher.Add("/settings", view.SettingsIndexHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)
 
@@ -88,6 +89,6 @@ func init() {
     "games/gameshort.html", "games/champsmall.html", "form.html", "base.html")
   view.AddTemplate("leagues/view.html",
     "form.html", "types.html", "base.html")
-  view.AddTemplate("profiles/edit.html",
-    "form.html", "base.html")
+  view.AddTemplate("settings/index.html",
+    "common/region_dropdown.html", "form.html", "base.html")
 }

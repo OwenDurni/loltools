@@ -5,6 +5,7 @@ import (
   "appengine/user"
   "errors"
   "fmt"
+  "github.com/OwenDurni/loltools/model"
   "github.com/OwenDurni/loltools/riot"
   "html/template"
   "io/ioutil"
@@ -22,6 +23,21 @@ func tmpl_form(id, uri, text string) interface{} {
     Uri:  uri,
     Text: text,
   }
+}
+
+func tmpl_unzip(values ...interface{}) (map[string]interface{}, error) {
+  if len(values)%2 != 0 {
+    return nil, errors.New("error: unzip must have even number of arguments")
+  }
+  dict := make(map[string]interface{}, len(values)/2)
+  for i := 0; i < len(values); i+=2 {
+    key, ok := values[i].(string)
+    if !ok {
+      return nil, errors.New("error: unzip keys must be strings")
+    }
+    dict[key] = values[i+1]
+  }
+  return dict, nil
 }
 
 func tmpl_ddc_name(id int) string {
@@ -113,6 +129,9 @@ func tmpl_gold(gold int) string {
 
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
+  // combining pipelines
+  "unzip": tmpl_unzip,
+  
   // dd champion functions
   "ddc_name": tmpl_ddc_name,
   "ddc_s":    tmpl_ddc_s,
@@ -197,19 +216,21 @@ func RenderTemplate(w http.ResponseWriter, id string, name string, ctx interface
 }
 
 type ctxBase struct {
-  Title   string
-  TimeNow string
-  User    string
   Errors  []error
+  Regions []string
+  TimeNow string
+  Title   string
+  User    string
 }
 
 func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
-  ctx.Title = ""
+  ctx.Errors = make([]error, 0)
+  ctx.Regions = model.Regions
   ctx.TimeNow = fmtTime(time.Now(), "America/Los_Angeles")
+  ctx.Title = ""
   if u := user.Current(c); u != nil {
     ctx.User = u.Email
   }
-  ctx.Errors = make([]error, 0)
   return ctx
 }
 
