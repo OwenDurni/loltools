@@ -103,18 +103,35 @@ table.base tr:hover td {
   margin-bottom: 10px;
 }
 
-.game-long {
-  margin-bottom: 3em;
+.game-short .team-summary {
+  text-align: center;
+  font-weight: bold;
 }
 
 .game-short .blue-team, .game-short .purple-team {
   display: inline-block;
 }
 
+.game-long {
+  margin-bottom: 3em;
+}
+
+.game-long .player-summoner-name {
+  font-size: 120%;
+}
+
+.game-long .team-summary p {
+    margin: 0 0.5em;
+}
+
+.game-long .team-summary .summary-label {
+    font-weight: bold;
+}
+
 .blue-team, .purple-team {
   margin: 0;
   padding: 0;
-  border: thick solid;
+  /* border: thick solid; */
 }
 
 .blue-team {

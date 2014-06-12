@@ -2,12 +2,23 @@
 
 {{define "gameshort"}}
 <div class="game-short">
+  <div class="header">
+      <div class="game-info">
+          {{.Game.StartDateTime.Format "Jan _2 15:04"}}
+          -
+          {{.Game.FormatGameType}}
+      </div>
+  </div>
   {{template "gameshort-team" .ThisTeam}}{{template "gameshort-team" .OtherTeam}}
 </div>
 {{end}}
 
 {{define "gameshort-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}}">
   <div class="header">
+    <div class="team-summary">
+      <span class="kda">{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</span>
+      <span class="gold">{{gold .GoldEarned}}</span>
+    </div>
     <div class="champion-icon-row">
       {{range .Players}}{{template "champsmall" .ChampionId}}{{end}}
     </div>
