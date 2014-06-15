@@ -3,9 +3,11 @@
 {{define "gamelong"}}
 <div class="game-long">
   <div class="header">
-      <div class="game-info">
-          {{.Game.FormatGameType}}
-      </div>
+    <div class="game-info">
+      {{.Game.StartDateTime.Format "Jan _2 15:04"}}
+      -
+      {{.Game.FormatGameType}}
+    </div>
   </div>
   {{template "gamelong-team" .ThisTeam}}{{template "gamelong-team" .OtherTeam}}
 </div>
@@ -14,10 +16,10 @@
 {{define "gamelong-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}} team">
   {{$team := .}}
   <div class="header">
-      <div class="team-summary">
-          <p class="kda"><span class="summary-label">KDA:</span> {{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</p>
-          <p class="gold"><span class="summary-label">Gold:</span> {{gold .GoldEarned}}</p>
-      </div>
+    <div class="team-summary">
+      <p class="kda"><span class="summary-label">KDA:</span> {{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</p>
+      <p class="gold"><span class="summary-label">Gold:</span> {{gold .GoldEarned}}</p>
+    </div>
   </div>
   <table class="long-player-stats">
     <tr class="header">

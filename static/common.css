@@ -135,7 +135,7 @@ table.base tr:hover td {
 .blue-team, .purple-team {
   margin: 0;
   padding: 0;
-  /* border: thick solid; */
+  border: thick solid;
 }
 
 .blue-team {

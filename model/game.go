@@ -49,8 +49,8 @@ func (game *Game) FormatGameType() string {
 
     switch subType {
       case "NONE": gameModeString = "None"
-      case "NORMAL": gameModeString = "Summoner's Rift"
-      case "BOT": gameModeString = "Summoner's Rift (Bot)"
+      case "NORMAL": gameModeString = "Normal"
+      case "BOT": gameModeString = "Normal (Bot)"
       case "RANKED_SOLO_5x5": gameModeString = "Ranked Solo"
       case "RANKED_PREMADE_3x3": gameModeString = "Ranked Duo 3v3"
       case "RANKED_PREMADE_5x5": gameModeString = "Ranked Duo"
@@ -71,7 +71,7 @@ func (game *Game) FormatGameType() string {
     }
 
     if custom {
-      return "Custom " + gameModeString
+      return fmt.Sprintf("Custom %s", gameModeString)
     } else {
       return gameModeString
     }
