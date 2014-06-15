@@ -123,6 +123,10 @@ func tmpl_odd(i int) bool {
   return i%2 == 1
 }
 
+func tmpl_gold(gold int) string {
+    return fmt.Sprintf("%0.1dk", gold / 1000.)
+}
+
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
   // combining pipelines
@@ -161,6 +165,8 @@ var tmplFuncRegistry = template.FuncMap{
   "even": tmpl_even,
   "form": tmpl_form,
   "odd":  tmpl_odd,
+
+  "gold": tmpl_gold,
 }
 
 var root string;

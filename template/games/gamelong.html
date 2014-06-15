@@ -2,14 +2,24 @@
 
 {{define "gamelong"}}
 <div class="game-long">
+  <div class="header">
+    <div class="game-info">
+      {{.Game.StartDateTime.Format "Jan _2 15:04"}}
+      -
+      {{.Game.FormatGameType}}
+    </div>
+  </div>
   {{template "gamelong-team" .ThisTeam}}{{template "gamelong-team" .OtherTeam}}
 </div>
 {{end}}
 
-{{define "gamelong-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}}">
+{{define "gamelong-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}} team">
   {{$team := .}}
   <div class="header">
-    <!-- TODO team stat totals -->
+    <div class="team-summary">
+      <p class="kda"><span class="summary-label">KDA:</span> {{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</p>
+      <p class="gold"><span class="summary-label">Gold:</span> {{gold .GoldEarned}}</p>
+    </div>
   </div>
   <table class="long-player-stats">
     <tr class="header">
@@ -23,12 +33,14 @@
       <th>Items</th>
     </tr>
     {{range $i, $stats := $team.PlayerStats}}
+    {{$p := index $team.Players $i}}
       <tr class="{{if even $i}}even{{else}}odd{{end}} {{if .IsOnAppTeam}}member{{else}}other{{end}}">
         <td>
-          {{$p := index $team.Players $i}}
           {{template "champsmall" $p.ChampionId}}
         </td>
-        <td>{{$stats.Player.Summoner}}</td>
+        <td>
+            <span class="player-summoner-name">{{$stats.Player.Summoner}}</span>
+        </td>
       {{if .NotAvailable}}
         <td colspan="6" class="blend">no longer available</td>
       {{else}}

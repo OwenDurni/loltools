@@ -29,9 +29,54 @@ type Game struct {
 func (g *Game) Id() string {
   return MakeGameId(g.Region, g.RiotId)
 }
+
 func (g *Game) Uri() string {
   return fmt.Sprintf("/games/%s", g.Id())
 }
+
+func (game *Game) FormatTime() string {
+    return game.StartDateTime.Format(time.Stamp)
+}
+
+func (game *Game) FormatGameType() string {
+    gameType := game.GameType
+    subType := game.SubType
+
+    // Check if custom, ignore tutorial and matched.
+    custom := gameType == "CUSTOM_GAME"
+
+    var gameModeString string;
+
+    switch subType {
+      case "NONE": gameModeString = "None"
+      case "NORMAL": gameModeString = "Normal"
+      case "BOT": gameModeString = "Normal (Bot)"
+      case "RANKED_SOLO_5x5": gameModeString = "Ranked Solo"
+      case "RANKED_PREMADE_3x3": gameModeString = "Ranked Duo 3v3"
+      case "RANKED_PREMADE_5x5": gameModeString = "Ranked Duo"
+      case "ODIN_UNRANKED": gameModeString = "Dominion"
+      case "RANKED_TEAM_3x3": gameModeString = "Ranked Team 3v3"
+      case "RANKED_TEAM_5x5": gameModeString = "Ranked Team 5v5"
+      case "NORMAL_3x3": gameModeString = "Twisted Treeline"
+      case "BOT_3x3": gameModeString = "Twisted Treeline (Bot)"
+      case "CAP_5x5": gameModeString = "Team Builder"
+      case "ARAM_UNRANKED_5x5": gameModeString = "ARAM"
+      case "ONEFORALL_5x5": gameModeString = "One For All (Mirror Mode)"
+      case "FIRSTBLOOD_1x1": gameModeString = "Showdown 1v1"
+      case "FIRSTBLOOD_2x2": gameModeString = "Showdown 2v2"
+      case "SR_6x6": gameModeString = "Hexakill"
+      case "URF": gameModeString = "URF"
+      case "URF_BOT": gameModeString = "URF (Bot)"
+      default: gameModeString = subType
+    }
+
+    if custom {
+      return fmt.Sprintf("Custom %s", gameModeString)
+    } else {
+      return gameModeString
+    }
+}
+
 func MakeGameId(region string, riotId int64) string {
   return fmt.Sprintf("%s-%d", region, riotId)
 }
@@ -93,10 +138,16 @@ type GameInfo struct {
   riotTeamPlayerCounts map[int]int
 }
 type GameTeamInfo struct {
-  IsBlueTeam   bool
-  IsPurpleTeam bool
-  Players      []*GamePlayerInfo
-  PlayerStats  []*GamePlayerStatsInfo
+  IsBlueTeam        bool
+  IsPurpleTeam      bool
+  Players           []*GamePlayerInfo
+  PlayerStats       []*GamePlayerStatsInfo
+
+  // stats
+  ChampionsKilled   int
+  NumDeaths         int
+  Assists           int
+  GoldEarned        int
 }
 type GamePlayerInfo struct {
   Player     *Player
@@ -181,6 +232,12 @@ func (ginfo *GameInfo) AddGamePlayer(
     gtinfo.Players = append(gtinfo.Players, pinfo)
     gtinfo.PlayerStats = append(gtinfo.PlayerStats, psinfo)
   }
+
+  gtinfo.ChampionsKilled += pstats.RiotData.ChampionsKilled
+  gtinfo.NumDeaths += pstats.RiotData.NumDeaths
+  gtinfo.Assists += pstats.RiotData.Assists
+
+  gtinfo.GoldEarned += pstats.RiotData.GoldEarned
 }
 
 // Fills fields of GameInfo that are derived from other fields.

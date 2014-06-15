@@ -8,11 +8,13 @@ import (
 type RiotTime time.Time
 
 func (rt *RiotTime) UnmarshalJSON(data []byte) error {
-  var epochSeconds int64
-  if err := json.Unmarshal(data, &epochSeconds); err != nil {
+  var epochMilliseconds int64
+  if err := json.Unmarshal(data, &epochMilliseconds); err != nil {
     return err
   }
-  t := time.Unix(epochSeconds, 0)
+  seconds := epochMilliseconds / 1000
+  nanoseconds := epochMilliseconds % 1000 * 1000000
+  t := time.Unix(seconds, nanoseconds)
   *rt = (RiotTime)(t)
   return nil
 }
