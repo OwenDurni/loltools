@@ -1,1 +1,1 @@
-goapp deploy -oauth
+goapp deploy -oauth app/app.yaml

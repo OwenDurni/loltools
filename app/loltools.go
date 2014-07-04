@@ -68,7 +68,7 @@ func init() {
 
   http.HandleFunc("/", dispatcher.RootHandler)
 
-  view.SetTemplateRoot("../template/")
+  view.SetTemplateRoot("template/")
   view.AddTemplate("admin.html",
     "form.html", "base.html")
   view.AddTemplate("httperror.html",
