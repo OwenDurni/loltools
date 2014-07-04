@@ -1,6 +1,19 @@
 var loltools = (function() {
   var module = {}
   
+  module.registerExpando = function(buttonSel, contentSel, openText, closeText) {
+    var $buttons = $(buttonSel)
+    var $contents = $(contentSel)
+    
+    $buttons.click(function() {
+      $contents.slideToggle(function() {
+        $buttons.text(function() {
+          return $contents.is(":visible") ? closeText : openText;
+        });
+      });
+    });
+  }
+  
   module.registerForm = function(formId, submitUrl) {
     var req;
     $("form#"+formId).submit(function(event){

@@ -20,12 +20,16 @@ form .tip {
   height: 40;
 }
 
-#header > .left {
+.left {
   float: left;
 }
-
-#header > .right {
+.right {
   float: right;
+}
+.group:after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 #errors {
@@ -117,7 +121,6 @@ table.base tr:hover td {
 }
 
 .game-short .team-summary {
-  text-align: center;
   font-weight: bold;
 }
 
@@ -152,9 +155,10 @@ table.base tr:hover td {
   background-color: #adf;
   border-color: #036;
 }
-.blue-team table th, .blue-team .header {
+.blue-team table th, .blue-team .header, .blue-team .footer {
   color: #fff;
   background-color: #036;
+  font-weight: bold;
 }
 .blue-team tr.odd td {
   background-color: #a3d3f3;
@@ -165,32 +169,53 @@ table.base tr:hover td {
   background-color: #daf;
   border-color: #306;
 }
-.purple-team table th, .purple-team .header {
+.purple-team table th, .purple-team .header, .purple-team .footer {
   color: #fff;
   background-color: #306;
+  font-weight: bold;
 }
 .purple-team tr.odd td {
   background-color: #d3a3f3;
 }
 
-.champion-icon-row {
-  display: inline-block;
-  padding-bottom: 5px;
-}
-
 .game-short {
   min-width: 600px;
+  font-size: small;
 }
 
-.game-short .header {
+.game-short .header, .game-short .footer {
   width: 100%;
 }
 
+.game-short .footer {
+  padding-top: 5px;
+}
+
+.game-short .header a:link, .game-short .footer a:link {
+  color: #ddf;
+}
+.game-short .header a:visited, .game-short .footer a:visited {
+  color: #ddf;
+}
+
+.expand-trigger {
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background-color: inherit;
+  color: inherit;
+}
+
 .champion-icon-row {
-  display:block;
+  display: block;
   width: 240px;
+  padding-bottom: 5px;
+  padding-top: 5px;
   margin-left: auto;
   margin-right: auto;
+  clear: both;
 }
 
 .short-player-stats {

@@ -124,7 +124,7 @@ func tmpl_odd(i int) bool {
 }
 
 func tmpl_gold(gold int) string {
-    return fmt.Sprintf("%0.1dk", gold / 1000.)
+  return fmt.Sprintf("%0.1fk", float64(gold) / 1000.)
 }
 
 var templateRegistry map[string]*template.Template

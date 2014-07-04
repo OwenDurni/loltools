@@ -1,52 +1,101 @@
 {{/* . GameInfo */}}
-
 {{define "gameshort"}}
-<div class="game-short">
-  <div class="header">
-      <div class="game-info">
-          {{.Game.FormatGameType}}
+{{$gid := printf "%s-%d" .Game.Region .Game.RiotId}}
+<div class="game-short" id="{{$gid}}">
+  <div class="{{template "blue-or-purple" .ThisTeam}}-team">
+    <div class="header group">
+      <div class="left">
+        <span class="game-type">{{.Game.FormatGameType}}</span>
       </div>
+      <div class="right">
+        <span class="kda">{{template "gameshort-kda" .ThisTeam}}</span>
+        <span class="gold">{{template "gameshort-gold" .ThisTeam}}</span>
+      </div>
+      {{template "gameshort-team-header" .ThisTeam}}
+    </div>
+    <div style="display:none" id="{{$gid}}-player-stats-0">
+      {{template "gameshort-team-contents" .ThisTeam}}
+    </div>
+    <div class="footer group">
+      <div class="left">
+        <span class="team-name">TODO:team-name</span>
+      </div>
+      <div class="right">
+        <button class="expand-trigger"
+                id="{{$gid}}-expand-trigger-0">▼</button>
+      </div>
+    </div>
+  </div><div class="{{template "blue-or-purple" .OtherTeam}}-team">
+    <div class="header group">
+      <div class="right">
+        <a class="details" href="#">full details</a>
+      </div>
+      <div class="left">
+        <span class="gold">{{template "gameshort-gold" .OtherTeam}}</span>
+        <span class="kda">{{template "gameshort-kda" .OtherTeam}}</span>
+      </div>
+      {{template "gameshort-team-header" .OtherTeam}}
+    </div>
+    <div style="display:none" id="{{$gid}}-player-stats-1">
+      {{template "gameshort-team-contents" .OtherTeam}}
+    </div>
+    <div class="footer group">
+      <div class="left">
+        <span class="team-name">TODO:team-name</span>
+      </div>
+      <div class="right">
+        <button class="expand-trigger"
+                id="{{$gid}}-expand-trigger-1">▼</button>
+      </div>
+    </div>
   </div>
-  {{template "gameshort-team" .ThisTeam}}{{template "gameshort-team" .OtherTeam}}
+</div>
+<script>
+loltools.registerExpando(
+    "#{{$gid}}-expand-trigger-0,#{{$gid}}-expand-trigger-1",
+    "#{{$gid}}-player-stats-0,#{{$gid}}-player-stats-1",
+    "▼", "▲");
+</script>
+{{end}}
+
+{{define "blue-or-purple"}}{{if .IsBlueTeam}}blue{{else}}purple{{end}}{{end}}
+{{define "gameshort-kda"}}{{.ChampionsKilled}}‧{{.NumDeaths}}‧{{.Assists}}{{end}}
+{{define "gameshort-gold"}}⦑{{gold .GoldEarned}}⦒{{end}}
+{{define "game-id"}}{{printf "%s-%d" .Region .RiotId}}{{end}}
+
+{{define "gameshort-team-header"}}
+<div class="champion-icon-row">
+  {{range .Players}}{{template "champsmall" .ChampionId}}{{end}}
 </div>
 {{end}}
 
-{{define "gameshort-team"}}<div class="{{if .IsBlueTeam}}blue-team{{else}}purple-team{{end}}">
-  <div class="header">
-    <div class="team-summary">
-      <span class="kda">{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</span>
-      <span class="gold">{{gold .GoldEarned}}</span>
-    </div>
-    <div class="champion-icon-row">
-      {{range .Players}}{{template "champsmall" .ChampionId}}{{end}}
-    </div>
-  </div>
-  <table class="short-player-stats">
-    <tr class="header">
-      <th>Player</th>
-      <th>Lvl</th>
-      <th>K/D/A</th>
-      <th>CS</th>
-      <th>Wards</th>
-    </tr>
-    {{range .PlayerStats}}
-      <tr class="{{if .IsOnAppTeam}}member{{else}}other{{end}}">
-        <td>{{.Player.Summoner}}</td>
-      {{if .NotAvailable}}
-        <td colspan="4" class="blend">no longer available</td>
-      {{else}}
-        {{if .Saved}}
-          {{with .Stats.RiotData}}
-            <td>{{.Level}}</td>
-            <td>{{.ChampionsKilled}}/{{.NumDeaths}}/{{.Assists}}</td>
-            <td>{{.MinionsKilled}}</td>
-            <td>{{.SightWardsBought}}/{{.VisionWardsBought}} ({{.WardPlaced}})</td>
-          {{end}}
-        {{else}}
-          <td colspan="4" class="blend">not fetched yet</td>
+{{define "gameshort-team-contents"}}
+<table class="short-player-stats">
+  <tr class="header">
+    <th>Player</th>
+    <th>K‧D‧A</th>
+    <th>Gold</th>
+    <th>CS</th>
+    <th>Wards</th>
+  </tr>
+  {{range .PlayerStats}}
+    <tr class="{{if .IsOnAppTeam}}member{{else}}other{{end}}">
+      <td>{{.Player.Summoner}}</td>
+    {{if .NotAvailable}}
+      <td colspan="4" class="blend">no longer available</td>
+    {{else}}
+      {{if .Saved}}
+        {{with .Stats.RiotData}}
+          <td>{{template "gameshort-kda" .}}</td>
+          <td>{{template "gameshort-gold" .}}</td>
+          <td>{{.MinionsKilled}}</td>
+          <td>{{.WardPlaced}}({{.SightWardsBought}}/{{.VisionWardsBought}})</td>
         {{end}}
+      {{else}}
+        <td colspan="4" class="blend">not fetched yet</td>
       {{end}}
-      </tr>
     {{end}}
-  </table>
-</div>{{end}}
+    </tr>
+  {{end}}
+</table>
+{{end}}
