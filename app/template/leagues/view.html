@@ -20,9 +20,9 @@
 <form id="add-team">
   <input type="hidden" name="league" value="{{.Id}}" />
   Team Name: <input type="text" name="team" value="" />
-{{with $x := form "add-team" "/api/leagues/add-team" "Create"}}
-{{template "formEnd" $x}}
-{{end}}
+  <input type="submit" value="Create" />
+</form>
+<script>loltools.registerForm("add-team", "/api/leagues/add-team")</script>
 
 <h3>Group Permissions</h3>
 <table class="base">
@@ -37,32 +37,28 @@
           <input type="hidden" name="league" value="{{$league.Id}}" />
           <input type="hidden" name="group" value="{{.Group.Id}}" />
           <input type="hidden" name="acl" value="view" />
-      {{if .CanView}}
-        {{with $x := form $formid "/api/leagues/group-acl-revoke" "Revoke"}}
-        {{template "formEnd" $x}}
-        {{end}}
-      {{else}}
-        {{with $x := form $formid "/api/leagues/group-acl-grant" "Grant"}}
-        {{template "formEnd" $x}}
-        {{end}}
-      {{end}}
+          <input type="submit" value="{{if .CanView}}Revoke{{else}}Grant{{end}}" />
+        </form>
+        <script>
+        loltools.registerForm(
+            "{{$formid}}",
+            "/api/leagues/group-acl-{{if .CanView}}revoke{{else}}grant{{end}}");
+        </script>
       </td>
       <td>
-        {{template "bool:yes-no" .CanEdit}}
         {{$formid := printf "edit-%d" $i}}
+        {{template "bool:yes-no" .CanEdit}}
         <form id="{{$formid}}">
           <input type="hidden" name="league" value="{{$league.Id}}" />
           <input type="hidden" name="group" value="{{.Group.Id}}" />
           <input type="hidden" name="acl" value="edit" />
-      {{if .CanEdit}}
-        {{with $x := form $formid "/api/leagues/group-acl-revoke" "Revoke"}}
-        {{template "formEnd" $x}}
-        {{end}}
-      {{else}}
-        {{with $x := form $formid "/api/leagues/group-acl-grant" "Grant"}}
-        {{template "formEnd" $x}}
-        {{end}}
-      {{end}}
+          <input type="submit" value="{{if .CanEdit}}Revoke{{else}}Grant{{end}}" />
+        </form>
+        <script>
+        loltools.registerForm(
+            "{{$formid}}",
+            "/api/leagues/group-acl-{{if .CanEdit}}revoke{{else}}grant{{end}}");
+        </script>
       </td>
     </tr>
   {{end}}
