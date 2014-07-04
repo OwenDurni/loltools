@@ -28,7 +28,10 @@
   </div><div class="{{template "blue-or-purple" .OtherTeam}}-team">
     <div class="header group">
       <div class="right">
-        <a class="details" href="#">full details</a>
+        <a class="details"
+           href="{{riot_history_link .Game.Region .Game.RiotId}}">
+        full details
+        </a>
       </div>
       <div class="left">
         <span class="gold">{{template "gameshort-gold" .OtherTeam}}</span>

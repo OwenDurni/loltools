@@ -127,6 +127,12 @@ func tmpl_gold(gold int) string {
   return fmt.Sprintf("%0.1fk", float64(gold) / 1000.)
 }
 
+func tmpl_riot_history_link(region string, gameId int64) string {
+  return fmt.Sprintf(
+    "http://matchhistory.%s.leagueoflegends.com/%s/#match-details/%s/%d",
+    region, "en", "NA1", gameId);
+}
+
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
   // combining pipelines
@@ -164,9 +170,9 @@ var tmplFuncRegistry = template.FuncMap{
 
   "even": tmpl_even,
   "form": tmpl_form,
-  "odd":  tmpl_odd,
-
   "gold": tmpl_gold,
+  "odd":  tmpl_odd,
+  "riot_history_link": tmpl_riot_history_link,
 }
 
 var root string;
