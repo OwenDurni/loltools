@@ -1,0 +1,108 @@
+{{/* extends base.html */}}
+{{define "content"}}
+<h2>{{.League.Name}}</h2>
+<div class="group">
+  <div class="left">
+    <form class="long" id="create-match">
+      <h3>Create Match</h3>
+      <div class="field">
+        <div class="label"><label for="summary">Summary</label></div>
+        <div class="tip">
+          A brief one-line description of the match.<br />
+          Example: "Summoner's Rift Draft (Best of 1)"
+        </div>
+      <input type="text" id="summary" name="summary" size="40" />
+      </div>
+      <div class="field">
+        <div class="label"><label for="description">Description</label></div>
+        <div class="tip">
+          Full description of the match, including any match-specific rules.
+        </div>
+      <textarea rows="10" cols="60" id="description" name="description"></textarea>
+      </div>
+      <div class="field">
+        <div class="label"><label for="primary-tag">Primary Tag</label></div>
+        <div class="tip">
+          The primary tag used to group this with other matches.<br />
+          Example: "Week 1"
+        </div>
+        <input type="text" id="primary-tag" name="primary-tag" size="20" />
+      </div>
+      <div class="field">
+        <div class="label"><label for="num-games">Number of Games</label></div>
+        <div class="tip">
+          The number of games in the match. "0" for "no limit"
+        </div>
+        <input type="text" id="num-games" name="num-games" size="3" />
+      </div>
+      <div class="field">
+        <div class="label">Official Datetime</div>
+        <div class="tip">
+          The official suggested datetime of the match. Specifying a time is optional.
+        </div>
+        <input type="date" id="official-date" name="official-date" />
+        <input type="time" id="official-time" name="official-time" />
+      </div>
+      <div class="field">
+        <div class="label">Date Range</div>
+        <div class="tip">
+          The earliest and latest dates the match should be played (not enforced).
+        </div><div class="field">
+          <div class="label">start</div>
+          <input type="date" id="start-date" name="start-date" />
+          <input type="time" id="start-time" name="start-time" />
+        </div><div class="field">
+          <div class="label">end</div>
+          <input type="date" id="end-date" name="end-date" />
+          <input type="time" id="end-time" name="end-time" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">Pairings</div>
+        <select id="template-team-list" style="display:none">
+        {{range .Teams}}
+          <option value="{{.Id}}">{{.Name}}</option>
+        {{end}}
+        </select>
+        <table id="pairings" class="field">
+          <tr>
+            <td class="label">Home Team</td>
+            <td class="label">Away Team</td>
+          </tr>
+          <tr>
+            <td>
+              <select name="home-team">
+                {{range .Teams}}
+                <option value="{{.Id}}">{{.Name}}</option>
+                {{end}}
+              </select>
+            </td>
+            <td>
+              <select name="away-team">
+              {{range .Teams}}
+                <option value="{{.Id}}">{{.Name}}</option>
+              {{end}}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td><button id="pairings-add-row-button">Add Row</button></td>
+            <td><button id="pairings-del-row-button">Remove Row</button></td>
+          </tr>
+        </table>
+      </div>
+      <input style="font-weight:bold" type="submit" value="Create Matches" />
+    </form>
+  </div>
+  <div class="right">
+    <h3>Upcoming Matches</h3>
+    <p>TODO</p>
+  </div>
+</div>
+
+<script src="/static/js/leagues/matches/create.js"></script>
+<script>
+loltools.pairingsAddRow("#pairings-add-row-button");
+loltools.pairingsDelRow("#pairings-del-row-button");
+</script>
+{{end}}

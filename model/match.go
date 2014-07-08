@@ -27,7 +27,7 @@ type ScheduledMatch struct {
   NumGames int
   
   // The official suggested date(time) of the match.
-  InitialDatetime *time.Time
+  OfficialDatetime *time.Time
   
   // The earliest the match should be played. This is not enforced.
   DateEarliest *time.Time

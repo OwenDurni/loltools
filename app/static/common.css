@@ -5,6 +5,25 @@ body {
 form {
   margin: 0
 }
+form.long {
+  border: thin black solid;
+  padding: 0 1em 1em 1em;
+  background-color: #eee;
+}
+form.long h3 {
+  border-bottom: thin #999 dotted;
+}
+form .field .field {
+  margin-top: .2em;
+  display: inline-block;
+  font-size: small;
+}
+form .field .field + .field {
+  margin-left: 2em;
+}
+form .field {
+  margin-bottom: 1em;
+}
 form .label {
   margin-left: 2px;
   font-weight: bold;
