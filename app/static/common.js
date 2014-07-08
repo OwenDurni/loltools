@@ -16,7 +16,15 @@ var loltools = (function() {
   
   module.registerForm = function(formId, submitUrl) {
     var req;
-    $("form#"+formId).submit(function(event){
+    var $form = $("form#"+formId);
+    
+    // If the form has a "tz" field, populate it with the user's IANA timezone.
+    $tz = $form.find("#tz");
+    if ($tz.size() > 0) {
+      $tz.attr("value", Intl.DateTimeFormat().resolved.timeZone);
+    }
+    
+    $form.submit(function(event){
       event.preventDefault();
       if (req) {
         req.abort();

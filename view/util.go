@@ -5,6 +5,7 @@ import (
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "net/http"
+  "strings"
   "time"
 )
 
@@ -19,6 +20,23 @@ func fmtTime(t time.Time, loc string) string {
     t = t.In(location)
   }
   return t.Format(TIME_FORMAT)
+}
+
+// date: The form value sent by an HTML input with type="date"
+// time: The form value sent by an HTML input with type="time" step="1"
+// tz: The IANA timezone string corresponding to the given date
+func parseDatetime(datestr string, timestr string, tz string) (time.Time, error) {
+  // Pad a truncated time string
+  for strings.Count(timestr, ":") < 2 {
+    timestr += ":00"
+  }
+  
+  location, err := time.LoadLocation(tz)
+  if err != nil {
+    return time.Time{}, err
+  }
+  return time.ParseInLocation(
+    "2006-01-02T15:04:05", fmt.Sprintf("%sT%s", datestr, timestr), location)
 }
 
 func HttpReplyOkEmpty(w http.ResponseWriter) {

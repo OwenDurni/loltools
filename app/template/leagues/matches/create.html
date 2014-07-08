@@ -4,6 +4,8 @@
 <div class="group">
   <div class="left">
     <form class="long" id="create-match">
+      <input type="hidden" name="league" value="{{.League.Id}}" />
+      <input type="hidden" id="tz" name="tz" value="" />
       <h3>Create Match</h3>
       <div class="field">
         <div class="label"><label for="summary">Summary</label></div>
@@ -33,15 +35,15 @@
         <div class="tip">
           The number of games in the match. "0" for "no limit"
         </div>
-        <input type="text" id="num-games" name="num-games" size="3" />
+        <input type="text" id="num-games" name="num-games" size="3" value="0" />
       </div>
       <div class="field">
         <div class="label">Official Datetime</div>
         <div class="tip">
-          The official suggested datetime of the match. Specifying a time is optional.
+          The official suggested datetime of the match.
         </div>
         <input type="date" id="official-date" name="official-date" />
-        <input type="time" id="official-time" name="official-time" />
+        <input type="time" id="official-time" name="official-time" value="19:00" step="1" />
       </div>
       <div class="field">
         <div class="label">Date Range</div>
@@ -50,11 +52,11 @@
         </div><div class="field">
           <div class="label">start</div>
           <input type="date" id="start-date" name="start-date" />
-          <input type="time" id="start-time" name="start-time" />
+          <input type="time" id="start-time" name="start-time" value="04:00" step="1" />
         </div><div class="field">
           <div class="label">end</div>
           <input type="date" id="end-date" name="end-date" />
-          <input type="time" id="end-time" name="end-time" />
+          <input type="time" id="end-time" name="end-time" value="04:00" step="1" />
         </div>
       </div>
       <div class="field">
@@ -104,5 +106,6 @@
 <script>
 loltools.pairingsAddRow("#pairings-add-row-button");
 loltools.pairingsDelRow("#pairings-del-row-button");
+loltools.registerForm("create-match", "/api/matches/create");
 </script>
 {{end}}
