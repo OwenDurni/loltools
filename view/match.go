@@ -3,6 +3,7 @@ package view
 import (
   "appengine"
   "appengine/datastore"
+  "errors"
   "fmt"
   "github.com/OwenDurni/loltools/model"
   "net/http"
@@ -57,15 +58,29 @@ func ApiMatchCreateHandler(w http.ResponseWriter, r *http.Request, args map[stri
   
   var err error
   
-  //leagueId := r.FormValue("league")
+  // Extract and validate parameters.
+  leagueId := r.FormValue("league")
   tz := r.FormValue("tz")
   summary := r.FormValue("summary")
   description := r.FormValue("description")
+  
   primaryTag := r.FormValue("primary-tag")
+  if primaryTag == "" {
+    err = errors.New("'primary-tag' must be non-empty")
+    ApiHandleError(c, w, err)
+    return
+  }
+  
   numGames, err := strconv.ParseInt(r.FormValue("num-games"), 10, 32)
   if ApiHandleError(c, w, err) {
     return
   }
+  if numGames < 0 {
+    err = errors.New(fmt.Sprintf("'num-games' must be non-negative: %d", numGames))
+    ApiHandleError(c, w, err)
+    return
+  }
+  
   officialDatetime, err := parseDatetime(r.FormValue("official-date"), r.FormValue("official-time"), tz)
   if ApiHandleError(c, w, err) {
     return
@@ -81,21 +96,71 @@ func ApiMatchCreateHandler(w http.ResponseWriter, r *http.Request, args map[stri
 
   var homeTeams []string = r.PostForm["home-team"]
   var awayTeams []string = r.PostForm["away-team"]
-  
-  match := &model.ScheduledMatch{
-    Summary: summary,
-    Description: description,
-    PrimaryTag: primaryTag,
-    TeamKeys: make([]*datastore.Key, 2),
-    NumGames: int(numGames),
-    OfficialDatetime: &officialDatetime,
-    DateEarliest: &startDatetime,
-    DateLatest: &endDatetime,
+  if len(homeTeams) != len(awayTeams) {
+    err = errors.New(fmt.Sprintf(
+      "length of home-team (%d) must equal length of away-team (%d)", len(homeTeams), len(awayTeams)))
+    ApiHandleError(c, w, err)
+    return
+  }
+  for i := range homeTeams {
+    if homeTeams[i] == awayTeams[i] {
+      err = errors.New("A team cannot be matched against itself.")
+      ApiHandleError(c, w, err)
+      return
+    }
   }
   
-  c.Debugf("Match: %v", match)
-  c.Debugf("Home Teams: %v", homeTeams)
-  c.Debugf("Away Teams: %v", awayTeams)
+  _, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) {
+    return
+  }
+  userAcls := model.NewRequestorAclCache(userKey)
+  
+  // Lookup league.
+  league, leagueKey, err := model.LeagueById(c, leagueId)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  // Lookup all the teams involved.
+  var homeTeamKeys []*datastore.Key = make([]*datastore.Key, len(homeTeams))
+  var awayTeamKeys []*datastore.Key = make([]*datastore.Key, len(awayTeams))
+  {
+    type A struct {
+      Ids  []string
+      Keys []*datastore.Key
+    }
+    as := []*A{
+      &A{Ids: homeTeams, Keys: homeTeamKeys},
+      &A{Ids: awayTeams, Keys: awayTeamKeys},
+    }
+    for _, a := range as {
+      for i, id := range a.Ids {
+        _, a.Keys[i], err = model.TeamById(c, userAcls, league, leagueKey, id)
+        if ApiHandleError(c, w, err) {
+          return
+        }
+      }
+    }
+  }
+  
+  for i := range homeTeamKeys {
+    match := &model.ScheduledMatch{
+      Summary: summary,
+      Description: description,
+      PrimaryTag: primaryTag,
+      TeamKeys: []*datastore.Key{homeTeamKeys[i], awayTeamKeys[i]},
+      NumGames: int(numGames),
+      OfficialDatetime: officialDatetime,
+      DateEarliest: startDatetime,
+      DateLatest: endDatetime,
+    }
+    
+    err = model.CreateScheduledMatch(c, userAcls, league, leagueKey, match)
+    if ApiHandleError(c, w, err) {
+      return
+    }
+  }
   
   HttpReplyOkEmpty(w)
 }

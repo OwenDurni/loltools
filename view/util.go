@@ -24,7 +24,7 @@ func fmtTime(t time.Time, loc string) string {
 
 // date: The form value sent by an HTML input with type="date"
 // time: The form value sent by an HTML input with type="time" step="1"
-// tz: The IANA timezone string corresponding to the given date
+// tz: The IANA timezone string corresponding to the given date (ex: "America/Los_Angeles")
 func parseDatetime(datestr string, timestr string, tz string) (time.Time, error) {
   // Pad a truncated time string
   for strings.Count(timestr, ":") < 2 {
