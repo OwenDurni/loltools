@@ -48,7 +48,7 @@ func (game *Game) FormatGameType() string {
     var gameModeString string;
 
     switch subType {
-      case "NONE": gameModeString = "None"
+      case "NONE": gameModeString = ""
       case "NORMAL": gameModeString = "Normal"
       case "BOT": gameModeString = "Normal (Bot)"
       case "RANKED_SOLO_5x5": gameModeString = "Ranked Solo"
@@ -121,7 +121,10 @@ func KeyForPlayerGameStatsId(
 
 type GameInfo struct {
   Game *Game
-
+  
+  // Non-empty when viewed in the context of a league.
+  LeagueId string
+  
   BlueTeam   *GameTeamInfo
   PurpleTeam *GameTeamInfo
 
@@ -248,6 +251,18 @@ func (ginfo *GameInfo) computeDerivedData() {
   }
 }
 
+func GameById(
+  c appengine.Context,
+  gameId string) (*Game, *datastore.Key, error) {
+  game := new(Game)
+  gameKey := KeyForGameId(c, gameId)
+  err := datastore.Get(c, gameKey, game)
+  if err != nil {
+    return nil, nil, err
+  }
+  return game, gameKey, nil
+}
+
 func GetOrCreateGame(
   c appengine.Context, region string, riotGameId int64) (*Game, *datastore.Key, error) {
   game := new(Game)
@@ -325,6 +340,35 @@ func GetPlayerGameStats(
   return games[0], gameKeys[0], errwrap.Wrap(err)
 }
 
+func GetGameInfo(
+  c appengine.Context,
+  playerCache *PlayerCache,
+  game *Game) (*GameInfo, []error) {
+  info := NewGameInfo()
+  info.Game = game
+  errors := make([]error, 0, 8)
+
+  for _, playerDto := range game.Players {
+    summonerId := playerDto.SummonerId
+    statKey := KeyForPlayerGameStatsId(c, game.Id(), MakePlayerId(game.Region, summonerId))
+    player, err := playerCache.ById(summonerId)
+    if err != nil {
+      errors = append(errors, errwrap.Wrap(err))
+    }
+    pstats := new(PlayerGameStats)
+    err = datastore.Get(c, statKey, pstats)
+    if err != nil {
+      if err == datastore.ErrNoSuchEntity {
+        pstats = nil
+      } else {
+        errors = append(errors, errwrap.Wrap(err))
+      }
+    }
+    info.AddGamePlayer(playerDto.TeamId, player, playerDto.ChampionId, pstats)
+  }
+  return info, errors
+}
+
 // Note that sometimes partial results are returned even if there is an error.
 func TeamRecentGameInfo(
   c appengine.Context,
@@ -380,31 +424,13 @@ func TeamRecentGameInfo(
     if game == nil {
       continue
     }
-    info := NewGameInfo()
+    info, errs := GetGameInfo(c, playerCache, game)
     infos = append(infos, info)
-    info.Game = game
-
+    errors = append(errors, errs...)
+    
+    info.LeagueId = EncodeKeyShort(leagueKey)
     for _, p := range players {
       info.AddAppTeamPlayer(p)
-    }
-
-    for _, playerDto := range game.Players {
-      summonerId := playerDto.SummonerId
-      statKey := KeyForPlayerGameStatsId(c, game.Id(), MakePlayerId(game.Region, summonerId))
-      player, err := playerCache.ById(summonerId)
-      if err != nil {
-        errors = append(errors, errwrap.Wrap(err))
-      }
-      pstats := new(PlayerGameStats)
-      err = datastore.Get(c, statKey, pstats)
-      if err != nil {
-        if err == datastore.ErrNoSuchEntity {
-          pstats = nil
-        } else {
-          errors = append(errors, errwrap.Wrap(err))
-        }
-      }
-      info.AddGamePlayer(playerDto.TeamId, player, playerDto.ChampionId, pstats)
     }
     info.computeDerivedData()
   }

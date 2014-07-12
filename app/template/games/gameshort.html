@@ -28,6 +28,10 @@
   </div><div class="{{template "blue-or-purple" .OtherTeam}}-team">
     <div class="header group">
       <div class="right">
+        {{if .LeagueId}}
+          <a href="/leagues/{{.LeagueId}}/games/{{.Game.Id}}">edit</a>
+          ‧
+        {{end}}
         <a class="details"
            href="{{riot_history_link .Game.Region .Game.RiotId}}">
         full details

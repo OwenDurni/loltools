@@ -240,9 +240,9 @@ func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
   return ctx
 }
 
-func (ctx *ctxBase) AddError(err error) {
+func (ctx *ctxBase) AddError(err ...error) {
   if err == nil {
     return
   }
-  ctx.Errors = append(ctx.Errors, err)
+  ctx.Errors = append(ctx.Errors, err...)
 }

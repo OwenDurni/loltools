@@ -60,6 +60,7 @@ func init() {
   dispatcher.Add("/groups/<groupId>", view.GroupViewHandler)
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
+  dispatcher.Add("/leagues/<leagueId>/games/<gameId>", view.GameViewHandler)
   dispatcher.Add("/leagues/<leagueId>/matches/create", view.MatchCreateHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>/history", view.TeamGameHistory)
@@ -87,6 +88,9 @@ func init() {
     "form.html", "base.html")
   view.AddTemplate("leagues/index.html",
     "form.html", "base.html")
+  view.AddTemplate("leagues/games/index.html",
+    "games/gamelong.html", "games/champsmall.html", "games/itemsmall.html",
+    "games/summonersmall.html", "form.html", "base.html")
   view.AddTemplate("leagues/matches/create.html",
     "form.html", "base.html")
   view.AddTemplate("leagues/teams/history.html",

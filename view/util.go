@@ -48,30 +48,37 @@ func HttpReplyResourceCreated(w http.ResponseWriter, loc string) {
   w.WriteHeader(http.StatusCreated)
 }
 
-func ApiHandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+func ApiHandleError(c appengine.Context, w http.ResponseWriter, errs ...error) bool {
   useTemplate := false
-  if err == nil {
-    return false
-  }
-  if _, ok := err.(model.ErrNotAuthorized); ok {
-    HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
+  for _, err := range errs {
+    if err == nil {
+      continue
+    }
+    if _, ok := err.(model.ErrNotAuthorized); ok {
+      HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
+      return true
+    }
+    HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
     return true
   }
-  HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
-  return true
+  return false
 }
 
-func HandleError(c appengine.Context, w http.ResponseWriter, err error) bool {
+func HandleError(c appengine.Context, w http.ResponseWriter, errs ...error) bool {
   useTemplate := true
-  if err == nil {
-    return false
+  for _, err := range errs {
+    if err == nil {
+      continue
+    }
+    if _, ok := err.(model.ErrNotAuthorized); ok {
+      HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
+      return true
+    } else {
+      HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
+      return true
+    }
   }
-  if _, ok := err.(model.ErrNotAuthorized); ok {
-    HttpReplyError(c, w, http.StatusForbidden, useTemplate, err)
-    return true
-  }
-  HttpReplyError(c, w, http.StatusInternalServerError, useTemplate, err)
-  return true
+  return false
 }
 
 // See http://golang.org/pkg/net/http/#pkg-constants for status codes.

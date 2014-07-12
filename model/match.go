@@ -39,6 +39,13 @@ type ScheduledMatch struct {
   DateLatest   time.Time
 }
 
+type MatchResult struct {
+  ScheduledMatch *datastore.Key
+  Team           *datastore.Key
+  Points         int
+  ManualResult   bool
+}
+
 // Creates a scheduled match.
 func CreateScheduledMatch(
   c appengine.Context,
