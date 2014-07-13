@@ -4,6 +4,7 @@ import (
   "appengine"
   "appengine/datastore"
   "github.com/OwenDurni/loltools/model"
+  "github.com/OwenDurni/loltools/util/errwrap"
   "net/http"
 )
 
@@ -11,7 +12,7 @@ func AdminIndexHandler(
   w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   user, _, err := model.GetUser(c)
-  if HandleError(c, w, err) {
+  if HandleError(c, w, errwrap.Wrap(err)) {
     return
   }
 
@@ -26,7 +27,7 @@ func AdminIndexHandler(
   
   riotApiKey, err := model.GetRiotApiKey(c)
   ctx.RiotApiKey = riotApiKey
-  ctx.ctxBase.AddError(err)
+  ctx.ctxBase.AddError(errwrap.Wrap(err))
 
   q := datastore.NewQuery("PlayerGameStats").
     Filter("Saved =", false).
@@ -34,12 +35,12 @@ func AdminIndexHandler(
     KeysOnly()
   gameStatsKeys, err := q.GetAll(c, nil)
   ctx.GameStatsBacklogCount = len(gameStatsKeys)
-  ctx.ctxBase.AddError(err)
+  ctx.ctxBase.AddError(errwrap.Wrap(err))
   
   ctx.RiotRateLimit = model.RiotApiRateLimiter.DebugStr(c)
 
   err = RenderTemplate(w, "admin.html", "base", ctx)
-  if HandleError(c, w, err) {
+  if HandleError(c, w, errwrap.Wrap(err)) {
     return
   }
 }

@@ -293,9 +293,13 @@ func (ctx *ctxBase) init(c appengine.Context, mUser *model.User) *ctxBase {
   return ctx
 }
 
-func (ctx *ctxBase) AddError(err ...error) {
-  if err == nil {
+func (ctx *ctxBase) AddError(errs ...error) {
+  if errs == nil {
     return
   }
-  ctx.Errors = append(ctx.Errors, err...)
+  for _, err := range errs {
+    if err != nil {
+      ctx.Errors = append(ctx.Errors, err)
+    }
+  }
 }
