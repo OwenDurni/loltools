@@ -49,7 +49,7 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
   c := appengine.NewContext(r)
 
   // Lookup data from backend.
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -65,7 +65,7 @@ func LeagueIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]
     ctxBase
     MyLeagues []*League
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
 
   ctx.MyLeagues = make([]*League, len(leagues))
   for i := range leagues {
@@ -89,7 +89,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   c := appengine.NewContext(r)
   leagueId := args["leagueId"]
 
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -112,7 +112,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     Teams     []Team
     GroupAcls []GroupAcl
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", league.Name)
 
   ctx.League.Fill(league, leagueKey)

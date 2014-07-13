@@ -11,16 +11,16 @@ func SettingsIndexHandler(
   w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
   
+  user, userKey, err := model.GetUser(c)
+  if HandleError(c, w, err) {
+    return
+  }
+  
   ctx := struct {
     ctxBase
     Summoners []*model.SummonerData
   }{}
-  ctx.ctxBase.init(c)
-
-  _, userKey, err := model.GetUser(c)
-  if HandleError(c, w, err) {
-    return
-  }
+  ctx.ctxBase.init(c, user)
 
   summoners, err := model.GetSummonerDatas(c, userKey)
   if HandleError(c, w, err) {
@@ -79,3 +79,30 @@ func ApiUserVerifySummoner(
   
   HttpReplyOkEmpty(w)
 } 
+
+func ApiUserSetPrimarySummoner(
+  w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
+  region := r.FormValue("region")
+  summonerId, err := strconv.ParseInt(r.FormValue("summonerid"), 10, 64)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  _, userKey, err := model.GetUser(c)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  player, playerKey, err := model.GetOrCreatePlayerByRiotId(c, region, summonerId)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  err = model.SetPrimarySummoner(c, userKey, player, playerKey)
+  if ApiHandleError(c, w, err) {
+    return
+  }
+  
+  HttpReplyOkEmpty(w)
+}

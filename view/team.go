@@ -28,7 +28,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   leagueId := args["leagueId"]
   teamId := args["teamId"]
 
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -69,7 +69,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
     RecentGames []*model.GameInfo
     Players     []*PlayerInfo
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
   ctx.ctxBase.Errors = errors
   ctx.League.Fill(league, leagueKey)
@@ -94,7 +94,7 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
   leagueId := args["leagueId"]
   teamId := args["teamId"]
 
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -124,7 +124,7 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
     Team
     RecentGames []*model.GameInfo
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
   ctx.ctxBase.Errors = errors
   ctx.League.Fill(league, leagueKey)

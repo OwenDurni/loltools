@@ -14,6 +14,9 @@ import (
 
 type User struct {
   Email string
+  
+  // Empty if no verified summoner.
+  DisplayName string
 }
 
 // Key: ("%s:%s", User.StringID(), Player.StringID())
@@ -238,3 +241,35 @@ func AddUnverifiedSummoner(
   }, &datastore.TransactionOptions{XG: true})
   return err
 }
+
+func SetPrimarySummoner(
+  c appengine.Context,
+  userKey *datastore.Key,
+  player *Player,
+  playerKey *datastore.Key) error {
+  // Ensure the specified player is a verified summoner for this user.
+  q := datastore.NewQuery("VerifiedSummoner").
+      Filter("User =", userKey).
+      Filter("Player =", playerKey).
+      Limit(1).
+      KeysOnly()
+  count, err := q.Count(c)
+  if err != nil {
+    return err
+  }
+  if count == 0 {
+    return errors.New(fmt.Sprintf("You must verify summoner %s first", player.Summoner))
+  }
+    
+  return datastore.RunInTransaction(c, func(c appengine.Context) error {
+    user := new(User)
+    err := datastore.Get(c, userKey, user)
+    if err != nil {
+      return err
+    }
+    user.DisplayName = fmt.Sprintf("%s-%s", player.Region, player.Summoner)
+    _, err = datastore.Put(c, userKey, user)
+    return err
+  }, nil)
+}
+  

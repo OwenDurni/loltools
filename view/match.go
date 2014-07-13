@@ -14,7 +14,7 @@ func MatchCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]
   c := appengine.NewContext(r)
   leagueId := args["leagueId"]
   
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -36,7 +36,7 @@ func MatchCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]
     Teams     []Team
     GroupAcls []GroupAcl
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - Create a Match", league.Name)
 
   ctx.League.Fill(league, leagueKey)

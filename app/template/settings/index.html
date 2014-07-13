@@ -12,7 +12,7 @@ in the table below and then hit the "Verify" button.</p>
 <script>loltools.registerForm("add-summoner", "/api/user/add-summoner")</script>
 
 <table class="base">
-  <tr><th>Region</th><th>Summoner</th><th>Status</th><th>Runepage Code</th></tr>
+  <tr><th>Region</th><th>Summoner</th><th>Status</th><th>Runepage Code</th><th>Other Controls</th></tr>
   {{range $s := .Summoners}}
   <tr>
     <td>{{$s.Player.Region}}</td>
@@ -20,6 +20,16 @@ in the table below and then hit the "Verify" button.</p>
     {{if $s.Verified}}
       <td>Verified</td>
       <td></td>
+      <td>
+        {{with $f := printf "set-display-name-%s-%d" $s.Player.Region $s.Player.RiotId}}
+        <form id="{{$f}}">
+          <input type="hidden" name="region" value="{{$s.Player.Region}}" />
+          <input type="hidden" name="summonerid" value="{{$s.Player.RiotId}}" />
+          <input type="submit" value="Set as primary summoner" form="{{$f}}" />
+        </form>
+        <script>loltools.registerForm("{{$f}}", "/api/user/set-primary-summoner")</script>
+        {{end}}
+      </td>
     {{else}}
       <td>
         {{with $f := printf "verify-summoner-%s-%d" $s.Player.Region $s.Player.RiotId}}

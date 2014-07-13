@@ -5,6 +5,7 @@
   <div class="{{template "blue-or-purple" .ThisTeam}}-team">
     <div class="header group">
       <div class="left">
+        <span class="time">{{time_deltanow .Game.StartDateTime}}</span>
         <span class="game-type">{{.Game.FormatGameType}}</span>
       </div>
       <div class="right">

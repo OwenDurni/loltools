@@ -12,18 +12,18 @@ func GameViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   leagueId := args["leagueId"]
   gameId := args["gameId"]
   
-  _, _, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
-  //userAcls := model.NewRequestorAclCache(userKey)
+  userAcls := model.NewRequestorAclCache(userKey)
   
   league, leagueKey, err := model.LeagueById(c, leagueId)
   if HandleError(c, w, err) {
     return
   }
   
-  game, _, err := model.GameById(c, gameId)
+  game, gameKey, err := model.GameById(c, gameId)
   playerCache := model.NewPlayerCache(c, league.Region)
   gameInfo, errs := model.GetGameInfo(c, playerCache, game)
   if HandleError(c, w, errs...) {
@@ -34,11 +34,23 @@ func GameViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
     ctxBase
     League
     GameInfo *model.GameInfo
+    UserTags []*model.UserGameTag
+    Tags     []*model.GameTag
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, gameId)
   ctx.League.Fill(league, leagueKey)
   ctx.GameInfo = gameInfo
+  
+  ctx.UserTags, _, err = model.GetUserGameTags(c, userKey, leagueKey, gameKey)
+  if HandleError(c, w, err) {
+    return
+  }
+  
+  ctx.Tags, _, err = model.GetGameTags(c, userAcls, leagueKey, gameKey)
+  if HandleError(c, w, err) {
+    return
+  }
   
   err = RenderTemplate(w, "leagues/games/index.html", "base", ctx)
   if HandleError(c, w, err) {

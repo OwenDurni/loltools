@@ -60,7 +60,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
   c := appengine.NewContext(r)
 
   // Lookup data from backend.
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -76,7 +76,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     OwnedGroups  []*Group
     MemberGroups []*Group
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = "loltools - My Groups"
 
   for i, m := range memberships {
@@ -104,7 +104,7 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   c := appengine.NewContext(r)
   groupId := args["groupId"]
 
-  _, userKey, err := model.GetUser(c)
+  user, userKey, err := model.GetUser(c)
   if HandleError(c, w, err) {
     return
   }
@@ -112,7 +112,7 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   group, groupKey, _, err := model.GroupById(c, userKey, groupId)
   switch e := err.(type) {
   case model.ErrNotAuthorized:
-    GroupViewNotAuthorizedHandler(w, c, userKey, e.Resource)
+    GroupViewNotAuthorizedHandler(w, c, user, e.Resource)
     return
   default:
     if HandleError(c, w, e) {
@@ -136,7 +136,7 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
     Members         []*Member
     ProposedMembers []*ProposedMember
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", group.Name)
   ctx.Group.Fill(group, groupKey)
   ctx.Members = make([]*Member, 0, len(memberships))
@@ -167,13 +167,13 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
   }
 }
 func GroupViewNotAuthorizedHandler(
-  w http.ResponseWriter, c appengine.Context, userKey *datastore.Key, groupKey *datastore.Key) {
+  w http.ResponseWriter, c appengine.Context, user *model.User, groupKey *datastore.Key) {
   
   ctx := struct {
     ctxBase
     Group
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = fmt.Sprintf("loltools - group %s", model.GroupId(groupKey))
   ctx.Group.Fill(nil, groupKey)
   

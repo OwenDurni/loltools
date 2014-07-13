@@ -133,6 +133,52 @@ func tmpl_riot_history_link(region string, gameId int64) string {
     region, "en", "NA1", gameId);
 }
 
+func tmpl_time_deltanow(t time.Time) string {
+  now := time.Now()
+  
+  var num    int
+  var unit   string
+  var suffix string
+  var delta  time.Duration
+  
+  if now.Unix() >= t.Unix() {
+    suffix = "ago"
+    delta = now.Sub(t)
+  } else {
+    suffix = "from now"
+    delta = t.Sub(now)
+  }
+  
+  seconds := delta.Seconds()
+  minutes := delta.Minutes()
+  hours := delta.Hours()
+  days := int(hours / 24)
+  months := int(hours / (24*30))
+  years := int(hours / (24*365))
+  
+  if years >= 1 {
+    unit = "year(s)"
+    num = years
+  } else if months >= 1 {
+    unit = "month(s)"
+    num = months
+  } else if days >= 1 {
+    unit = "day(s)"
+    num = days
+  } else if hours >= 1 {
+    unit = "hour(s)"
+    num = int(hours)
+  } else if minutes >= 1 {
+    unit = "minute(s)"
+    num = int(minutes)
+  } else {
+    unit = "second(s)"
+    num = int(seconds)
+  }
+  
+  return fmt.Sprintf("%d %s %s", num, unit, suffix)
+}
+
 var templateRegistry map[string]*template.Template
 var tmplFuncRegistry = template.FuncMap{
   // combining pipelines
@@ -173,6 +219,7 @@ var tmplFuncRegistry = template.FuncMap{
   "gold": tmpl_gold,
   "odd":  tmpl_odd,
   "riot_history_link": tmpl_riot_history_link,
+  "time_deltanow": tmpl_time_deltanow,
 }
 
 var root string;
@@ -229,13 +276,19 @@ type ctxBase struct {
   User    string
 }
 
-func (ctx *ctxBase) init(c appengine.Context) *ctxBase {
+func (ctx *ctxBase) init(c appengine.Context, mUser *model.User) *ctxBase {
   ctx.Errors = make([]error, 0)
   ctx.Regions = model.Regions
   ctx.TimeNow = fmtTime(time.Now(), "America/Los_Angeles")
   ctx.Title = ""
-  if u := user.Current(c); u != nil {
-    ctx.User = u.Email
+  if mUser != nil {
+    if mUser.DisplayName != "" {
+      ctx.User = fmt.Sprintf("%s", mUser.DisplayName)
+    } else {
+      ctx.User = fmt.Sprintf("[%s]", mUser.Email)
+    }
+  } else if u := user.Current(c); u != nil {
+    ctx.User = fmt.Sprintf("[%s]", u.Email)
   }
   return ctx
 }

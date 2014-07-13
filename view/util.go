@@ -108,7 +108,7 @@ func HttpReplyError(
       ctxBase
       HttpStatusCode int
     }{}
-    ctx.ctxBase.init(c)
+    ctx.ctxBase.init(c, nil)
     ctx.ctxBase.AddError(err)
     ctx.HttpStatusCode = httpStatusCode
 

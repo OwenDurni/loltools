@@ -10,6 +10,10 @@ import (
 func AdminIndexHandler(
   w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
+  user, _, err := model.GetUser(c)
+  if HandleError(c, w, err) {
+    return
+  }
 
   ctx := struct {
     ctxBase
@@ -17,7 +21,7 @@ func AdminIndexHandler(
     GameStatsBacklogCount int
     RiotRateLimit         string
   }{}
-  ctx.ctxBase.init(c)
+  ctx.ctxBase.init(c, user)
   ctx.ctxBase.Title = "Admin Console"
   
   riotApiKey, err := model.GetRiotApiKey(c)

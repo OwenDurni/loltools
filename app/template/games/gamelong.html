@@ -2,13 +2,7 @@
 
 {{define "gamelong"}}
 <div class="game-long">
-  <div class="header">
-    <div class="game-info">
-      {{.Game.StartDateTime.Format "Jan _2 15:04"}}
-      -
-      {{.Game.FormatGameType}}
-    </div>
-  </div>
+  <h3>{{.Game.FormatGameType}} ({{time_deltanow .Game.StartDateTime}})</h3>
   {{template "gamelong-team" .ThisTeam}}{{template "gamelong-team" .OtherTeam}}
 </div>
 {{end}}
