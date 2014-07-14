@@ -9,6 +9,36 @@ import (
 
 func GameViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
   c := appengine.NewContext(r)
+  gameId := args["gameId"]
+  
+  user, _, err := model.GetUser(c)
+  if HandleError(c, w, err) {
+    return
+  }
+  
+  game, _, err := model.GameById(c, gameId)
+  playerCache := model.NewPlayerCache(c, game.Region)
+  gameInfo, errs := model.GetGameInfo(c, playerCache, game)
+  if HandleError(c, w, errs...) {
+    return
+  }
+  
+  ctx := struct {
+    ctxBase
+    GameInfo *model.GameInfo
+  }{}
+  ctx.ctxBase.init(c, user)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s", gameId)
+  ctx.GameInfo = gameInfo
+  
+  err = RenderTemplate(w, "games/index.html", "base", ctx)
+  if HandleError(c, w, err) {
+    return
+  }
+}
+
+func LeagueGameViewHandler(w http.ResponseWriter, r *http.Request, args map[string]string) {
+  c := appengine.NewContext(r)
   leagueId := args["leagueId"]
   gameId := args["gameId"]
   
@@ -24,7 +54,7 @@ func GameViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
   }
   
   game, gameKey, err := model.GameById(c, gameId)
-  playerCache := model.NewPlayerCache(c, league.Region)
+  playerCache := model.NewPlayerCache(c, game.Region)
   gameInfo, errs := model.GetGameInfo(c, playerCache, game)
   if HandleError(c, w, errs...) {
     return

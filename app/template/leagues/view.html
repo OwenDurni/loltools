@@ -4,6 +4,8 @@
 
 {{$league := .League}}
 
+<div class="group">
+<div class="left">
 <h3>Standings</h3>
 <table class="base">
   <tr><th>Team</th><th>Wins</th><th>Losses</th></tr>
@@ -17,6 +19,8 @@
 </table>
 
 <h3><a href="/leagues/{{$league.Id}}/matches/create">Create a Match</a></h3>
+
+<h3>Unfinished Matches</h3>
 
 <h3>Add New Team</h3>
 <form id="add-team">
@@ -65,4 +69,9 @@
     </tr>
   {{end}}
 </table>
+</div>
+<div class="right">
+  <h3>Recent Results</h3>
+</div>
+</div>
 {{end}}

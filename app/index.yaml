@@ -23,6 +23,13 @@ indexes:
   properties:
   - name: TeamKey
   - name: DateTime
+  - name: GameKey
+
+- kind: GameByTeam
+  ancestor: yes
+  properties:
+  - name: TeamKey
+  - name: DateTime
     direction: desc
   - name: GameKey
 

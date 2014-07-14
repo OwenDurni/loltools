@@ -8,7 +8,7 @@ import (
   "time"
 )
 
-// A scheduled match between two teams. May consist of one or more ScheduledGames
+// A scheduled match between two teams.
 //
 // Ancestor: League
 type ScheduledMatch struct {
@@ -37,6 +37,12 @@ type ScheduledMatch struct {
   
   // The latest the match should be played. This is not enforced.
   DateLatest   time.Time
+}
+func (m *ScheduledMatch) HomeTeam() *datastore.Key {
+  return m.TeamKeys[0]
+}
+func (m *ScheduledMatch) AwayTeam() *datastore.Key {
+  return m.TeamKeys[1]
 }
 
 type MatchResult struct {

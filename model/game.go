@@ -77,6 +77,10 @@ func (game *Game) FormatGameType() string {
     }
 }
 
+func GameUri(gameKey *datastore.Key) string {
+  return fmt.Sprintf("/games/%s", gameKey.StringID())
+}
+
 func MakeGameId(region string, riotId int64) string {
   return fmt.Sprintf("%s-%d", region, riotId)
 }

@@ -57,17 +57,20 @@ func init() {
   dispatcher.Add("/api/user/verify-summoner", view.ApiUserVerifySummoner)
   dispatcher.Add("/debug", debugHandler)
   dispatcher.Add("/home", view.HomeHandler)
+  dispatcher.Add("/games/<gameId>", view.GameViewHandler)
   dispatcher.Add("/groups", view.GroupIndexHandler)
   dispatcher.Add("/groups/<groupId>", view.GroupViewHandler)
   dispatcher.Add("/leagues", view.LeagueIndexHandler)
   dispatcher.Add("/leagues/<leagueId>", view.LeagueViewHandler)
-  dispatcher.Add("/leagues/<leagueId>/games/<gameId>", view.GameViewHandler)
+  dispatcher.Add("/leagues/<leagueId>/games/<gameId>", view.LeagueGameViewHandler)
   dispatcher.Add("/leagues/<leagueId>/matches/create", view.MatchCreateHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>", view.TeamViewHandler)
   dispatcher.Add("/leagues/<leagueId>/teams/<teamId>/history", view.TeamGameHistory)
+  dispatcher.Add("/task/cron/all-match-sync", task.AllMatchSync)
   dispatcher.Add("/task/cron/all-team-histories", task.AllTeamHistories)
   dispatcher.Add("/task/cron/get-missing-game-stats", task.MissingGameStats)
   dispatcher.Add("/task/riot/get/team/history", task.FetchTeamMatchHistoryHandler)
+  dispatcher.Add("/task/match/sync", task.MatchSync)
   dispatcher.Add("/settings", view.SettingsIndexHandler)
 
   http.HandleFunc("/", dispatcher.RootHandler)
@@ -79,6 +82,9 @@ func init() {
     "base.html")
   view.AddTemplate("home.html",
     "base.html")
+  view.AddTemplate("games/index.html",
+    "games/gamelong.html", "games/champsmall.html", "games/itemsmall.html",
+    "games/summonersmall.html", "base.html")
   view.AddTemplate("groups/index.html",
     "form.html", "base.html")
   view.AddTemplate("groups/join.html",
