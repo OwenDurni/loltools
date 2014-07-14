@@ -6,11 +6,17 @@
 <h3>Your Tags</h3>
 <table class="base">
   <tr><th>Tag</th></tr>
+  {{range .UserTags}}
+    <tr><td>{{.Tag}}</td></tr>
+  {{end}}
 </table>
 
 <h3>System Tags</h3>
 <table class="base">
   <tr><th>Tag</th><th>Reason</th></tr>
+  {{range .Tags}}
+    <tr><td>{{.Tag}}</td><td>{{.Reason}}</td></tr>
+  {{end}}
 </table>
   
 

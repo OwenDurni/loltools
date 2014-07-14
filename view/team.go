@@ -70,7 +70,7 @@ func TeamViewHandler(w http.ResponseWriter, r *http.Request, args map[string]str
     Players     []*PlayerInfo
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s > %s", league.Name, team.Name)
   ctx.ctxBase.Errors = errors
   ctx.League.Fill(league, leagueKey)
   ctx.Team.Fill(team, teamKey, leagueKey)
@@ -125,7 +125,7 @@ func TeamGameHistory(w http.ResponseWriter, r *http.Request, args map[string]str
     RecentGames []*model.GameInfo
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, team.Name)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s > %s", league.Name, team.Name)
   ctx.ctxBase.Errors = errors
   ctx.League.Fill(league, leagueKey)
   ctx.Team.Fill(team, teamKey, leagueKey)

@@ -68,7 +68,7 @@ func LeagueGameViewHandler(w http.ResponseWriter, r *http.Request, args map[stri
     Tags     []*model.GameTag
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - %s", league.Name, gameId)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s > %s", league.Name, gameId)
   ctx.League.Fill(league, leagueKey)
   ctx.GameInfo = gameInfo
   

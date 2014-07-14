@@ -77,7 +77,7 @@ func GroupIndexHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     MemberGroups []*Group
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = "loltools - My Groups"
+  ctx.ctxBase.Title = "loltools > My Groups"
 
   for i, m := range memberships {
     g := groups[i]
@@ -137,7 +137,7 @@ func GroupViewHandler(w http.ResponseWriter, r *http.Request, args map[string]st
     ProposedMembers []*ProposedMember
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", group.Name)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s", group.Name)
   ctx.Group.Fill(group, groupKey)
   ctx.Members = make([]*Member, 0, len(memberships))
   ctx.ProposedMembers = make([]*ProposedMember, 0, len(proposedMemberships))
@@ -174,7 +174,7 @@ func GroupViewNotAuthorizedHandler(
     Group
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - group %s", model.GroupId(groupKey))
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > group %s", model.GroupId(groupKey))
   ctx.Group.Fill(nil, groupKey)
   
   err := RenderTemplate(w, "groups/join.html", "base", ctx)

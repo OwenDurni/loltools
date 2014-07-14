@@ -37,7 +37,7 @@ func MatchCreateHandler(w http.ResponseWriter, r *http.Request, args map[string]
     GroupAcls []GroupAcl
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s - Create a Match", league.Name)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s > Create a Match", league.Name)
 
   ctx.League.Fill(league, leagueKey)
 

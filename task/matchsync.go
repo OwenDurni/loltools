@@ -6,6 +6,7 @@ import (
   "appengine/taskqueue"
   "fmt"
   "github.com/OwenDurni/loltools/model"
+  "github.com/OwenDurni/loltools/model/tags"
   "io"
   "net/http"
   "net/url"
@@ -75,6 +76,18 @@ func tagGamesInMatchWindow(
   for _, gameKey := range gameKeys {
     uri := model.GameUri(gameKey)
     fmt.Fprintf(w, "  <a href=\"%s\">%s</a>\n", uri, uri)
+  }
+  fmt.Fprintf(w, "\n")
+  
+  leagueKey := homeTeamKey.Parent()
+  for _, gameKey := range gameKeys {
+    err := model.AddGameTag(
+      c, nil, leagueKey, gameKey,
+      tags.AutomaticallyDetectedMatchResult(match.PrimaryTag),
+      tags.ReasonNotApplicable)
+    if err != nil {
+      return err
+    }
   }
   return nil
 }

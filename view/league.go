@@ -113,7 +113,7 @@ func LeagueViewHandler(w http.ResponseWriter, r *http.Request, args map[string]s
     GroupAcls []GroupAcl
   }{}
   ctx.ctxBase.init(c, user)
-  ctx.ctxBase.Title = fmt.Sprintf("loltools - %s", league.Name)
+  ctx.ctxBase.Title = fmt.Sprintf("loltools > %s", league.Name)
 
   ctx.League.Fill(league, leagueKey)
 
