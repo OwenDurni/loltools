@@ -99,8 +99,7 @@ func MissingGameStats(w http.ResponseWriter, r *http.Request, args map[string]st
 
     for _, gameDto := range recentGamesDto.Games {
       gameId := model.MakeGameId(player.Region, gameDto.GameId)
-      gameDtoCopy := gameDto
-      collectiveGameStats.Add(player.Region, gameId, player.RiotId, &gameDtoCopy)
+      collectiveGameStats.Add(gameId, player.RiotId, &gameDto)
     }
   }
 
@@ -229,26 +228,33 @@ func FetchTeamMatchHistoryHandler(
 
     for _, gameDto := range recentGamesDto.Games {
       gameId := model.MakeGameId(region, gameDto.GameId)
-      gameDtoCopy := gameDto
-      collectiveGameStats.Add(region, gameId, player.RiotId, &gameDtoCopy)
+      
+      var gameDtoCopy riot.GameDto = gameDto
+      collectiveGameStats.Add(gameId, player.RiotId, &gameDtoCopy)
     }
   }
 
   // Filter to only the games that contain at least 3 members of the team.
-  collectiveGameStats.FilterToGamesWithAtLeast(3, players)
+  collectiveGameStats.FilterToGamesWithPlayersAtLeast(3)
 
   // Write to datastore.
-  collectiveGameStats.ForEachGame(func(gameId string,
-    sampleRiotSummonerId int64,
-    sampleStat *riot.GameDto) {
+  collectiveGameStats.ForEachGame(func(
+      gameId string,
+      gameStats *model.GameStats,
+      sampleRiotSummonerId int64,
+      sampleStat *riot.GameDto) {
     gameKey := model.KeyForGameId(c, gameId)
     err := model.EnsureGameExists(c, region, gameKey, sampleRiotSummonerId, sampleStat)
     if ReportError(c, w, err) {
       return
     }
 
-    err = model.LeagueAddGameByTeam(
-      c, leagueKey, gameKey, teamKey, (time.Time)(sampleStat.CreateDate))
+    err = model.LeagueAddGameByTeam(c, leagueKey, &model.GameByTeam{
+      GameKey: gameKey,
+      TeamKey: teamKey,
+      DateTime: (time.Time)(sampleStat.CreateDate),
+      RiotTeamIds: gameStats.GetTeamsWithCountAtLeast(3),
+    })
     if ReportError(c, w, err) {
       return
     }
@@ -293,6 +299,6 @@ func FetchTeamMatchHistoryHandler(
   for _, player := range players {
     fmt.Fprintf(w, "  %s (%d)\n", player.Summoner, player.RiotId)
   }
-  collectiveGameStats.WriteDebugStringTo(w)
+  fmt.Fprintf(w, collectiveGameStats.DebugString())
   fmt.Fprintf(w, "</pre></body></html>")
 }

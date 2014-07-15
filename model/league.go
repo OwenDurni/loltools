@@ -5,6 +5,7 @@ import (
   "appengine/datastore"
   "errors"
   "fmt"
+  "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
   "time"
 )
@@ -38,6 +39,27 @@ type GameByTeam struct {
   GameKey  *datastore.Key
   TeamKey  *datastore.Key
   DateTime time.Time
+  
+  // Contains {riot.BlueTeamId, riot.PurpleTeamId} if that team contained at least 3
+  // members of the team.
+  RiotTeamIds []int
+}
+
+func (g *GameByTeam) IsOnBlue() bool {
+  for _, id := range g.RiotTeamIds {
+    if id == riot.BlueTeamId {
+      return true
+    }
+  }
+  return false
+}
+func (g *GameByTeam) IsOnPurple() bool {
+  for _, id := range g.RiotTeamIds {
+    if id == riot.PurpleTeamId {
+      return true
+    }
+  }
+  return false
 }
 
 // An associate between games and tags. A game can have multiple tags.
@@ -351,13 +373,11 @@ func TeamDelPlayer(
 func LeagueAddGameByTeam(
   c appengine.Context,
   leagueKey *datastore.Key,
-  gameKey *datastore.Key,
-  teamKey *datastore.Key,
-  dateTime time.Time) error {
+  gameByTeam *GameByTeam) error {
   err := datastore.RunInTransaction(c, func(c appengine.Context) error {
     q := datastore.NewQuery("GameByTeam").Ancestor(leagueKey).
-      Filter("GameKey =", gameKey).
-      Filter("TeamKey =", teamKey).
+      Filter("GameKey =", gameByTeam.GameKey).
+      Filter("TeamKey =", gameByTeam.TeamKey).
       Limit(1).
       KeysOnly()
     keys, err := q.GetAll(c, nil)
@@ -368,10 +388,6 @@ func LeagueAddGameByTeam(
       return nil
     }
     key := datastore.NewIncompleteKey(c, "GameByTeam", leagueKey)
-    gameByTeam := new(GameByTeam)
-    gameByTeam.GameKey = gameKey
-    gameByTeam.TeamKey = teamKey
-    gameByTeam.DateTime = dateTime
     _, err = datastore.Put(c, key, gameByTeam)
     return err
   }, nil)

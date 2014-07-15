@@ -10,6 +10,7 @@ import (
   "io"
   "net/http"
   "net/url"
+  "sort"
 )
 
 func QueueMatchSync(c appengine.Context, matchKey *datastore.Key) {
@@ -58,7 +59,17 @@ func MatchSync(w http.ResponseWriter, r *http.Request, args map[string]string) {
   awayTeamKey := match.AwayTeam()
   
   // Phase 1: Tag games that look like they could be for this match.
-  tagGamesInMatchWindow(c, w, homeTeamKey, awayTeamKey, match)
+  err = tagGamesInMatchWindow(c, w, homeTeamKey, awayTeamKey, match, matchKey)
+  if ReportError(c, w, err) {
+    return
+  }
+  
+  // Phase 2: Compute match results.
+  computeMatchResults(c, w, homeTeamKey, awayTeamKey, match, matchKey)
+  if ReportError(c, w, err) {
+    return
+  }
+  
   fmt.Fprintf(w, "</pre></body></html>")
 }
 
@@ -67,7 +78,8 @@ func tagGamesInMatchWindow(
   w io.Writer,
   homeTeamKey *datastore.Key,
   awayTeamKey *datastore.Key,
-  match *model.ScheduledMatch) error {
+  match *model.ScheduledMatch,
+  matchKey *datastore.Key) error {
   gameKeys, err := getGamesInMatchWindow(c, homeTeamKey, awayTeamKey, match)
   if err != nil {
     return err
@@ -83,8 +95,8 @@ func tagGamesInMatchWindow(
   for _, gameKey := range gameKeys {
     err := model.AddGameTag(
       c, nil, leagueKey, gameKey,
-      tags.AutomaticallyDetectedMatchResult(match.PrimaryTag),
-      tags.ReasonNotApplicable)
+      tags.AutomaticallyDetectedMatchResultFor(matchKey),
+      tags.ReasonNotApplicable())
     if err != nil {
       return err
     }
@@ -120,6 +132,8 @@ func getGamesInMatchWindow(
   return ret, nil
 }
 
+// Gets a list of gameKeys played by the specified team within the bounds of
+// the specified match.
 func getGamesInMatchWindowByTeam(
   c appengine.Context,
   teamKey *datastore.Key,
@@ -140,4 +154,57 @@ func getGamesInMatchWindowByTeam(
     gameKeys[i] = gameByTeams[i].GameKey
   }
   return gameKeys, nil
+}
+
+// Computes match results for each team based on games identified as part of the match.
+func computeMatchResults(
+  c appengine.Context,
+  w io.Writer,
+  homeTeamKey *datastore.Key,
+  awayTeamKey *datastore.Key,
+  match *model.ScheduledMatch,
+  matchKey *datastore.Key) error {
+  leagueKey := homeTeamKey.Parent()
+  // TODO: Manually reported results should take precedence over automatically reported ones.
+  
+  q := datastore.NewQuery("GameTag").
+    Ancestor(leagueKey).
+    Filter("Tag =", tags.AutomaticallyDetectedMatchResultFor(matchKey)).
+    Project("Game")
+  var gameTags []*model.GameTag
+  _, err := q.GetAll(c, &gameTags)
+  if err != nil {
+    return err
+  }
+  games := make([]*model.Game, len(gameTags))
+  gameKeys := make([]*datastore.Key, len(gameTags))
+  for i := range gameTags {
+    games[i] = new(model.Game)
+    gameKeys[i] = gameTags[i].Game
+  }
+  err = datastore.GetMulti(c, gameKeys, games)
+  if err != nil {
+    return err
+  }
+  sort.Sort(model.GameByTime(games))
+  
+  err = computeMatchResultForTeam(c, w, homeTeamKey, match, games)
+  if err != nil {
+    return err
+  }
+  err = computeMatchResultForTeam(c, w, awayTeamKey, match, games)
+  if err != nil {
+    return err
+  }
+  
+  return nil
+}
+
+func computeMatchResultForTeam(
+  c appengine.Context,
+  w io.Writer,
+  teamKey *datastore.Key,
+  match *model.ScheduledMatch,
+  games []*model.Game) error {
+  return nil 
 }

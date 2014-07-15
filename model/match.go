@@ -44,6 +44,9 @@ func (m *ScheduledMatch) HomeTeam() *datastore.Key {
 func (m *ScheduledMatch) AwayTeam() *datastore.Key {
   return m.TeamKeys[1]
 }
+func MatchId(matchKey *datastore.Key) string {
+  return EncodeKeyShort(matchKey)
+}
 
 type MatchResult struct {
   ScheduledMatch *datastore.Key

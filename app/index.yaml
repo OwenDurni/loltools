@@ -33,6 +33,12 @@ indexes:
     direction: desc
   - name: GameKey
 
+- kind: GameTag
+  ancestor: yes
+  properties:
+  - name: Tag
+  - name: Game
+
 - kind: League
   properties:
   - name: Owner

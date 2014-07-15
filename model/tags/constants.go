@@ -1,13 +1,15 @@
 package tags
 
 import (
+  "appengine/datastore"
   "fmt"
+  "github.com/OwenDurni/loltools/model"
 )
 
-const (
-  ReasonNotApplicable = "n/a"
-)
+func AutomaticallyDetectedMatchResultFor(matchKey *datastore.Key) string {
+  return fmt.Sprintf("auto-result:%s", model.MatchId(matchKey))
+}
 
-func AutomaticallyDetectedMatchResult(matchTag string) string {
-  return fmt.Sprintf("auto-result:%s", matchTag)
+func ReasonNotApplicable() string {
+  return "n/a"
 }

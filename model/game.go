@@ -6,7 +6,6 @@ import (
   "fmt"
   "github.com/OwenDurni/loltools/riot"
   "github.com/OwenDurni/loltools/util/errwrap"
-  "io"
   "strings"
   "time"
 )
@@ -25,19 +24,18 @@ type Game struct {
   Players       []riot.PlayerDto
   Invalid       bool
 }
-
 func (g *Game) Id() string {
   return MakeGameId(g.Region, g.RiotId)
 }
-
+func (g *Game) Key(c appengine.Context) *datastore.Key {
+  return KeyForGameId(c, g.Id())
+}
 func (g *Game) Uri() string {
   return fmt.Sprintf("/games/%s", g.Id())
 }
-
 func (game *Game) FormatTime() string {
     return game.StartDateTime.Format(time.Stamp)
 }
-
 func (game *Game) FormatGameType() string {
     gameType := game.GameType
     subType := game.SubType
@@ -75,6 +73,12 @@ func (game *Game) FormatGameType() string {
     } else {
       return gameModeString
     }
+}
+type GameByTime []*Game
+func (a GameByTime) Len() int { return len(a) }
+func (a GameByTime) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a GameByTime) Less(i, j int) bool {
+  return a[i].StartDateTime.Unix() < a[j].StartDateTime.Unix()
 }
 
 func GameUri(gameKey *datastore.Key) string {
@@ -151,6 +155,7 @@ type GameTeamInfo struct {
   PlayerStats       []*GamePlayerStatsInfo
 
   // stats
+  IsWinner          bool
   ChampionsKilled   int
   NumDeaths         int
   Assists           int
@@ -215,7 +220,7 @@ func (ginfo *GameInfo) AddAppTeamPlayer(p *Player) {
 // Adds a player and their in-game-stats to the GameInfo.
 func (ginfo *GameInfo) AddGamePlayer(
   teamId int, p *Player, championId int, pstats *PlayerGameStats) {
-
+  
   isOnAppTeam := ginfo.appTeamSummonerIdSet[p.RiotId]
 
   pinfo := NewGamePlayerInfo(p, championId)
@@ -235,15 +240,12 @@ func (ginfo *GameInfo) AddGamePlayer(
     ginfo.riotTeamPlayerCounts[teamId]++
   }
 
-  if gtinfo != nil {
-    gtinfo.Players = append(gtinfo.Players, pinfo)
-    gtinfo.PlayerStats = append(gtinfo.PlayerStats, psinfo)
-  }
-
+  gtinfo.Players = append(gtinfo.Players, pinfo)
+  gtinfo.PlayerStats = append(gtinfo.PlayerStats, psinfo)
+  gtinfo.IsWinner = pstats.RiotData.Win
   gtinfo.ChampionsKilled += pstats.RiotData.ChampionsKilled
   gtinfo.NumDeaths += pstats.RiotData.NumDeaths
   gtinfo.Assists += pstats.RiotData.Assists
-
   gtinfo.GoldEarned += pstats.RiotData.GoldEarned
 }
 
@@ -444,118 +446,111 @@ func TeamRecentGameInfo(
 
 type CollectiveGameStats struct {
   // map[GameId]map[RiotSummonerId]*riot.GameDto
-  games map[string]map[int64]*riot.GameDto
+  games map[string]*GameStats
+  
+  // The players we are interested in.
+  playerSet map[int64]struct{}
 }
-
+type GameStats struct {
+  // map[RiotSummonerId]*riot.GameDto
+  stats map[int64]*riot.GameDto
+  
+  // map[RiotTeamId]{number of players on that team in the 'players' slice}
+  teamCount map[int]int
+}
+func (g *GameStats) AddStats(riotSummonerId int64, stats *riot.GameDto) {
+  if g.stats == nil {
+    g.stats = make(map[int64]*riot.GameDto)
+  }
+  g.stats[riotSummonerId] = stats
+  g.IncrementTeamCount(stats.TeamId)
+  
+  for _, riotOtherPlayer := range stats.FellowPlayers {
+    g.stub(riotOtherPlayer.SummonerId)
+  }
+}
+func (g *GameStats) GetTeamsWithCountAtLeast(target int) []int {
+  var ret []int = make([]int, 0, 2)
+  if g.teamCount == nil {
+    return ret
+  }
+  for teamId, count := range g.teamCount {
+    if count >= target {
+      ret = append(ret, teamId)
+    }
+  }
+  return ret
+}
+func (g *GameStats) IncrementTeamCount(riotTeamId int) {
+  if g.teamCount == nil {
+    g.teamCount = make(map[int]int)
+  }
+  g.teamCount[riotTeamId] = g.teamCount[riotTeamId] + 1
+}
+func (g *GameStats) Lookup(riotSummonerId int64) *riot.GameDto {
+  if g.stats == nil {
+    return nil
+  }
+  return g.stats[riotSummonerId]
+}
+func (g *GameStats) stub(riotSummonerId int64) {
+  if g.stats == nil {
+    g.stats = make(map[int64]*riot.GameDto)
+  }
+  _, exists := g.stats[riotSummonerId]
+  if !exists {
+    g.stats[riotSummonerId] = nil
+  }
+}
 // Adds a player's stats to the collective stats and creates entries with nil stats
 // for players in this game that have not been added to the map yet.
 func (c *CollectiveGameStats) Add(
-  region string, gameId string, riotSummonerId int64, stats *riot.GameDto) {
+  gameId string, riotSummonerId int64, stats *riot.GameDto) {
   if c.games == nil {
-    c.games = make(map[string]map[int64]*riot.GameDto)
+    c.games = make(map[string]*GameStats)
   }
-  playerMap, exists := c.games[gameId]
+  gameStats, exists := c.games[gameId]
   if !exists {
-    playerMap = make(map[int64]*riot.GameDto)
-    c.games[gameId] = playerMap
+    gameStats = new(GameStats)
+    c.games[gameId] = gameStats
   }
-  playerMap[riotSummonerId] = stats
-
-  for _, riotOtherPlayer := range stats.FellowPlayers {
-    c.stub(region, gameId, riotOtherPlayer.SummonerId)
-  }
+  gameStats.AddStats(riotSummonerId, stats)
 }
 func (c *CollectiveGameStats) Lookup(gameId string, riotSummonerId int64) *riot.GameDto {
   if c.games == nil {
     return nil
   }
-  playerMap, exists := c.games[gameId]
+  gameStats, exists := c.games[gameId]
   if !exists {
     return nil
   }
-  stats, exists := playerMap[riotSummonerId]
-  if !exists {
-    return nil
-  }
-  return stats
+  return gameStats.Lookup(riotSummonerId)
 }
-
-// Fills a stub with this player's stats. If no stub exists for these stats this is a no-op.
-func (c *CollectiveGameStats) FillStub(
-  region string, gameId string, riotSummonerId int64, stats *riot.GameDto) {
-  if c.games == nil {
-    return
-  }
-  playerMap, exists := c.games[gameId]
-  if !exists {
-    return
-  }
-  oldStats, exists := playerMap[riotSummonerId]
-  if !exists {
-    return
-  }
-  if oldStats != nil {
-    return
-  }
-  playerMap[riotSummonerId] = stats
-}
-
 // Filters the stats collection to games that have at least n players from the specified
 // list appearing on the same team.
-func (s *CollectiveGameStats) FilterToGamesWithAtLeast(n int, players []*Player) {
+func (s *CollectiveGameStats) FilterToGamesWithPlayersAtLeast(n int) {
   if s.games == nil {
     return
   }
-  filteredGames := make(map[string]map[int64]*riot.GameDto)
+  filteredGames := make(map[string]*GameStats)
 
-  playerSet := make(map[int64]struct{})
-  for _, player := range players {
-    playerSet[player.RiotId] = struct{}{}
-  }
-
-  for gameId, playerMap := range s.games {
-    for riotSummonerId, gameDto := range playerMap {
-      if gameDto == nil {
-        // Skip stubs
-        continue
-      }
-      // Counts of the number of players matching on each team.
-      counts := make(map[int]int)
-      matches := false
-
-      // Check the current player.
-      if _, exists := playerSet[riotSummonerId]; exists {
-        counts[gameDto.TeamId]++
-      }
-
-      // Check each fellow player.
-      for _, playerDto := range gameDto.FellowPlayers {
-        if _, exists := playerSet[playerDto.SummonerId]; exists {
-          counts[playerDto.TeamId]++
-          if counts[playerDto.TeamId] >= n {
-            matches = true
-            break
-          }
-        }
-      }
-      if matches {
-        filteredGames[gameId] = playerMap
-        break
-      }
+  for gameId, gameStats := range s.games {
+    if len(gameStats.GetTeamsWithCountAtLeast(n)) > 0 {
+      filteredGames[gameId] = gameStats
     }
   }
   s.games = filteredGames
 }
 
 // Calls the provided function once for each game with a sample player's stat for that game.
-func (s *CollectiveGameStats) ForEachGame(fn func(string, int64, *riot.GameDto)) {
+func (s *CollectiveGameStats) ForEachGame(fn func(string, *GameStats, int64, *riot.GameDto)) {
   if s.games == nil {
     return
   }
-  for gameId, playerMap := range s.games {
-    for riotSummonerId, stat := range playerMap {
+  for gameId, gameStats := range s.games {
+    for riotSummonerId, stat := range gameStats.stats {
       if stat != nil {
-        fn(gameId, riotSummonerId, stat)
+        fn(gameId, gameStats, riotSummonerId, stat)
         break
       }
     }
@@ -567,8 +562,11 @@ func (s *CollectiveGameStats) ForEachStat(fn func(string, int64, *riot.GameDto))
   if s.games == nil {
     return
   }
-  for gameId, playerMap := range s.games {
-    for playerId, stat := range playerMap {
+  for gameId, gameStats := range s.games {
+    if gameStats.stats == nil {
+      continue
+    }
+    for playerId, stat := range gameStats.stats {
       fn(gameId, playerId, stat)
     }
   }
@@ -579,34 +577,17 @@ func (s *CollectiveGameStats) Size() int {
   }
   return len(s.games)
 }
-func (s *CollectiveGameStats) WriteDebugStringTo(w io.Writer) {
-  if s.games == nil {
-    return
-  }
-  for gameId, playerMap := range s.games {
-    fmt.Fprintf(w, "Game %s:\n", gameId)
-    for playerId, stat := range playerMap {
-      if stat == nil {
-        fmt.Fprintf(w, "  Player %d: <stub>\n", playerId)
-      } else {
-        fmt.Fprintf(w, "  Player %d: KDA(%d/%d/%d)\n",
-          playerId, stat.Stats.ChampionsKilled, stat.Stats.NumDeaths,
-          stat.Stats.Assists)
-      }
+func (s *CollectiveGameStats) DebugString() string {
+  ret := ""
+  s.ForEachGame(func(
+    gameId string,
+    gameStats *GameStats,
+    sampleSummonerId int64,
+    sampleStats *riot.GameDto) {
+    ret += fmt.Sprintf("Game %s: %+v\n", gameId, gameStats)
+    for summonerId, stat := range gameStats.stats {
+      ret += fmt.Sprintf("  Summoner %d: %+v\n", summonerId, stat)
     }
-  }
-}
-func (s *CollectiveGameStats) stub(region string, gameId string, riotSummonerId int64) {
-  if s.games == nil {
-    s.games = make(map[string]map[int64]*riot.GameDto)
-  }
-  playerMap, exists := s.games[gameId]
-  if !exists {
-    playerMap = make(map[int64]*riot.GameDto)
-    s.games[gameId] = playerMap
-  }
-  _, exists = playerMap[riotSummonerId]
-  if !exists {
-    playerMap[riotSummonerId] = nil
-  }
+  })
+  return ret
 }
