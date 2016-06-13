@@ -1,7 +1,6 @@
 package riot
 
 import (
-  "appengine"
   "encoding/json"
   "errors"
   "fmt"
@@ -48,7 +47,8 @@ func CanonicalizeSummoner(name string) string {
 }
 
 func SummonerByName(
-  c appengine.Context,
+  urlFetcher func(string) ([]byte, error),
+  rateLimiter func(),
   riotApiKey string,
   region string,
   name string) (*SummonerDto, error) {
@@ -58,7 +58,8 @@ func SummonerByName(
     riotApiKey,
     fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", region, name),
     &url.Values{})
-  jsonData, err := Fetch(c, loc)
+  rateLimiter();
+  jsonData, err := urlFetcher(loc)
   data := make(map[string]*SummonerDto)
   json.Unmarshal(jsonData, &data)
   if err != nil {
@@ -74,7 +75,7 @@ func SummonerByName(
 
 // Note that if the summoner id is not found nil gets populated into the output slice.
 func SummonersById(
-  c appengine.Context,
+  urlFetcher func(string) ([]byte, error),
   riotApiKey string,
   region string,
   ids ...int64) ([]*SummonerDto, error) {
@@ -96,7 +97,7 @@ func SummonersById(
       riotApiKey,
       fmt.Sprintf("/api/lol/%s/v1.4/summoner/%s", region, strings.Join(batch, ",")),
       &url.Values{})
-    jsonData, err := Fetch(c, loc)
+    jsonData, err := urlFetcher(loc)
     data := make(map[string]*SummonerDto)
     err = json.Unmarshal(jsonData, &data)
     if err != nil {
@@ -116,7 +117,7 @@ func SummonersById(
 }
 
 func RunesBySummonerId(
-  c appengine.Context,
+  urlFetcher func(string) ([]byte, error),
   riotApiKey string,
   region string,
   riotId int64) (*RunePagesDto, error) {
@@ -124,7 +125,7 @@ func RunesBySummonerId(
     riotApiKey,
     fmt.Sprintf("/api/lol/%s/v1.4/summoner/%d/runes", region, riotId),
     &url.Values{})
-  jsonData, err := Fetch(c, loc)
+  jsonData, err := urlFetcher(loc)
   data := make(map[string]*RunePagesDto)
   json.Unmarshal(jsonData, &data)
   if err != nil {

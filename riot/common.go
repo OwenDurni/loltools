@@ -1,10 +1,7 @@
 package riot
 
 import (
-  "appengine"
-  "appengine/urlfetch"
   "fmt"
-  "io/ioutil"
   "net/url"
   "strings"
 )
@@ -15,7 +12,7 @@ const (
 )
 
 const (
-  baseUrl = "https://prod.api.pvp.net"
+  baseUrl = "https://na.api.pvp.net"
 )
 
 func BaseUrl() (url *url.URL) {
@@ -53,22 +50,3 @@ func (e ErrRiotRestApi) Error() string {
   return fmt.Sprintf("%s returned ErrRiotRestApi(%d)", e.Url, e.HttpStatusCode)
 }
 
-func Fetch(c appengine.Context, loc string) ([]byte, error) {
-  client := urlfetch.Client(c)
-  resp, err := client.Get(loc)
-  if err != nil {
-    return nil, err
-  }
-  if resp.StatusCode < 200 || resp.StatusCode > 299 {
-    c.Errorf("RiotApi fetch failed with status %d: %s", resp.StatusCode, loc)
-    return nil, NewErrRiotRestApi(loc, resp.StatusCode)
-  } else {
-    c.Infof("RiotApi fetch status %d: %s", resp.StatusCode, loc)
-  }
-  defer resp.Body.Close()
-  body, err := ioutil.ReadAll(resp.Body)
-  if err != nil {
-    return nil, err
-  }
-  return body, nil
-}

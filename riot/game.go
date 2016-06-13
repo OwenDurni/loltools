@@ -1,7 +1,6 @@
 package riot
 
 import (
-  "appengine"
   "encoding/json"
   "fmt"
   "net/url"
@@ -156,7 +155,8 @@ type RawStatsDto struct {
 }
 
 func GameStatsForPlayer(
-  c appengine.Context,
+  urlFetcher func(string) ([]byte, error),
+  rateLimiter func(),
   riotApiKey string,
   region string,
   riotSummonerId int64) (*RecentGamesDto, error) {
@@ -167,7 +167,8 @@ func GameStatsForPlayer(
   g := new(RecentGamesDto)
   g.SummonerId = riotSummonerId
 
-  jsonData, err := Fetch(c, loc)
+  rateLimiter()
+  jsonData, err := urlFetcher(loc)
   if err != nil {
     if err, ok := err.(ErrRiotRestApi); ok && err.HttpStatusCode == 404 {
       // 404 means no match history for this summoner id.
