@@ -1,8 +1,8 @@
 package riot
 
 import (
-  "github.com/OwenDurni/loltools/ddragon"
-  "io"
+	"github.com/OwenDurni/loltools/ddragon"
+	"io"
 )
 
 //
