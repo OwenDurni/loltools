@@ -21,7 +21,7 @@ func check(err error) {
 }
 
 // Usage:
-//   go run tools/ranked_data.go [summoner...]
+//   go run tools/ranked_data.go [summoner...] 2> /dev/null
 func main() {
 	var riotApiKey string
 	{
