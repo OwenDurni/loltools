@@ -18,6 +18,7 @@ type ChampionStatsDto struct {
 	ChampionId int                 `json:"id"`
 	Stats      *AggregatedStatsDto `json:"stats"`
 }
+
 // ChampionStatsDto.ChampionId for aggregated data about all champions.
 const ChampionStatsDto_AllChampions = 0
 
@@ -28,7 +29,7 @@ type AggregatedStatsDto struct {
 	//NormalGamesPlayed        int `json:"normalGamesPlayed"`
 	//RankedPremadeGamesPlayed int `json:"rankedPremadeGamesPlayed"`
 	//RankedSoloGamesPlayed    int `json:"rankedSoloGamesPlayed"`
-	TotalSessionsPlayed      int `json:"totalSessionsPlayed"`
+	TotalSessionsPlayed int `json:"totalSessionsPlayed"`
 }
 
 func RankedStatsBySummonerId(

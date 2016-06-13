@@ -54,10 +54,12 @@ func main() {
 
 		rankedStats, err := riot.RankedStatsBySummonerId(
 			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId)
+		check(err)
+
 		for _, championStats := range rankedStats.Champions {
-		  if championStats.ChampionId == riot.ChampionStatsDto_AllChampions {
-		    fmt.Printf("%s,%d\n", summoner, championStats.Stats.TotalSessionsPlayed)
-		  }
+			if championStats.ChampionId == riot.ChampionStatsDto_AllChampions {
+				fmt.Printf("%s,%d\n", summoner, championStats.Stats.TotalSessionsPlayed)
+			}
 		}
 	}
 }
