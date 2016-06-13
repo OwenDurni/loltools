@@ -20,6 +20,8 @@ func check(err error) {
 	}
 }
 
+// Usage:
+//   go run tools/ranked_data.go [summoner...]
 func main() {
 	var riotApiKey string
 	{
@@ -47,8 +49,15 @@ func main() {
 		summonerData, err := riot.SummonerByName(
 			web.FetchUrl, rateLimiter, riotApiKey, Region, summoner)
 		check(err)
-		fmt.Fprintf(os.Stderr, "%+v\n", summonerData)
 
-		summonerId = summonerData.Id
+		summonerId := summonerData.Id
+
+		rankedStats, err := riot.RankedStatsBySummonerId(
+			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId)
+		for _, championStats := range rankedStats.Champions {
+		  if championStats.ChampionId == riot.ChampionStatsDto_AllChampions {
+		    fmt.Printf("%s,%d\n", summoner, championStats.Stats.TotalSessionsPlayed)
+		  }
+		}
 	}
 }
