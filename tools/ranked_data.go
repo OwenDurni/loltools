@@ -48,5 +48,7 @@ func main() {
       web.FetchUrl, rateLimiter, riotApiKey, Region, summoner)
     check(err)
     fmt.Fprintf(os.Stderr, "%+v\n", summonerData)
+    
+    summonerId = summonerData.Id
   }
 }
