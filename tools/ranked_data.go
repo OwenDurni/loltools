@@ -8,10 +8,12 @@ import (
 	"golang.org/x/time/rate"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 const (
-	Region = "na"
+	Region              = "na"
+	GamesSinceStartDate = "2016-06-01T00:00:00Z"
 )
 
 func check(err error) {
@@ -30,6 +32,16 @@ func main() {
 		riotApiKey = string(contents)
 	}
 	fmt.Fprintf(os.Stderr, "Using riot key: %s\n", riotApiKey)
+
+	var gamesSinceStartDate riot.RiotTime
+	{
+		t, err := time.Parse(time.RFC3339, GamesSinceStartDate)
+		check(err)
+		gamesSinceStartDate = riot.RiotTime(t)
+	}
+
+	fmt.Println(gamesSinceStartDate)
+	fmt.Println(gamesSinceStartDate.UnixMillisString())
 
 	var rateLimiter func()
 	{
@@ -56,10 +68,23 @@ func main() {
 			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId)
 		check(err)
 
+		rankedGames, err := riot.RankedGameHistoryBySummonerIdSince(
+			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId,
+			gamesSinceStartDate)
+		check(err)
+
+		totalRankedGames := 0
+		totalGamesSinceDate := rankedGames.TotalGames
 		for _, championStats := range rankedStats.Champions {
 			if championStats.ChampionId == riot.ChampionStatsDto_AllChampions {
-				fmt.Printf("%s,%d\n", summoner, championStats.Stats.TotalSessionsPlayed)
+				totalRankedGames = championStats.Stats.TotalSessionsPlayed
 			}
 		}
+
+		for _, rankedGame := range rankedGames.Matches {
+			fmt.Println(time.Time(rankedGame.Timestamp).Format(time.RFC3339))
+		}
+
+		fmt.Printf("%s,%d,%d\n", summoner, totalRankedGames, totalGamesSinceDate)
 	}
 }

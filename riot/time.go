@@ -2,6 +2,7 @@ package riot
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 )
 
@@ -21,4 +22,8 @@ func (rt *RiotTime) UnmarshalJSON(data []byte) error {
 
 func (rt RiotTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*time.Time)(&rt).Unix())
+}
+
+func (rt RiotTime) UnixMillisString() string {
+	return strconv.FormatInt(int64(time.Time(rt).Unix())*1000, 10)
 }

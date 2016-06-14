@@ -45,11 +45,10 @@ func RankedStatsBySummonerId(
 		&url.Values{})
 	rateLimiter()
 	jsonData, err := urlFetcher(loc)
-	dto := new(RankedStatsDto)
-	json.Unmarshal(jsonData, &dto)
 	if err != nil {
 		return nil, err
 	}
-
+	dto := new(RankedStatsDto)
+	err = json.Unmarshal(jsonData, &dto)
 	return dto, err
 }

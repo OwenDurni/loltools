@@ -60,8 +60,11 @@ func SummonerByName(
 		&url.Values{})
 	rateLimiter()
 	jsonData, err := urlFetcher(loc)
+	if err != nil {
+		return nil, err
+	}
 	data := make(map[string]*SummonerDto)
-	json.Unmarshal(jsonData, &data)
+	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +102,9 @@ func SummonersById(
 			&url.Values{})
 		jsonData, err := urlFetcher(loc)
 		data := make(map[string]*SummonerDto)
+		if err != nil {
+			return nil, err
+		}
 		err = json.Unmarshal(jsonData, &data)
 		if err != nil {
 			return nil, err
@@ -126,8 +132,11 @@ func RunesBySummonerId(
 		fmt.Sprintf("/api/lol/%s/v1.4/summoner/%d/runes", region, riotId),
 		&url.Values{})
 	jsonData, err := urlFetcher(loc)
+	if err != nil {
+		return nil, err
+	}
 	data := make(map[string]*RunePagesDto)
-	json.Unmarshal(jsonData, &data)
+	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
 		return nil, err
 	}
