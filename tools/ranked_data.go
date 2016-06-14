@@ -40,9 +40,6 @@ func main() {
 		gamesSinceStartDate = riot.RiotTime(t)
 	}
 
-	fmt.Println(gamesSinceStartDate)
-	fmt.Println(gamesSinceStartDate.UnixMillisString())
-
 	var rateLimiter func()
 	{
 		// Create a rate limiter that allows 1 call every 2 seconds with a burst of
@@ -73,6 +70,10 @@ func main() {
 			gamesSinceStartDate)
 		check(err)
 
+		soloRank, err := riot.SoloQueueRankBySummonerId(
+			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId)
+		check(err)
+
 		totalRankedGames := 0
 		totalGamesSinceDate := rankedGames.TotalGames
 		for _, championStats := range rankedStats.Champions {
@@ -85,6 +86,7 @@ func main() {
 			fmt.Println(time.Time(rankedGame.Timestamp).Format(time.RFC3339))
 		}
 
-		fmt.Printf("%s,%d,%d\n", summoner, totalRankedGames, totalGamesSinceDate)
+		fmt.Printf("%s,%d,%d,%s\n",
+			summoner, totalRankedGames, totalGamesSinceDate, soloRank)
 	}
 }

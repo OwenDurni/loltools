@@ -47,7 +47,7 @@ func CanonicalizeSummoner(name string) string {
 }
 
 func SummonerByName(
-	urlFetcher func(string) ([]byte, error),
+	urlFetcher func(string) ([]byte, int, error),
 	rateLimiter func(),
 	riotApiKey string,
 	region string,
@@ -59,7 +59,7 @@ func SummonerByName(
 		fmt.Sprintf("/api/lol/%s/v1.4/summoner/by-name/%s", region, name),
 		&url.Values{})
 	rateLimiter()
-	jsonData, err := urlFetcher(loc)
+	jsonData, _, err := urlFetcher(loc)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func SummonerByName(
 
 // Note that if the summoner id is not found nil gets populated into the output slice.
 func SummonersById(
-	urlFetcher func(string) ([]byte, error),
+	urlFetcher func(string) ([]byte, int, error),
 	riotApiKey string,
 	region string,
 	ids ...int64) ([]*SummonerDto, error) {
@@ -100,7 +100,7 @@ func SummonersById(
 			riotApiKey,
 			fmt.Sprintf("/api/lol/%s/v1.4/summoner/%s", region, strings.Join(batch, ",")),
 			&url.Values{})
-		jsonData, err := urlFetcher(loc)
+		jsonData, _, err := urlFetcher(loc)
 		data := make(map[string]*SummonerDto)
 		if err != nil {
 			return nil, err
@@ -123,7 +123,7 @@ func SummonersById(
 }
 
 func RunesBySummonerId(
-	urlFetcher func(string) ([]byte, error),
+	urlFetcher func(string) ([]byte, int, error),
 	riotApiKey string,
 	region string,
 	riotId int64) (*RunePagesDto, error) {
@@ -131,7 +131,7 @@ func RunesBySummonerId(
 		riotApiKey,
 		fmt.Sprintf("/api/lol/%s/v1.4/summoner/%d/runes", region, riotId),
 		&url.Values{})
-	jsonData, err := urlFetcher(loc)
+	jsonData, _, err := urlFetcher(loc)
 	if err != nil {
 		return nil, err
 	}

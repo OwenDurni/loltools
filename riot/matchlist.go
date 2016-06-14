@@ -28,7 +28,7 @@ type MatchReference struct {
 }
 
 func RankedGameHistoryBySummonerIdSince(
-	urlFetcher func(string) ([]byte, error),
+	urlFetcher func(string) ([]byte, int, error),
 	rateLimiter func(),
 	riotApiKey string,
 	region string,
@@ -42,7 +42,7 @@ func RankedGameHistoryBySummonerIdSince(
 			"beginTime": []string{startDateTime.UnixMillisString()},
 		})
 	rateLimiter()
-	jsonData, err := urlFetcher(loc)
+	jsonData, _, err := urlFetcher(loc)
 	if err != nil {
 		return nil, err
 	}

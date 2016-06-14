@@ -33,7 +33,7 @@ type AggregatedStatsDto struct {
 }
 
 func RankedStatsBySummonerId(
-	urlFetcher func(string) ([]byte, error),
+	urlFetcher func(string) ([]byte, int, error),
 	rateLimiter func(),
 	riotApiKey string,
 	region string,
@@ -44,7 +44,7 @@ func RankedStatsBySummonerId(
 			region, summonerId),
 		&url.Values{})
 	rateLimiter()
-	jsonData, err := urlFetcher(loc)
+	jsonData, _, err := urlFetcher(loc)
 	if err != nil {
 		return nil, err
 	}

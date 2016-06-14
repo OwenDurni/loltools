@@ -170,11 +170,6 @@ func GameStatsForPlayer(
 	rateLimiter()
 	jsonData, err := urlFetcher(loc)
 	if err != nil {
-		if err, ok := err.(ErrRiotRestApi); ok && err.HttpStatusCode == 404 {
-			// 404 means no match history for this summoner id.
-			return g, nil
-		}
-
 		return nil, err
 	}
 

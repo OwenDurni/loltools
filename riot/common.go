@@ -1,9 +1,7 @@
 package riot
 
 import (
-	"fmt"
 	"net/url"
-	"strings"
 )
 
 const (
@@ -14,6 +12,12 @@ const (
 const (
 	baseUrl = "https://na.api.pvp.net"
 )
+
+type NotFound struct{}
+
+func (e NotFound) Error() string {
+	return "Riot API 404"
+}
 
 func BaseUrl() (url *url.URL) {
 	url, err := url.Parse(baseUrl)
@@ -29,23 +33,4 @@ func ComposeUrl(riotApiKey string, path string, args *url.Values) string {
 	args.Add("api_key", riotApiKey)
 	u.RawQuery = args.Encode()
 	return u.String()
-}
-
-func stripArgs(loc string) string {
-	return strings.Split(loc, "?")[0]
-}
-
-type ErrRiotRestApi struct {
-	Url            string
-	HttpStatusCode int
-}
-
-func NewErrRiotRestApi(loc string, httpStatusCode int) ErrRiotRestApi {
-	var e ErrRiotRestApi
-	e.Url = stripArgs(loc)
-	e.HttpStatusCode = httpStatusCode
-	return e
-}
-func (e ErrRiotRestApi) Error() string {
-	return fmt.Sprintf("%s returned ErrRiotRestApi(%d)", e.Url, e.HttpStatusCode)
 }
