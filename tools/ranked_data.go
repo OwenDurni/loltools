@@ -70,9 +70,30 @@ func main() {
 			gamesSinceStartDate)
 		check(err)
 
+		var sampleMatchId *int64 = nil
+		if len(rankedGames.Matches) > 0 {
+			sampleMatchId = &rankedGames.Matches[0].MatchId
+		}
+
 		soloRank, err := riot.SoloQueueRankBySummonerId(
 			web.FetchUrl, rateLimiter, riotApiKey, Region, summonerId)
 		check(err)
+
+		previousSeasonRank := "Unranked"
+		if sampleMatchId != nil {
+			match, err := riot.LookupMatch(
+				web.FetchUrl, rateLimiter, riotApiKey, Region, *sampleMatchId)
+			check(err)
+			for _, pid := range match.ParticipantIdentities {
+				if pid.Player.SummonerId == summonerId {
+					for _, p := range match.Participants {
+						if pid.ParticipantId == p.ParticipantId {
+							previousSeasonRank = p.HighestAchievedSeasonTier
+						}
+					}
+				}
+			}
+		}
 
 		totalRankedGames := 0
 		totalGamesSinceDate := rankedGames.TotalGames
@@ -83,10 +104,12 @@ func main() {
 		}
 
 		for _, rankedGame := range rankedGames.Matches {
-			fmt.Println(time.Time(rankedGame.Timestamp).Format(time.RFC3339))
+			fmt.Fprintln(
+				os.Stderr, time.Time(rankedGame.Timestamp).Format(time.RFC3339))
 		}
 
-		fmt.Printf("%s,%d,%d,%s\n",
-			summoner, totalRankedGames, totalGamesSinceDate, soloRank)
+		fmt.Printf("%s,%d,%d,%s,%s\n",
+			summoner, totalRankedGames, totalGamesSinceDate, soloRank,
+			previousSeasonRank)
 	}
 }
